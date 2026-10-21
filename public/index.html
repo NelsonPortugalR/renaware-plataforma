@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E3A5B">
+<title>Equipo Arequipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root{
+    --fondo:#F3F5F7; --superficie:#FFFFFF; --tinta:#15232E; --suave:#51606C;
+    --acero:#0E3A5B; --acero-2:#2A6A99; --acero-claro:#D9E3EB; --sobre-acero:#FFFFFF;
+    --borde:#CBD5DD; --alto:#B3261E; --medio:#9A6200; --info:#7A8792; --ok:#1F7A4D;
+    --fuente:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --medio:#E5B54F; --info:#8E9EAA; --ok:#6CC49A;
+    color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --medio:#E5B54F; --info:#8E9EAA; --ok:#6CC49A;
+    color-scheme: dark;
+  }
+  /* Zonas seguras del celular (notch y barra inferior) */
+  :root{box-sizing:border-box;padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top, 0px)}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font-family:var(--fuente);font-size:17px;line-height:1.5;
+    padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+  .marco{max-width:640px;margin:0 auto;padding:14px 18px 56px}
+  h1{font-size:28px;line-height:1.2;margin:0;font-weight:700}
+  h2{font-size:19px;line-height:1.3;margin:38px 0 12px;font-weight:700}
+  h3{font-size:17.5px;line-height:1.35;margin:0;font-weight:700}
+  p{margin:0}
+  a{color:var(--acero-2)}
+  :focus-visible{outline:3px solid var(--acero-2);outline-offset:2px}
+  .apoyo{color:var(--suave)}
+  .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .oculto{display:none !important}
+
+  .barra{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+  .marca{font-weight:700;color:var(--acero);font-size:16px}
+  .salir{background:none;border:0;padding:12px 2px;font:inherit;font-size:15.5px;color:var(--suave);cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px}
+
+  /* El período de 14 días: lo que ordena todo en Rena Ware */
+  .periodo{margin-top:16px}
+  .periodo-texto{color:var(--suave);margin-bottom:14px}
+  .franja{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;align-items:end;height:30px}
+  .dia{display:block;height:12px;border-radius:3px;background:var(--acero-claro)}
+  .dia.pasado{background:var(--acero)}
+  .dia.hoy{height:30px;background:var(--acero-2)}
+  .marcas{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;margin-top:6px;font-size:13.5px;color:var(--suave)}
+  .marca-mitad{grid-column:8 / span 3;grid-row:1}
+  .marca-cierre{grid-column:12 / span 3;grid-row:1;text-align:right}
+  .periodo-estado{margin-top:10px}
+  .oficial{margin-top:6px}
+
+  /* Pendientes de hoy: el borde dice la urgencia */
+  .lista{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .item{background:var(--superficie);border-left:5px solid var(--info);border-radius:3px 10px 10px 3px;padding:14px 16px 15px}
+  .item.alto{border-left-color:var(--alto)}
+  .item.medio{border-left-color:var(--medio)}
+  .item-cab{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+  .item-modulo{font-size:13.5px;color:var(--suave);white-space:nowrap}
+  .item p{margin-top:5px;color:var(--suave)}
+  .item .accion{font-style:italic}
+  .abrir{display:inline-block;margin-top:8px;padding:6px 0;font-weight:700;text-underline-offset:3px}
+  .vacio{background:var(--superficie);border-radius:10px;padding:18px}
+  .vacio p + p{margin-top:4px}
+
+  .grupo{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave);margin:22px 0 8px;font-weight:700}
+  .grupo:first-of-type{margin-top:0}
+  .modulos{display:grid;gap:1px;background:var(--borde);border:1px solid var(--borde);border-radius:12px;overflow:hidden}
+  .mod{display:block;background:var(--superficie);padding:15px 16px;color:var(--tinta);text-decoration:none}
+  a.mod:hover{background:var(--acero-claro)}
+  .mod strong{display:block;font-size:17.5px}
+  .mod span{display:block;color:var(--suave);font-size:15.5px}
+  .mod.off strong{color:var(--suave)}
+  .mod .pronto{font-style:italic;font-size:14.5px;margin-top:2px}
+
+  .puntos{list-style:none;margin:0;padding:0;background:var(--superficie);border:1px solid var(--borde);border-radius:12px}
+  .puntos li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:13px 16px}
+  .puntos li + li{border-top:1px solid var(--borde)}
+  .puntos .pb{grid-column:1 / -1;color:var(--suave);font-size:15.5px}
+  .puntos strong{font-size:20px}
+  .puntos .ped{align-self:end;color:var(--suave);font-size:15.5px}
+
+  .acceso{min-height:calc(100vh - 80px);min-height:calc(100dvh - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;justify-content:center;padding-bottom:40px}
+  .acceso h1{margin-top:10px}
+  .acceso .apoyo{margin-top:8px}
+  label{display:block;font-weight:700;margin:22px 0 6px}
+  input{display:block;width:100%;font:inherit;font-size:19px;padding:13px 14px;border:2px solid var(--borde);border-radius:10px;
+    background:var(--superficie);color:var(--tinta)}
+  input:focus{border-color:var(--acero-2);outline:none}
+  .boton{display:block;width:100%;margin-top:22px;padding:15px;border:0;border-radius:10px;background:var(--acero);
+    color:var(--sobre-acero);font:inherit;font-size:18px;font-weight:700;cursor:pointer}
+  .boton:disabled{opacity:.65;cursor:default}
+  .error{color:var(--alto);font-weight:700;margin-top:14px;min-height:26px}
+  .cargando{padding:40px 0}
+
+  /* Subir reporte */
+  label.boton{text-align:center;margin:22px 0 0}
+  #archivo:focus-visible + label{outline:3px solid var(--acero-2);outline-offset:2px}
+  .resumen{margin:8px 0 0;padding-left:20px}
+  .resumen li{margin:4px 0}
+  .aviso{color:var(--medio);font-weight:700;margin-top:12px}
+  .listo{margin-top:18px}
+  .volver{display:inline-block;padding:8px 0;font-weight:700}
+  /* Conciliar */
+  .item.segura{border-left-color:var(--acero-2)}
+  .item.hecho{border-left-color:var(--ok)}
+  .acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .mini{font:inherit;font-size:16px;font-weight:700;padding:10px 14px;border-radius:9px;border:2px solid var(--acero);
+    background:var(--acero);color:var(--sobre-acero);cursor:pointer}
+  .mini.secundario{background:transparent;color:var(--acero-2);border-color:var(--borde)}
+  .mini:disabled{opacity:.6;cursor:default}
+  .aviso-ok{color:var(--ok);font-weight:700;margin-top:14px}
+</style>
+</head>
+<body>
+<div id="app" class="marco"></div>
+<noscript>Activa JavaScript para usar la plataforma.</noscript>
+<script>
+'use strict';
+const SB_URL = 'https://kiexpdaaoegbtesqmaff.supabase.co';
+const SB_KEY = 'sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth';
+// Misma clave que usa supabase-js: los módulos que se muden a este dominio heredan la sesión.
+const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';
+const K_ASESOR = 'rw_asesor_token';
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const NIVEL_SR = {alto:'Urgente', medio:'Importante', info:'Para tener en cuenta'};
+const app = document.getElementById('app');
+
+/* ---------- utilidades ---------- */
+function h(tag, attrs, ...hijos){
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of hijos.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+function pintar(...nodos){ app.replaceChildren(...nodos.filter(Boolean)); window.scrollTo(0, 0); }
+function leer(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function guardar(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function borrar(k){ try { localStorage.removeItem(k); } catch (e) {} }
+const num = n => Number(n || 0).toLocaleString('es-PE');
+const minus = s => String(s || '').charAt(0).toLowerCase() + String(s || '').slice(1);
+function primerNombre(n){
+  const p = String(n || '').trim().split(/\s+/)[0] || '';
+  return p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : '';
+}
+function fecha(iso){ const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+function diasEntre(a, b){ return Math.round((fecha(b) - fecha(a)) / 86400000); }
+function rango(ini, fin){
+  const a = fecha(ini), b = fecha(fin);
+  return a.getUTCMonth() === b.getUTCMonth()
+    ? `del ${a.getUTCDate()} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`
+    : `del ${a.getUTCDate()} de ${MESES[a.getUTCMonth()]} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`;
+}
+function largo(iso){ const d = fecha(iso); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} de ${MESES[d.getUTCMonth()]}`; }
+
+/* ---------- conexión con Supabase ---------- */
+async function api(ruta, {method = 'GET', body, token} = {}){
+  const r = await fetch(SB_URL + ruta, {
+    method,
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + (token || SB_KEY), 'Content-Type': 'application/json'},
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const txt = await r.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+  if (!r.ok) {
+    const msg = (data && (data.message || data.msg || data.error_description || data.error)) || ('Error ' + r.status);
+    const err = new Error(msg); err.status = r.status; throw err;
+  }
+  return data;
+}
+function mensaje(err){
+  const m = (err && err.message) || '';
+  if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
+  if (/Invalid login credentials/i.test(m)) return 'Correo o contraseña incorrectos.';
+  if (/Email not confirmed/i.test(m)) return 'Tu correo aún no está confirmado. Revisa tu bandeja de entrada.';
+  if (/no esta habilitado/i.test(m)) return 'Ese número no está habilitado. Pide que te registren en el equipo.';
+  return m || 'Algo falló. Intenta de nuevo.';
+}
+
+/* ---------- sesiones: equipo (correo) y asesor (celular) ---------- */
+function guardarSesion(s){
+  if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+  guardar(K_STAFF, s);
+  return s;
+}
+async function entrarCorreo(email, password){
+  const s = await api('/auth/v1/token?grant_type=password', {method: 'POST', body: {email, password}});
+  borrar(K_ASESOR);
+  return guardarSesion(s);
+}
+async function sesionVigente(){
+  let s = leer(K_STAFF);
+  if (!s || !s.access_token) return null;
+  if (s.expires_at - 60 < Date.now() / 1000) {
+    try {
+      s = guardarSesion(await api('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: {refresh_token: s.refresh_token}}));
+    } catch (e) {
+      if (e instanceof TypeError) throw e;   // sin internet: no se borra la sesión
+      borrar(K_STAFF); return null;
+    }
+  }
+  return s;
+}
+function contexto(){
+  const ua = navigator.userAgent || '';
+  return {
+    dispositivo: /Mobi|Android|iPhone/i.test(ua) ? 'móvil' : 'escritorio',
+    navegador: (ua.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/) || [''])[0],
+    so: (ua.match(/Android|iPhone OS|Windows|Mac OS X|Linux/) || [''])[0],
+    pantalla: (screen.width || 0) + 'x' + (screen.height || 0),
+    zona: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+    idioma: navigator.language || ''
+  };
+}
+async function entrarCelular(cel){
+  const r = await api('/rest/v1/rpc/asesor_login', {method: 'POST', body: {p_celular: cel, p_ctx: contexto()}});
+  borrar(K_STAFF);
+  guardar(K_ASESOR, r.token);
+  return r;
+}
+function cerrarSesion(){
+  const s = leer(K_STAFF);
+  borrar(K_STAFF); borrar(K_ASESOR);
+  if (s && s.access_token) api('/auth/v1/logout', {method: 'POST', token: s.access_token}).catch(() => {});
+  pantallaAcceso();
+}
+
+/* ---------- traspaso: el módulo arranca con la sesión del hub ---------- */
+// Al abrir un módulo externo se crea un código de un solo uso (vence en 2 minutos)
+// y viaja en el enlace: #traspaso=<código>. El módulo lo canjea por su propia sesión.
+function conTraspaso(m){
+  if (!m || !m.url || m.url.charAt(0) === '#') return false;
+  if (leer(K_STAFF)) return !!m.traspaso_staff;
+  if (leer(K_ASESOR)) return !!m.traspaso_asesor;
+  return false;
+}
+async function abrirModulo(m, ev){
+  if (!conTraspaso(m)) return;              // el enlace navega solo
+  ev.preventDefault();
+  const el = ev.currentTarget;
+  el.setAttribute('aria-busy', 'true');
+  let destino = m.url;
+  try {
+    const s = await sesionVigente();
+    const codigo = s
+      ? await api('/rest/v1/rpc/traspaso_crear', {method: 'POST', body: {p_destino: m.id}, token: s.access_token})
+      : await api('/rest/v1/rpc/traspaso_crear_asesor', {method: 'POST', body: {p_token: leer(K_ASESOR), p_destino: m.id}});
+    if (typeof codigo === 'string' && /^[0-9a-f-]{36}$/i.test(codigo)) {
+      destino = m.url + (m.url.includes('#') ? '&' : '#') + 'traspaso=' + codigo;
+    }
+  } catch (e) { /* sin traspaso: el módulo pedirá su acceso como siempre */ }
+  navegar(destino);
+}
+function navegar(url){ location.href = url; }
+function enlaceModulo(m, attrs, ...hijos){
+  const a = h('a', Object.assign({href: m.url}, attrs), ...hijos);
+  a.addEventListener('click', ev => abrirModulo(m, ev));
+  return a;
+}
+
+/* ---------- piezas de pantalla ---------- */
+function barra(){
+  return h('header', {class: 'barra'},
+    h('span', {class: 'marca'}, 'Equipo Arequipa'),
+    h('button', {class: 'salir', type: 'button', onclick: cerrarSesion}, 'Salir'));
+}
+function cargando(){ return h('p', {class: 'apoyo cargando', role: 'status'}, 'Cargando…'); }
+function bloquePeriodo(p){
+  const dia = Math.min(14, Math.max(1, diasEntre(p.inicio, p.hoy) + 1));
+  const resta = 14 - dia;
+  const cierre = resta === 0 ? 'Hoy cierra el período.'
+    : `Cierra el ${largo(p.fin)}${resta === 1 ? ', mañana' : ''}.`;
+  return h('section', {class: 'periodo'},
+    h('p', {class: 'periodo-texto'}, `Período ${p.numero}, ${rango(p.inicio, p.fin)}.`),
+    h('div', {class: 'franja', role: 'img', 'aria-label': `Día ${dia} de 14 del período`},
+      Array.from({length: 14}, (_, i) => h('span', {class: 'dia' + (i + 1 < dia ? ' pasado' : i + 1 === dia ? ' hoy' : '')}))),
+    h('div', {class: 'marcas', 'aria-hidden': 'true'},
+      h('span', {class: 'marca-mitad'}, 'mitad'),
+      h('span', {class: 'marca-cierre'}, 'cierre')),
+    h('p', {class: 'periodo-estado'}, `Día ${dia} de 14. ${cierre}`));
+}
+function listaItems(items, porId){
+  if (!items.length) return h('div', {class: 'vacio'},
+    h('p', {}, h('strong', {}, 'Todo en orden por hoy.')),
+    h('p', {class: 'apoyo'}, 'Cuando algo necesite atención, aparecerá aquí.'));
+  return h('ul', {class: 'lista'}, items.map(it => {
+    const m = porId[it.enlace];
+    return h('li', {class: 'item ' + (it.nivel || 'info')},
+      h('div', {class: 'item-cab'},
+        h('h3', {}, h('span', {class: 'sr'}, (NIVEL_SR[it.nivel] || '') + ': '), it.titulo),
+        h('span', {class: 'item-modulo'}, it.modulo || '')),
+      it.detalle ? h('p', {}, it.detalle) : null,
+      it.accion ? h('p', {class: 'accion'}, it.accion) : null,
+      m && m.url ? enlaceModulo(m, {class: 'abrir'}, it.boton || ('Abrir ' + minus(m.nombre))) : null);
+  }));
+}
+function tarjetaModulo(m){
+  return m.url
+    ? enlaceModulo(m, {class: 'mod'}, h('strong', {}, m.nombre), h('span', {}, m.descripcion || ''))
+    : h('div', {class: 'mod off', 'aria-disabled': 'true'},
+        h('strong', {}, m.nombre), h('span', {}, m.descripcion || ''), h('span', {class: 'pronto'}, 'Por conectar'));
+}
+function listaModulos(mods){
+  if (!mods.length) return h('p', {class: 'apoyo'}, 'Aún no tienes módulos asignados.');
+  const grupos = [];
+  for (const m of mods) {
+    const g = m.grupo || 'Módulos';
+    let x = grupos.find(y => y.nombre === g);
+    if (!x) { x = {nombre: g, mods: []}; grupos.push(x); }
+    x.mods.push(m);
+  }
+  if (grupos.length === 1) return h('div', {class: 'modulos'}, grupos[0].mods.map(tarjetaModulo));
+  return h('div', {}, grupos.map(g => [h('h3', {class: 'grupo'}, g.nombre), h('div', {class: 'modulos'}, g.mods.map(tarjetaModulo))]));
+}
+function puntosAsesor(lista){
+  if (!lista.length) return h('p', {class: 'apoyo'},
+    'Aún no aparecen puntos tuyos en los reportes de Rena Ware. Saldrán después de tu primer pedido.');
+  return h('ul', {class: 'puntos'}, lista.map(x => {
+    const fechas = (String(x.periodo || '').match(/\(([^)]+)\)/) || [])[1];
+    return h('li', {},
+      h('span', {class: 'pb'}, `Período ${x.pb}` + (fechas ? ` (${fechas})` : '')),
+      h('strong', {}, `${num(x.puntos)} puntos`),
+      h('span', {class: 'ped'}, `${num(x.pedidos)} ${Number(x.pedidos) === 1 ? 'pedido' : 'pedidos'}`));
+  }));
+}
+function pantallaError(msg, reintentar){
+  pintar(barra(), h('main', {},
+    h('h1', {}, 'No se pudo cargar'),
+    h('p', {class: 'apoyo', style: 'margin-top:8px'}, msg),
+    h('button', {class: 'boton', type: 'button', onclick: reintentar}, 'Reintentar')));
+}
+
+/* ---------- pantallas ---------- */
+function pantallaAcceso(msg){
+  const dato = h('input', {id: 'dato', type: 'text', autocomplete: 'username', autocapitalize: 'none',
+    spellcheck: 'false', 'aria-describedby': 'ayuda'});
+  const clave = h('input', {id: 'clave', type: 'password', autocomplete: 'current-password'});
+  const filaClave = h('div', {id: 'filaClave', class: 'oculto'}, h('label', {for: 'clave'}, 'Contraseña'), clave);
+  const error = h('p', {class: 'error', role: 'alert', id: 'error'}, msg || '');
+  const boton = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
+  const form = h('form', {class: 'acceso', novalidate: true},
+    h('p', {class: 'marca'}, 'Equipo Arequipa'),
+    h('h1', {}, 'Entra con tu celular o tu correo'),
+    h('p', {class: 'apoyo', id: 'ayuda'}, 'Asesores: escriban su celular. Equipo de oficina: su correo.'),
+    h('label', {for: 'dato'}, 'Celular o correo'), dato, filaClave, boton, error);
+  dato.addEventListener('input', () => {
+    const esCorreo = dato.value.includes('@');
+    filaClave.classList.toggle('oculto', !esCorreo);
+    dato.setAttribute('inputmode', esCorreo ? 'email' : 'text');
+  });
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    error.textContent = '';
+    const v = dato.value.trim();
+    boton.disabled = true; boton.textContent = 'Entrando…';
+    try {
+      if (v.includes('@')) {
+        if (!clave.value) throw new Error('Escribe tu contraseña.');
+        await entrarCorreo(v, clave.value);
+      } else {
+        const cel = v.replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
+        if (!/^9\d{8}$/.test(cel)) throw new Error('Escribe tu celular de 9 dígitos o tu correo.');
+        await entrarCelular(cel);
+      }
+      await iniciar();
+    } catch (e) {
+      error.textContent = mensaje(e);
+      boton.disabled = false; boton.textContent = 'Entrar';
+    }
+  });
+  pintar(form);
+}
+
+async function inicioEquipo(s){
+  pintar(cargando());
+  let datos, mods;
+  try {
+    [datos, mods] = await Promise.all([
+      api('/rest/v1/rpc/hoy', {method: 'POST', body: {}, token: s.access_token}),
+      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,grupo,traspaso_staff,traspaso_asesor&order=orden', {token: s.access_token})
+    ]);
+  } catch (e) {
+    if (e.status === 401 || /rol asignado|JWT/i.test(e.message)) { borrar(K_STAFF); return pantallaAcceso(mensaje(e)); }
+    return pantallaError(mensaje(e), () => iniciar());
+  }
+  const propios = (mods || []).filter(m => (m.roles || []).includes(datos.rol));
+  const porId = Object.fromEntries(propios.map(m => [m.id, m]));
+  const nombre = primerNombre(datos.nombre);
+  const of = datos.oficial || {};
+  pintar(barra(), h('main', {},
+    h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
+    bloquePeriodo(datos.periodo),
+    of.pb ? h('p', {class: 'apoyo oficial'},
+      `Reporte oficial del PB${of.pb}: ${num(of.puntos)} puntos en ${num(of.pedidos)} pedidos.`) : null,
+    h('h2', {}, 'Hoy'),
+    listaItems(datos.items || [], porId),
+    h('h2', {}, 'Módulos'),
+    listaModulos(propios)));
+}
+
+async function inicioAsesor(tok){
+  pintar(cargando());
+  let d, mods;
+  try {
+    [d, mods] = await Promise.all([
+      api('/rest/v1/rpc/asesor_inicio', {method: 'POST', body: {p_token: tok}}),
+      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,grupo,traspaso_staff,traspaso_asesor&order=orden')
+    ]);
+  } catch (e) {
+    if (/venció|vencio/i.test(e.message)) { borrar(K_ASESOR); return pantallaAcceso(mensaje(e)); }
+    return pantallaError(mensaje(e), () => iniciar());
+  }
+  const propios = (mods || []).filter(m => (m.roles || []).includes('asesor'));
+  const nombre = primerNombre(d.nombre);
+  pintar(barra(), h('main', {},
+    h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
+    bloquePeriodo(d.periodo),
+    h('h2', {}, 'Tus puntos según Rena Ware'),
+    puntosAsesor(d.puntos || []),
+    h('h2', {}, 'Accesos'),
+    listaModulos(propios)));
+}
+
+/* ---------- importador del reporte de pedidos de Rena Ware ---------- */
+// Columna de la base -> otros nombres con que puede venir en el archivo (ya normalizados)
+const COLUMNAS = {
+  n_orden: ['no_orden','nro_orden','num_orden','numero_orden','numero_de_orden','n_de_orden','orden','order','order_number','order_id','id_orden','pedido','n_pedido','nro_pedido','numero_pedido'],
+  periodo: ['period','periodo_pb'],
+  fecha_ordenado: ['fecha_orden','fecha_de_orden','order_date','fecha_pedido','fecha'],
+  fecha_comision: ['fecha_de_comision','commission_date'],
+  fecha_entrega_aprox: ['fecha_entrega_aproximada','fecha_aprox_entrega','fecha_estimada_entrega','fecha_entrega_estimada'],
+  fecha_despacho: ['fecha_de_despacho','dispatch_date','ship_date'],
+  fecha_enviado: ['fecha_envio','fecha_de_envio','sent_date'],
+  delivery_date: ['fecha_entrega','fecha_de_entrega','fecha_entregado'],
+  gdr: ['guia','guia_de_remision','guia_remision'],
+  estatus: ['status','estado','estado_orden'],
+  vendedor: ['nombre_vendedor','seller','vendedor_nombre','asesor'],
+  id_vendedor: ['codigo_vendedor','cod_vendedor','vendedor_id','codigo_asesor','cod_asesor','seller_id','id_asesor'],
+  codigo_oficina: ['cod_oficina','oficina','office_code','id_oficina'],
+  almacen: ['warehouse','bodega'],
+  tipo_orden: ['tipo_de_orden','order_type'],
+  comisionable: ['commissionable'],
+  document_type: ['tipo_documento','tipo_de_documento'],
+  commissionable_value: ['valor_comisionable','monto_comisionable'],
+  puntos: ['points','pts','puntaje'],
+  cliente: ['customer','nombre_cliente','client'],
+  direccion: ['address','direccion_cliente'],
+  ciudad: ['city'],
+  celular: ['telefono','movil','phone','mobile','cel'],
+  email: ['correo','e_mail','correo_electronico','mail'],
+  credito_contado: ['credito_o_contado','tipo_venta','forma_de_pago','forma_pago','condicion_de_venta'],
+  cuotas: ['n_cuotas','nro_cuotas','numero_cuotas','installments'],
+  tasa: ['rate','tasa_interes'],
+  cupon: ['coupon'],
+  deposito: ['deposit'],
+  financiado: ['financed','monto_financiado'],
+  interes: ['interest','intereses'],
+  expenses: ['gastos'],
+  total: ['monto_total','importe_total','amount','total_orden'],
+  productos: ['products','items'],
+  notas: ['notes','observaciones','nota']
+};
+const ALIAS = {};
+for (const [col, lista] of Object.entries(COLUMNAS)) for (const a of [col, ...lista]) if (!(a in ALIAS)) ALIAS[a] = col;
+const FECHAS = ['fecha_ordenado','fecha_comision','fecha_entrega_aprox','fecha_despacho','fecha_enviado','delivery_date'];
+const ENTEROS = ['n_orden','id_vendedor','puntos','cuotas'];
+const DECIMALES = ['commissionable_value','tasa','cupon','deposito','financiado','interes','expenses','total'];
+const NOMBRE_COL = {periodo: 'el período', id_vendedor: 'el código del vendedor', puntos: 'los puntos', estatus: 'el estatus'};
+
+function normaliza(t){
+  return String(t == null ? '' : t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[°º]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+function listaEs(a){ return a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1]; }
+function aNumero(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  let s = String(v).replace(/[^\d.,-]/g, '');
+  if (!s || s === '-') return null;
+  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');
+  if (c > -1 && p > -1) s = c > p ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else if (c > -1) s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, '') : s.replace(',', '.');
+  else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+  const n = Number(s);
+  return isFinite(n) ? n : null;
+}
+function aFecha(v){
+  if (v == null || v === '') return null;
+  const dos = n => String(n).padStart(2, '0');
+  if (typeof v === 'number') {                       // fecha de Excel (número de serie)
+    if (v < 20000 || v > 80000) return null;
+    const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v * 86400000));
+    return `${dos(d.getUTCDate())}/${dos(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`;
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${dos(m[3])}/${dos(m[2])}/${m[1]}`;
+  m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+  if (m) {
+    let d = Number(m[1]), mes = Number(m[2]), y = m[3];
+    if (mes > 12 && d <= 12) [d, mes] = [mes, d];
+    if (y.length === 2) y = '20' + y;
+    return `${dos(d)}/${dos(mes)}/${y}`;
+  }
+  return s;
+}
+
+function leerBytes(file){
+  return new Promise((ok, mal) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(new Uint8Array(fr.result));
+    fr.onerror = () => mal(new Error('No se pudo leer el archivo.'));
+    fr.readAsArrayBuffer(file);
+  });
+}
+async function inflar(datos){
+  if (typeof DecompressionStream === 'undefined')
+    throw new Error('Este navegador no puede abrir archivos Excel. Actualízalo o sube el reporte como CSV.');
+  const ds = new DecompressionStream('deflate-raw');
+  const w = ds.writable.getWriter();
+  w.write(datos).catch(() => {}); w.close().catch(() => {});
+  const r = ds.readable.getReader(); const partes = []; let total = 0;
+  for (;;) { const {done, value} = await r.read(); if (done) break; partes.push(value); total += value.length; }
+  const out = new Uint8Array(total); let o = 0;
+  for (const p of partes) { out.set(p, o); o += p.length; }
+  return out;
+}
+function abrirZip(b){                                // un .xlsx es un zip de archivos XML
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  let fin = -1;
+  for (let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+  if (fin < 0) throw new Error('El archivo Excel está dañado o no es un .xlsx.');
+  const total = dv.getUint16(fin + 10, true); let p = dv.getUint32(fin + 16, true);
+  const dec = new TextDecoder(), entradas = {};
+  for (let k = 0; k < total && dv.getUint32(p, true) === 0x02014b50; k++) {
+    const ln = dv.getUint16(p + 28, true), le = dv.getUint16(p + 30, true), lc = dv.getUint16(p + 32, true);
+    entradas[dec.decode(b.subarray(p + 46, p + 46 + ln))] =
+      {metodo: dv.getUint16(p + 10, true), tam: dv.getUint32(p + 20, true), local: dv.getUint32(p + 42, true)};
+    p += 46 + ln + le + lc;
+  }
+  return {
+    nombres: Object.keys(entradas),
+    async leer(nombre){
+      const e = entradas[nombre]; if (!e) return null;
+      const ini = e.local + 30 + dv.getUint16(e.local + 26, true) + dv.getUint16(e.local + 28, true);
+      const datos = b.subarray(ini, ini + e.tam);
+      if (e.metodo === 0) return dec.decode(datos);
+      if (e.metodo === 8) return dec.decode(await inflar(datos));
+      throw new Error('El Excel usa un formato que no reconozco. Guárdalo de nuevo como .xlsx.');
+    }
+  };
+}
+const xmlDoc = t => new DOMParser().parseFromString(t, 'application/xml');
+const etiquetas = (n, nombre) => Array.from(n.getElementsByTagNameNS('*', nombre));
+function columnaDe(ref){ let n = 0; for (const ch of ref.replace(/\d+/g, '').toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; }
+async function filasXlsx(b){
+  const zip = abrirZip(b);
+  let hoja = null;
+  const libro = await zip.leer('xl/workbook.xml'), rels = await zip.leer('xl/_rels/workbook.xml.rels');
+  if (libro && rels) {                               // la primera hoja del libro, se llame como se llame
+    const s = etiquetas(xmlDoc(libro), 'sheet')[0];
+    const rid = s && (s.getAttribute('r:id') || s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id'));
+    const rel = rid && etiquetas(xmlDoc(rels), 'Relationship').find(r => r.getAttribute('Id') === rid);
+    if (rel) { const t = rel.getAttribute('Target').replace(/^\/+/, ''); hoja = t.startsWith('xl/') ? t : 'xl/' + t; }
+  }
+  if (!hoja || !zip.nombres.includes(hoja)) hoja = zip.nombres.filter(n => /^xl\/worksheets\/[^/]+\.xml$/.test(n)).sort()[0];
+  if (!hoja) throw new Error('No encontré ninguna hoja dentro del Excel.');
+  const sst = await zip.leer('xl/sharedStrings.xml');
+  const textos = sst ? etiquetas(xmlDoc(sst), 'si').map(si => etiquetas(si, 't').map(t => t.textContent).join('')) : [];
+  const filas = [];
+  for (const row of etiquetas(xmlDoc(await zip.leer(hoja)), 'row')) {
+    const f = []; let sig = 0;
+    for (const c of etiquetas(row, 'c')) {
+      const ref = c.getAttribute('r'); const i = ref ? columnaDe(ref) : sig; sig = i + 1;
+      const t = c.getAttribute('t'), v = etiquetas(c, 'v')[0], txt = v ? v.textContent : '';
+      if (t === 's') f[i] = textos[Number(txt)] ?? '';
+      else if (t === 'inlineStr') f[i] = etiquetas(c, 't').map(x => x.textContent).join('');
+      else if (t === 'str' || t === 'e' || t === 'd') f[i] = txt;
+      else if (t === 'b') f[i] = txt === '1';
+      else f[i] = txt === '' ? null : Number(txt);
+    }
+    filas.push(f);
+  }
+  return filas;
+}
+function filasCsv(texto){
+  texto = texto.replace(/^\uFEFF/, '');
+  const primera = texto.split(/\r?\n/, 1)[0] || '';
+  const cuenta = ch => primera.split(ch).length - 1;
+  const sep = [';', '\t', ','].reduce((a, b) => cuenta(b) > cuenta(a) ? b : a, ',');
+  const filas = []; let fila = [], campo = '', comillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const ch = texto[i];
+    if (comillas) {
+      if (ch === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else comillas = false; }
+      else campo += ch;
+    } else if (ch === '"') comillas = true;
+    else if (ch === sep) { fila.push(campo); campo = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && texto[i + 1] === '\n') i++;
+      fila.push(campo); filas.push(fila); fila = []; campo = '';
+    } else campo += ch;
+  }
+  if (campo !== '' || fila.length) { fila.push(campo); filas.push(fila); }
+  return filas;
+}
+function filasHtml(texto){                           // algunos portales exportan una tabla HTML con extensión .xls
+  const tabla = new DOMParser().parseFromString(texto, 'text/html').querySelector('table');
+  if (!tabla) throw new Error('No encontré una tabla de pedidos en el archivo.');
+  return Array.from(tabla.rows).map(tr => Array.from(tr.cells).map(td => td.textContent.trim()));
+}
+async function leerTabla(file){
+  const b = await leerBytes(file);
+  if (b[0] === 0x50 && b[1] === 0x4b) return filasXlsx(b);
+  if (b[0] === 0xd0 && b[1] === 0xcf) throw new Error('Es un Excel antiguo (.xls). Ábrelo, guárdalo como .xlsx y súbelo de nuevo.');
+  let texto;
+  try { texto = new TextDecoder('utf-8', {fatal: true}).decode(b); }
+  catch (e) { texto = new TextDecoder('windows-1252').decode(b); }
+  if (/^\s*</.test(texto) && /<table/i.test(texto)) return filasHtml(texto);
+  return filasCsv(texto);
+}
+function mapear(filas){
+  let cab = -1, mapa = null;
+  for (let i = 0; i < Math.min(filas.length, 25); i++) {   // la fila de títulos puede no ser la primera
+    const m = Array.from(filas[i] || [], x => ALIAS[normaliza(x)] || null);
+    if (m.includes('n_orden') && m.filter(Boolean).length >= 3) { cab = i; mapa = m; break; }
+  }
+  if (cab < 0) throw new Error('No encontré la fila de títulos con el número de orden. Revisa que sea el reporte de pedidos de Rena Ware.');
+  const usadas = new Set();
+  mapa = mapa.map(c => c && !usadas.has(c) ? (usadas.add(c), c) : null);
+  const ignoradas = Array.from(filas[cab], (x, i) => mapa[i] ? '' : String(x == null ? '' : x).trim()).filter(Boolean);
+  const pedidos = [];
+  for (const f of filas.slice(cab + 1)) {
+    if (!f) continue;
+    const o = {};
+    mapa.forEach((col, i) => {
+      if (!col) return;
+      const v = f[i];
+      if (FECHAS.includes(col)) o[col] = aFecha(v);
+      else if (ENTEROS.includes(col)) { const n = aNumero(v); o[col] = n == null ? null : Math.round(n); }
+      else if (DECIMALES.includes(col)) o[col] = aNumero(v);
+      else { const s = v == null ? '' : String(v).trim(); o[col] = s === '' ? null : s; }
+    });
+    if (o.n_orden > 0) pedidos.push(o);                 // descarta totales y filas vacías
+  }
+  return {pedidos, reconocidas: [...usadas], ignoradas};
+}
+function resumenPeriodos(pedidos){
+  const por = {};
+  for (const p of pedidos) {
+    const k = p.periodo || 'Sin período';
+    por[k] = por[k] || {n: 0, pts: 0};
+    por[k].n++;
+    if (!/^\s*(RECHAZ|CANCEL)/i.test(p.estatus || '')) por[k].pts += p.puntos || 0;
+  }
+  return Object.entries(por).sort((a, b) => b[0].localeCompare(a[0]));
+}
+const etiquetaPb = k => (String(k).match(/PB\d+.*$/) || [k])[0];
+
+function vistaPrevia(zona, r, nombreArchivo){
+  const {pedidos, reconocidas, ignoradas} = r;
+  if (!pedidos.length) { zona.replaceChildren(h('p', {class: 'error'}, 'El archivo no trae pedidos con número de orden.')); return; }
+  const faltan = ['periodo', 'id_vendedor', 'puntos', 'estatus'].filter(c => !reconocidas.includes(c));
+  const textoBoton = `Cargar ${num(pedidos.length)} ${pedidos.length === 1 ? 'pedido' : 'pedidos'}`;
+  const boton = h('button', {class: 'boton', type: 'button'}, textoBoton);
+  const salida = h('div', {'aria-live': 'polite'});
+  boton.addEventListener('click', async () => {
+    boton.disabled = true; boton.textContent = 'Cargando…';
+    try {
+      const s = await sesionVigente();
+      if (!s) throw new Error('Tu sesión venció. Sal y vuelve a entrar.');
+      const tot = {nuevos: 0, actualizados: 0, sin: 0, conc: 0};
+      for (let i = 0; i < pedidos.length; i += 400) {
+        const res = await api('/rest/v1/rpc/importar_pedidos_rw', {method: 'POST', body: {p_filas: pedidos.slice(i, i + 400)}, token: s.access_token});
+        tot.nuevos += res.nuevos; tot.actualizados += res.actualizados; tot.sin = res.vendedores_sin_cruzar; tot.conc = res.por_conciliar || 0;
+      }
+      boton.remove();
+      salida.replaceChildren(
+        h('p', {class: 'listo'}, h('strong', {},
+          `Listo: ${num(tot.nuevos)} ${tot.nuevos === 1 ? 'pedido nuevo' : 'pedidos nuevos'} y ${num(tot.actualizados)} ${tot.actualizados === 1 ? 'actualizado' : 'actualizados'}.`)),
+        tot.sin ? h('p', {class: 'apoyo'},
+          `${num(tot.sin)} ${tot.sin === 1 ? 'vendedor del reporte no está' : 'vendedores del reporte no están'} en la base del equipo; los verás en Hoy.`) : null,
+        tot.conc ? h('p', {style: 'margin-top:10px'},
+          `${num(tot.conc)} ${tot.conc === 1 ? 'venta coincide' : 'ventas coinciden'} con pedidos oficiales. `,
+          h('a', {href: '#conciliar'}, 'Revisar y confirmar')) : null,
+        h('a', {class: 'volver', href: '#'}, 'Volver a Hoy'));
+    } catch (e) {
+      boton.disabled = false; boton.textContent = textoBoton;
+      salida.replaceChildren(h('p', {class: 'error'}, mensaje(e)));
+    }
+  });
+  zona.replaceChildren(
+    h('h2', {}, nombreArchivo),
+    h('p', {}, `${num(pedidos.length)} ${pedidos.length === 1 ? 'pedido' : 'pedidos'} en el archivo:`),
+    h('ul', {class: 'resumen'}, resumenPeriodos(pedidos).map(([k, x]) =>
+      h('li', {}, `${etiquetaPb(k)}: ${num(x.n)} ${x.n === 1 ? 'pedido' : 'pedidos'}, ${num(x.pts)} puntos`))),
+    faltan.length ? h('p', {class: 'aviso'},
+      `Al archivo le falta ${listaEs(faltan.map(c => NOMBRE_COL[c]))}. Se carga igual, pero ese dato no se actualizará.`) : null,
+    ignoradas.length ? h('p', {class: 'apoyo', style: 'margin-top:8px'}, `Columnas que no se usan: ${ignoradas.join(', ')}.`) : null,
+    boton, salida);
+}
+
+function pantallaImportar(){
+  const entrada = h('input', {type: 'file', id: 'archivo', class: 'sr', accept: '.xlsx,.csv,.xls,.htm,.html'});
+  const zona = h('div', {'aria-live': 'polite'});
+  entrada.addEventListener('change', async () => {
+    const f = entrada.files && entrada.files[0];
+    if (!f) return;
+    zona.replaceChildren(h('p', {class: 'apoyo', style: 'margin-top:16px'}, `Leyendo ${f.name}…`));
+    try { vistaPrevia(zona, mapear(await leerTabla(f)), f.name); }
+    catch (e) { zona.replaceChildren(h('p', {class: 'error'}, mensaje(e))); }
+    entrada.value = '';
+  });
+  pintar(barra(), h('main', {},
+    h('a', {class: 'volver', href: '#'}, 'Volver a Hoy'),
+    h('h1', {style: 'margin-top:12px'}, 'Subir reporte de pedidos'),
+    h('p', {class: 'apoyo', style: 'margin-top:8px'},
+      'Descarga el reporte de órdenes del portal de Rena Ware y súbelo tal cual, en Excel (.xlsx) o CSV. Los pedidos que ya estaban se actualizan; ninguno se borra.'),
+    entrada,
+    h('label', {for: 'archivo', class: 'boton'}, 'Elegir el archivo'),
+    zona));
+}
+
+/* ---------- conciliación: cada venta con su pedido oficial ---------- */
+function fechaCorta(iso){
+  if (!iso) return '';
+  const d = fecha(iso);
+  return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0');
+}
+function tarjetaConciliacion(x){
+  const g = x.registro || {}, p = x.pedido || {};
+  const li = h('li', {class: 'item ' + (x.nivel === 'segura' ? 'segura' : 'medio')});
+  const confirmar = h('button', {class: 'mini', type: 'button'}, 'Es este pedido');
+  const descartar = h('button', {class: 'mini secundario', type: 'button'}, 'No corresponde');
+  const estado = h('p', {class: 'error', role: 'status'});
+  async function accion(rpc, hecho){
+    confirmar.disabled = descartar.disabled = true;
+    estado.textContent = '';
+    try {
+      const s = await sesionVigente();
+      if (!s) throw new Error('Tu sesión venció. Sal y vuelve a entrar.');
+      await api('/rest/v1/rpc/' + rpc, {method: 'POST', body: {p_registro: g.id, p_n_orden: p.n_orden}, token: s.access_token});
+      li.className = 'item hecho';
+      li.replaceChildren(h('p', {}, h('strong', {}, `${g.codigo}: ${hecho}`)));
+    } catch (e) {
+      confirmar.disabled = descartar.disabled = false;
+      estado.textContent = mensaje(e);
+    }
+  }
+  confirmar.addEventListener('click', () => accion('conciliar_confirmar', `conciliada con el pedido ${p.n_orden}.`));
+  descartar.addEventListener('click', () => accion('conciliar_descartar', 'descartada; no se volverá a sugerir.'));
+  li.append(
+    h('h3', {}, `${g.codigo}: ${g.titular || 'sin nombre'}`),
+    h('p', {}, `Venta ${g.tipo === 'credito' ? 'al crédito' : 'al contado'} del ${fechaCorta(g.fecha)}` + (g.asesor ? `, asesor ${g.asesor}.` : '.')),
+    h('p', {}, `Pedido ${p.n_orden} a nombre de ${p.cliente || 'sin nombre'}, del ${fechaCorta(p.fecha)}: `
+      + `${String(p.estatus || 'sin estatus').toLowerCase()}, ${num(p.puntos)} puntos.`),
+    h('p', {class: 'apoyo'}, 'Coincide: ' + listaEs(x.motivos || []) + '.'),
+    h('div', {class: 'acciones'}, confirmar, descartar),
+    estado);
+  return li;
+}
+async function pantallaConciliar(aviso){
+  const cabeza = [
+    h('a', {class: 'volver', href: '#'}, 'Volver a Hoy'),
+    h('h1', {style: 'margin-top:12px'}, 'Conciliar con Rena Ware'),
+    h('p', {class: 'apoyo', style: 'margin-top:8px'},
+      'Cada venta del formulario junto al pedido oficial que le corresponde. Al confirmar, la venta queda en sistema '
+      + 'con su número de pedido, y el despacho y la entrega se marcan con las fechas del reporte. El panel de equipo '
+      + 'recalcula los puntos solo.'),
+    aviso ? h('p', {class: 'aviso-ok', role: 'status'}, aviso) : null];
+  pintar(barra(), h('main', {}, cabeza, cargando()));
+  const s = await sesionVigente();
+  if (!s) return pantallaAcceso('Tu sesión venció. Vuelve a entrar.');
+  let lista;
+  try { lista = await api('/rest/v1/rpc/conciliacion_candidatos', {method: 'POST', body: {}, token: s.access_token}) || []; }
+  catch (e) { return pantallaError(mensaje(e), () => pantallaConciliar()); }
+  const seguras = lista.filter(x => x.nivel === 'segura');
+  const revisar = lista.filter(x => x.nivel !== 'segura');
+  const cuerpo = [];
+  if (!lista.length) cuerpo.push(h('div', {class: 'vacio', style: 'margin-top:20px'},
+    h('p', {}, h('strong', {}, 'No hay coincidencias pendientes.')),
+    h('p', {class: 'apoyo'}, 'Cuando subas un reporte nuevo, las ventas que coincidan con un pedido aparecerán aquí.')));
+  if (seguras.length) {
+    const texto = `Confirmar las ${num(seguras.length)} seguras`;
+    const b = h('button', {class: 'boton', type: 'button'}, seguras.length === 1 ? 'Confirmar la segura' : texto);
+    const err = h('p', {class: 'error', role: 'alert'});
+    b.addEventListener('click', async () => {
+      b.disabled = true; b.textContent = 'Conciliando…'; err.textContent = '';
+      try {
+        const s2 = await sesionVigente();
+        if (!s2) throw new Error('Tu sesión venció. Sal y vuelve a entrar.');
+        const r = await api('/rest/v1/rpc/conciliar_seguras', {method: 'POST', body: {}, token: s2.access_token});
+        const fallidas = (r.errores || []).map(e => `${e.registro} (${e.error})`);
+        pantallaConciliar(`Listo: ${num(r.conciliados)} ${r.conciliados === 1 ? 'venta conciliada' : 'ventas conciliadas'}.`
+          + (fallidas.length ? ` No se pudieron: ${fallidas.join('; ')}.` : ''));
+      } catch (e) {
+        b.disabled = false; b.textContent = texto; err.textContent = mensaje(e);
+      }
+    });
+    cuerpo.push(b, err,
+      h('h2', {}, `Seguras (${seguras.length})`),
+      h('ul', {class: 'lista'}, seguras.map(tarjetaConciliacion)));
+  }
+  if (revisar.length) cuerpo.push(
+    h('h2', {}, `Para revisar (${revisar.length})`),
+    h('p', {class: 'apoyo', style: 'margin-bottom:12px'}, 'Se parecen, pero no lo bastante para confirmarlas solas. Revísalas una por una.'),
+    h('ul', {class: 'lista'}, revisar.map(tarjetaConciliacion)));
+  pintar(barra(), h('main', {}, cabeza, cuerpo));
+}
+
+async function iniciar(){
+  const s = await sesionVigente();
+  if (s) return inicioEquipo(s);
+  const tok = leer(K_ASESOR);
+  if (tok) return inicioAsesor(tok);
+  pantallaAcceso();
+}
+async function ruta(){
+  const pantallas = {'#importar': pantallaImportar, '#conciliar': pantallaConciliar};
+  if (pantallas[location.hash] && await sesionVigente()) return pantallas[location.hash]();
+  return iniciar();
+}
+window.addEventListener('hashchange', () => ruta().catch(e => pantallaAcceso(mensaje(e))));
+ruta().catch(e => pantallaAcceso(mensaje(e)));
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Sitio estático: no hay código de servidor, solo los archivos de public/.
+# Cloudflare publica desde aquí en cada push a main; no hay que subir nada a mano.
+name = "renaware-plataforma"
+compatibility_date = "2026-10-21"
+
+[assets]
+directory = "./public"
+not_found_handling = "404-page"
