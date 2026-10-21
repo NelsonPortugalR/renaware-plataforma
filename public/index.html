@@ -254,10 +254,11 @@ function cerrarSesion(){
 /* ---------- traspaso: el módulo arranca con la sesión del hub ---------- */
 // Al abrir un módulo externo se crea un código de un solo uso (vence en 2 minutos)
 // y viaja en el enlace: #traspaso=<código>. El módulo lo canjea por su propia sesión.
+// acceso: 'supabase' (correo), 'admin_sesion' (clave de admin), 'asesor' (celular), 'libre' o 'hub' (sin traspaso)
 function conTraspaso(m){
   if (!m || !m.url || m.url.charAt(0) === '#') return false;
-  if (leer(K_STAFF)) return !!m.traspaso_staff;
-  if (leer(K_ASESOR)) return !!m.traspaso_asesor;
+  if (leer(K_STAFF)) return ['supabase', 'admin_sesion', 'asesor'].includes(m.acceso);
+  if (leer(K_ASESOR)) return m.acceso === 'asesor';
   return false;
 }
 async function abrirModulo(m, ev){
@@ -269,8 +270,8 @@ async function abrirModulo(m, ev){
   try {
     const s = await sesionVigente();
     const codigo = s
-      ? await api('/rest/v1/rpc/traspaso_crear', {method: 'POST', body: {p_destino: m.id}, token: s.access_token})
-      : await api('/rest/v1/rpc/traspaso_crear_asesor', {method: 'POST', body: {p_token: leer(K_ASESOR), p_destino: m.id}});
+      ? await api('/rest/v1/rpc/traspaso_crear', {method: 'POST', body: {p_modulo: m.id}, token: s.access_token})
+      : await api('/rest/v1/rpc/traspaso_crear_asesor', {method: 'POST', body: {p_token: leer(K_ASESOR), p_modulo: m.id}});
     if (typeof codigo === 'string' && /^[0-9a-f-]{36}$/i.test(codigo)) {
       destino = m.url + (m.url.includes('#') ? '&' : '#') + 'traspaso=' + codigo;
     }
@@ -328,9 +329,12 @@ function tarjetaModulo(m){
 }
 function listaModulos(mods){
   if (!mods.length) return h('p', {class: 'apoyo'}, 'Aún no tienes módulos asignados.');
+  const GRUPO = {cotizador: 'Ventas', registro: 'Ventas', 'admin-registros': 'Ventas', pedidos: 'Ventas', 'importar-pedidos': 'Ventas', conciliar: 'Ventas',
+    premios: 'Equipo', equipo: 'Equipo', 'empiece-ya': 'Equipo', 'nivel-cero': 'Equipo', bienvenida: 'Equipo',
+    reparaciones: 'Oficina', facturacion: 'Oficina'};
   const grupos = [];
   for (const m of mods) {
-    const g = m.grupo || 'Módulos';
+    const g = m.grupo || GRUPO[m.id] || 'Otros';
     let x = grupos.find(y => y.nombre === g);
     if (!x) { x = {nombre: g, mods: []}; grupos.push(x); }
     x.mods.push(m);
@@ -403,7 +407,7 @@ async function inicioEquipo(s){
   try {
     [datos, mods] = await Promise.all([
       api('/rest/v1/rpc/hoy', {method: 'POST', body: {}, token: s.access_token}),
-      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,grupo,traspaso_staff,traspaso_asesor&order=orden', {token: s.access_token})
+      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden', {token: s.access_token})
     ]);
   } catch (e) {
     if (e.status === 401 || /rol asignado|JWT/i.test(e.message)) { borrar(K_STAFF); return pantallaAcceso(mensaje(e)); }
@@ -430,7 +434,7 @@ async function inicioAsesor(tok){
   try {
     [d, mods] = await Promise.all([
       api('/rest/v1/rpc/asesor_inicio', {method: 'POST', body: {p_token: tok}}),
-      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,grupo,traspaso_staff,traspaso_asesor&order=orden')
+      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden')
     ]);
   } catch (e) {
     if (/venció|vencio/i.test(e.message)) { borrar(K_ASESOR); return pantallaAcceso(mensaje(e)); }

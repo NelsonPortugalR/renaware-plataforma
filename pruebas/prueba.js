@@ -8,13 +8,13 @@ const SB = 'https://kiexpdaaoegbtesqmaff.supabase.co';
 const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';
 const CODIGO = '2f6d1d8e-0a9b-4c2e-9f1a-123456789abc';
 const MODS = [
-  {id:'cotizador',nombre:'Precios y promociones',descripcion:'Listas.',url:'https://renaware-peru.nelson1614.workers.dev',roles:['admin','asistente','gestor','asesor'],orden:1,grupo:'Ventas',traspaso_staff:true,traspaso_asesor:true},
-  {id:'registro',nombre:'Registrar venta o afiliado',descripcion:'Formulario.',url:'https://renaware-registro.nelson1614.workers.dev',roles:['admin','asistente'],orden:2,grupo:'Ventas',traspaso_staff:false,traspaso_asesor:false},
-  {id:'admin-registros',nombre:'Pedidos y afiliaciones',descripcion:'Revisar.',url:'https://renaware-registro.nelson1614.workers.dev/admin',roles:['admin','asistente'],orden:3,grupo:'Ventas',traspaso_staff:true,traspaso_asesor:false},
-  {id:'importar-pedidos',nombre:'Subir reporte de Rena Ware',descripcion:'Carga.',url:'#importar',roles:['admin','asistente'],orden:5,grupo:'Ventas',traspaso_staff:false,traspaso_asesor:false},
-  {id:'equipo',nombre:'Premios',descripcion:'Premios.',url:'https://panel-equipo.pages.dev',roles:['admin','asistente'],orden:7,grupo:'Equipo',traspaso_staff:true,traspaso_asesor:false},
-  {id:'empiece-ya',nombre:'Ganadores Empiece Ya',descripcion:'Ganadores.',url:'https://empiece-ya.nelson1614.workers.dev',roles:['admin','asistente'],orden:8,grupo:'Equipo',traspaso_staff:false,traspaso_asesor:false},
-  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:12,grupo:'Oficina',traspaso_staff:true,traspaso_asesor:false}];
+  {id:'cotizador',nombre:'Precios y promociones',descripcion:'Listas.',url:'https://renaware-peru.nelson1614.workers.dev',roles:['admin','asistente','gestor','asesor'],orden:1,acceso:'asesor'},
+  {id:'registro',nombre:'Registrar venta o afiliado',descripcion:'Formulario.',url:'https://renaware-registro.nelson1614.workers.dev',roles:['admin','asistente'],orden:2,acceso:'libre'},
+  {id:'admin-registros',nombre:'Pedidos y afiliaciones',descripcion:'Revisar.',url:'https://renaware-registro.nelson1614.workers.dev/admin',roles:['admin','asistente'],orden:3,acceso:'supabase'},
+  {id:'importar-pedidos',nombre:'Subir reporte de Rena Ware',descripcion:'Carga.',url:'#importar',roles:['admin','asistente'],orden:5,acceso:'libre'},
+  {id:'equipo',nombre:'Premios',descripcion:'Premios.',url:'https://panel-equipo.pages.dev',roles:['admin','asistente'],orden:7,acceso:'supabase'},
+  {id:'empiece-ya',nombre:'Ganadores Empiece Ya',descripcion:'Ganadores.',url:'https://empiece-ya.nelson1614.workers.dev',roles:['admin','asistente'],orden:8,acceso:'libre'},
+  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:12,acceso:'supabase'}];
 const HOY = {rol:'admin', nombre:'Nelson Portugal Román',
   periodo:{numero:22,inicio:'2026-10-15',fin:'2026-10-28',hoy:'2026-10-21'}, oficial:{pb:19,puntos:5684,pedidos:14},
   items:[
@@ -76,7 +76,7 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   const premios = [...d.querySelectorAll('a.mod')].find(a => a.textContent.includes('Premios'));
   premios.click(); await espera(120);
   const crear1 = llamadas.filter(c => c.u.startsWith('/rest/v1/rpc/traspaso_crear')).pop();
-  ok(crear1 && JSON.parse(crear1.opts.body).p_destino === 'equipo' && crear1.opts.headers.Authorization.includes('jwt-1'), 'Crea el código de traspaso con la sesión del hub');
+  ok(crear1 && JSON.parse(crear1.opts.body).p_modulo === 'equipo' && crear1.opts.headers.Authorization.includes('jwt-1'), 'Crea el código de traspaso con la sesión del hub');
   ok(idas[0] === 'https://panel-equipo.pages.dev#traspaso=' + CODIGO, 'Abre Premios con #traspaso=<código> (' + idas[0] + ')');
 
   // Módulo sin traspaso: enlace normal
