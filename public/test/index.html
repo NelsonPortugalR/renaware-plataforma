@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E3A5B">
+<title>Test del Nivel 0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root{
+    --fondo:#F3F5F7; --superficie:#FFFFFF; --tinta:#15232E; --suave:#51606C;
+    --acero:#0E3A5B; --acero-2:#2A6A99; --acero-claro:#D9E3EB; --sobre-acero:#FFFFFF;
+    --borde:#CBD5DD; --alto:#B3261E; --alto-claro:#FBE9E7; --medio:#9A6200; --medio-claro:#FFF4DC;
+    --info:#7A8792; --ok:#1F7A4D; --ok-claro:#E3F3EA; --foto:#FFFFFF;
+    --fuente:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --alto-claro:#3A2220; --medio:#E5B54F; --medio-claro:#33291A;
+    --info:#8E9EAA; --ok:#6CC49A; --ok-claro:#1A3227; --foto:#F4F6F8;
+    color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --alto-claro:#3A2220; --medio:#E5B54F; --medio-claro:#33291A;
+    --info:#8E9EAA; --ok:#6CC49A; --ok-claro:#1A3227; --foto:#F4F6F8;
+    color-scheme: dark;
+  }
+  :root{box-sizing:border-box;padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font-family:var(--fuente);font-size:17px;line-height:1.5;
+    padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+  .marco{max-width:640px;margin:0 auto;padding:14px 16px 64px}
+  h1{font-size:27px;line-height:1.2;margin:0;font-weight:700}
+  h2{font-size:19px;line-height:1.3;margin:34px 0 12px;font-weight:700}
+  h3{font-size:17.5px;line-height:1.35;margin:0;font-weight:700}
+  p{margin:0}
+  p + p{margin-top:8px}
+  a{color:var(--acero-2)}
+  :focus-visible{outline:3px solid var(--acero-2);outline-offset:2px}
+  .apoyo{color:var(--suave)}
+  .chico{font-size:15.5px}
+  .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .oculto{display:none !important}
+
+  .barra{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;min-height:44px}
+  .marca{font-weight:700;color:var(--acero);font-size:16px}
+  .lado{background:none;border:0;padding:12px 2px;font:inherit;font-size:15.5px;color:var(--suave);cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px}
+
+  .tarjeta{background:var(--superficie);border:1px solid var(--borde);border-radius:14px;padding:18px 18px 20px;margin-top:16px}
+  .tarjeta.ok{border-left:6px solid var(--ok)}
+  .tarjeta.medio{border-left:6px solid var(--medio)}
+  .tarjeta.alto{border-left:6px solid var(--alto)}
+  .tarjeta h2{margin:0 0 6px}
+  .tarjeta .boton{margin-top:18px}
+  .plazo{margin-top:10px;font-weight:700}
+  .reglas{margin:6px 0 0;padding-left:20px}
+  .reglas li{margin:7px 0}
+  .recursos{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .recursos a{display:inline-block;padding:9px 13px;border:2px solid var(--borde);border-radius:999px;font-weight:700;
+    text-decoration:none;font-size:15.5px;background:var(--superficie)}
+
+  label{display:block;font-weight:700;margin:20px 0 6px}
+  input,select,textarea{display:block;width:100%;font:inherit;font-size:18px;padding:12px 13px;border:2px solid var(--borde);
+    border-radius:10px;background:var(--superficie);color:var(--tinta)}
+  textarea{min-height:84px;resize:vertical;font-size:16.5px}
+  input:focus,select:focus,textarea:focus{border-color:var(--acero-2);outline:none}
+  .boton{display:block;width:100%;margin-top:22px;padding:15px;border:0;border-radius:11px;background:var(--acero);
+    color:var(--sobre-acero);font:inherit;font-size:18px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+  .boton:disabled{opacity:.55;cursor:default}
+  .boton.sec{background:transparent;color:var(--acero-2);border:2px solid var(--borde)}
+  .mini{font:inherit;font-size:15.5px;font-weight:700;padding:9px 13px;border-radius:9px;border:2px solid var(--acero);
+    background:var(--acero);color:var(--sobre-acero);cursor:pointer}
+  .mini.sec{background:transparent;color:var(--acero-2);border-color:var(--borde)}
+  .mini:disabled{opacity:.55;cursor:default}
+  .acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .error{color:var(--alto);font-weight:700;margin-top:14px;min-height:24px}
+  .error:empty{min-height:0;margin:0}
+  .cargando{padding:40px 0}
+  .acceso{min-height:calc(100vh - 80px);min-height:calc(100dvh - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display:flex;flex-direction:column;justify-content:center;padding-bottom:40px}
+  .acceso h1{margin-top:10px}
+  .acceso .apoyo{margin-top:8px}
+  .cambiar{margin-top:22px;text-align:center}
+  .cambiar button{background:none;border:0;font:inherit;color:var(--acero-2);text-decoration:underline;cursor:pointer;padding:10px}
+
+  /* ---------- pregunta ---------- */
+  .avance{margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;font-size:15.5px;color:var(--suave)}
+  .avance strong{color:var(--tinta)}
+  .barra-av{height:8px;border-radius:99px;background:var(--acero-claro);overflow:hidden}
+  .barra-av span{display:block;height:100%;background:var(--acero-2);border-radius:99px;transition:width .3s}
+  .foto{margin:16px 0 0;background:var(--foto);border:1px solid var(--borde);border-radius:12px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;min-height:140px}
+  .foto img{display:block;width:100%;max-height:340px;object-fit:contain}
+  .sub{margin-top:10px;color:var(--suave);font-size:15.5px}
+  .texto-q{font-size:21px;line-height:1.35;margin:14px 0 4px}
+  .pista{color:var(--suave);font-size:15.5px;margin-top:2px}
+  .opciones{display:grid;gap:10px;margin-top:14px}
+  .opcion{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:center;width:100%;text-align:left;
+    background:var(--superficie);color:var(--tinta);border:2px solid var(--borde);border-radius:12px;padding:12px 14px;
+    font:inherit;font-size:17px;line-height:1.35;cursor:pointer}
+  .opcion .letra{width:30px;height:30px;border-radius:50%;border:2px solid var(--borde);display:flex;align-items:center;
+    justify-content:center;font-weight:700;font-size:15px;color:var(--suave)}
+  .multi .opcion .letra{border-radius:7px}
+  .opcion[aria-checked="true"]{border-color:var(--acero-2);background:var(--acero-claro)}
+  .opcion[aria-checked="true"] .letra{background:var(--acero-2);border-color:var(--acero-2);color:var(--sobre-acero)}
+  .opcion.bien{border-color:var(--ok);background:var(--ok-claro)}
+  .opcion.bien .letra{background:var(--ok);border-color:var(--ok);color:#fff}
+  .opcion.mal{border-color:var(--alto);background:var(--alto-claro)}
+  .opcion.mal .letra{background:var(--alto);border-color:var(--alto);color:#fff}
+  .opcion:disabled{cursor:default}
+  .pares{display:grid;gap:12px;margin-top:14px}
+  .par{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;background:var(--superficie);
+    border:1px solid var(--borde);border-radius:12px;padding:10px}
+  .par img{width:104px;height:104px;object-fit:contain;background:var(--foto);border-radius:8px}
+  .par label{margin:0 0 6px;font-size:15px}
+  .par select{font-size:16px;padding:10px}
+  .resultado{margin-top:18px;border-radius:12px;padding:16px 16px 18px;border-left:6px solid var(--ok);background:var(--ok-claro)}
+  .resultado.mal{border-left-color:var(--alto);background:var(--alto-claro)}
+  .resultado h3{font-size:19px}
+  .resultado p{margin-top:8px}
+  .resultado .boton{margin-top:14px}
+  .salir-q{margin-top:26px;text-align:center}
+  .salir-q button{background:none;border:0;font:inherit;font-size:15.5px;color:var(--suave);text-decoration:underline;cursor:pointer;padding:10px}
+
+  /* ---------- final ---------- */
+  .nota{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+  .nota strong{font-size:64px;line-height:1;font-weight:700}
+  .nota span{color:var(--suave)}
+  .datos{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;margin-top:16px}
+  .dato{background:var(--superficie);border:1px solid var(--borde);border-radius:10px;padding:10px 12px}
+  .dato b{display:block;font-size:22px}
+  .dato span{color:var(--suave);font-size:14.5px}
+  .bloques-err{list-style:none;margin:12px 0 0;padding:0}
+  .bloques-err li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--borde)}
+  .bloques-err li:first-child{border-top:0}
+  .historial{list-style:none;margin:0;padding:0;background:var(--superficie);border:1px solid var(--borde);border-radius:12px}
+  .historial li{display:flex;justify-content:space-between;gap:12px;padding:12px 16px}
+  .historial li + li{border-top:1px solid var(--borde)}
+
+  /* ---------- oficina ---------- */
+  .pestanas{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+  @media (min-width:520px){ .pestanas{grid-template-columns:repeat(4, 1fr)} }
+  .pestanas button{font:inherit;font-size:15.5px;font-weight:700;padding:9px 10px;border-radius:999px;
+    border:2px solid var(--borde);background:var(--superficie);color:var(--suave);cursor:pointer}
+  .pestanas button[aria-selected="true"]{background:var(--acero);border-color:var(--acero);color:var(--sobre-acero)}
+  .cifras{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;margin-top:16px}
+  .cifra{background:var(--superficie);border:1px solid var(--borde);border-radius:12px;padding:12px 14px}
+  .cifra b{display:block;font-size:28px;line-height:1.1}
+  .cifra span{color:var(--suave);font-size:15px}
+  .barras{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .barras li{background:var(--superficie);border:1px solid var(--borde);border-radius:10px;padding:10px 12px}
+  .barras .fila{display:flex;justify-content:space-between;gap:10px;font-size:15.5px}
+  .barras .pista-b{height:8px;border-radius:99px;background:var(--acero-claro);margin-top:6px;overflow:hidden}
+  .barras .pista-b span{display:block;height:100%;background:var(--alto)}
+  .personas{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .persona{background:var(--superficie);border:1px solid var(--borde);border-radius:12px}
+  .persona > button{display:block;width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;padding:13px 14px;cursor:pointer}
+  .persona .nombre{font-weight:700}
+  .persona .linea{color:var(--suave);font-size:15.5px;margin-top:2px}
+  .chip{display:inline-block;font-size:13.5px;font-weight:700;padding:2px 9px;border-radius:99px;margin-left:6px;vertical-align:2px;
+    background:var(--acero-claro);color:var(--acero)}
+  .chip.ok{background:var(--ok-claro);color:var(--ok)}
+  .chip.medio{background:var(--medio-claro);color:var(--medio)}
+  .chip.alto{background:var(--alto-claro);color:var(--alto)}
+  .detalle{border-top:1px solid var(--borde);padding:4px 14px 16px}
+  .detalle h4{margin:16px 0 6px;font-size:15.5px;color:var(--suave);text-transform:uppercase;letter-spacing:.03em}
+  .intentos{list-style:none;margin:0;padding:0}
+  .intentos li{padding:8px 0;border-top:1px solid var(--borde)}
+  .intentos li:first-child{border-top:0}
+  .respuestas{list-style:none;margin:8px 0 0;padding:0;font-size:15.5px}
+  .respuestas li{display:flex;gap:8px;padding:3px 0}
+  .respuestas .si{color:var(--ok);font-weight:700}
+  .respuestas .no{color:var(--alto);font-weight:700}
+  .pasos-b{list-style:none;margin:0;padding:0;background:var(--superficie);border:1px solid var(--borde);border-radius:12px}
+  .pasos-b li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px}
+  .pasos-b li + li{border-top:1px solid var(--borde)}
+  .pasos-b .t{font-size:16.5px}
+  .pasos-b .v{display:block;color:var(--suave);font-size:14px}
+  .interruptor{flex:0 0 auto;width:54px;height:32px;border-radius:99px;border:2px solid var(--borde);background:var(--acero-claro);
+    position:relative;cursor:pointer;padding:0}
+  .interruptor::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--superficie);
+    box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+  .interruptor[aria-checked="true"]{background:var(--ok);border-color:var(--ok)}
+  .interruptor[aria-checked="true"]::after{left:25px}
+  .interruptor:disabled{opacity:.5}
+  .fila-edit{display:grid;gap:8px;background:var(--superficie);border:1px solid var(--borde);border-radius:12px;padding:10px;margin-top:10px}
+  .fila-edit input,.fila-edit textarea{font-size:16px;padding:10px}
+  .grupo-t{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave);margin:22px 0 8px;font-weight:700}
+  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%) translateY(20px);
+    background:var(--tinta);color:var(--fondo);padding:12px 18px;border-radius:12px;font-weight:700;max-width:calc(100% - 32px);
+    opacity:0;visibility:hidden;transition:transform .25s, opacity .25s, visibility .25s;z-index:5;pointer-events:none}
+  .toast.on{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible}
+  .toast.mal{background:var(--alto);color:#fff}
+  @media (prefers-reduced-motion: reduce){ .toast,.barra-av span,.interruptor::after{transition:none} }
+</style>
+</head>
+<body>
+<div id="app" class="marco"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript>Activa JavaScript para rendir el test.</noscript>
+<script>
+'use strict';
+/* =====================================================================
+   Test del Nivel 0 · Equipo Arequipa
+   Asesor: entra con su celular (o llega ya con sesión desde la plataforma),
+   ve si su test está habilitado y lo rinde pregunta por pregunta.
+   Oficina: resultados, práctica, qué preguntas salen y ajustes.
+   Todo lo calcula Supabase (funciones ts_*): la página solo muestra y envía.
+   ===================================================================== */
+const SB_URL = 'https://kiexpdaaoegbtesqmaff.supabase.co';
+const SB_KEY = 'sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth';
+const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';   // sesión de oficina de la plataforma (mismo dominio)
+const K_ASESOR = 'rw_asesor_token';                      // sesión de asesor de la plataforma (mismo dominio)
+const K_TEST = 'rw_test_token';                          // sesión solo para el test (nuevos que aún no están en el equipo)
+const K_ADMIN = 'rw_test_admin';                         // sesión de oficina para este módulo (admin_sesion)
+const K_PESTANA = 'rw_test_pestana';
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const LETRAS = 'ABCDEFGH';
+const app = document.getElementById('app');
+
+/* ---------- utilidades ---------- */
+function h(tag, attrs, ...hijos){
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of hijos.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+function pintar(...nodos){ app.replaceChildren(...nodos.filter(Boolean)); window.scrollTo(0, 0); }
+// Repinta sin saltar arriba y devuelve el foco al control que se tocó (data-foco)
+function repintar(foco, ...nodos){
+  const y = window.scrollY;
+  app.replaceChildren(...nodos.filter(Boolean));
+  window.scrollTo(0, y);
+  const el = foco && app.querySelector(`[data-foco="${foco}"]`);
+  if (el) el.focus({preventScroll: true});
+}
+function leer(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function guardar(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function borrar(k){ try { localStorage.removeItem(k); } catch (e) {} }
+const num = n => Number(n || 0).toLocaleString('es-PE');
+const minus = s => String(s || '').charAt(0).toLowerCase() + String(s || '').slice(1);
+const PEQUENAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e']);
+function titulo(n){
+  return String(n || '').toLowerCase().split(/\s+/).filter(Boolean)
+    .map((p, i) => i > 0 && PEQUENAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+function primerNombre(n){ return titulo(String(n || '').trim().split(/\s+/)[0] || ''); }
+function fecha(iso){ const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+function corta(iso){ if (!iso) return ''; const d = fecha(iso); return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+function largo(iso){ const d = fecha(iso); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} de ${MESES[d.getUTCMonth()]}`; }
+function quedan(dias){
+  if (dias == null) return '';
+  if (dias <= 0) return 'hoy es el último día';
+  return dias === 1 ? 'queda 1 día' : `quedan ${dias} días`;
+}
+function plural(n, uno, varios){ return `${num(n)} ${Number(n) === 1 ? uno : varios}`; }
+function cargando(t){ return h('p', {class: 'apoyo cargando', role: 'status'}, t || 'Cargando…'); }
+function aviso(msg, mal){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast on' + (mal ? ' mal' : '');
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => { t.className = 'toast' + (mal ? ' mal' : ''); }, 2800);
+}
+
+/* ---------- conexión ---------- */
+async function api(ruta, {method = 'GET', body, token} = {}){
+  const r = await fetch(SB_URL + ruta, {
+    method,
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + (token || SB_KEY), 'Content-Type': 'application/json'},
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const txt = await r.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+  if (!r.ok) {
+    const msg = (data && (data.message || data.msg || data.error_description || data.error)) || ('Error ' + r.status);
+    const err = new Error(msg); err.status = r.status; throw err;
+  }
+  return data;
+}
+const rpc = (fn, args, token) => api('/rest/v1/rpc/' + fn, {method: 'POST', body: args || {}, token});
+function mensaje(err){
+  const m = (err && err.message) || '';
+  if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
+  if (/Sesion invalida/i.test(m)) return 'Tu sesión de oficina venció. Entra de nuevo.';
+  if (/Clave incorrecta/i.test(m)) return 'Esa clave no es correcta.';
+  return m || 'Algo falló. Intenta de nuevo.';
+}
+async function canjear(codigo){
+  const r = await fetch(SB_URL + '/functions/v1/traspaso', {
+    method: 'POST', headers: {'Content-Type': 'application/json', 'apikey': SB_KEY}, body: JSON.stringify({codigo})});
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!d || !d.ok) throw new Error((d && d.motivo) || 'Enlace inválido');
+  return d;
+}
+function contexto(){
+  const ua = navigator.userAgent || '';
+  return {
+    dispositivo: /Mobi|Android|iPhone/i.test(ua) ? 'móvil' : 'escritorio',
+    navegador: (ua.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/) || [''])[0],
+    so: (ua.match(/Android|iPhone OS|Windows|Mac OS X|Linux/) || [''])[0],
+    pantalla: (screen.width || 0) + 'x' + (screen.height || 0),
+    zona: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+    idioma: navigator.language || '', origen: 'test'
+  };
+}
+
+/* ---------- sesiones ---------- */
+function tokenAsesor(){ return leer(K_ASESOR) || leer(K_TEST); }
+function tokenAdmin(){ return leer(K_ADMIN); }
+async function sesionEquipo(){            // la de la plataforma, renovada si hace falta
+  let s = leer(K_STAFF);
+  if (!s || !s.access_token) return null;
+  if (s.expires_at - 60 < Date.now() / 1000) {
+    try {
+      s = await api('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: {refresh_token: s.refresh_token}});
+      if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+      guardar(K_STAFF, s);
+    } catch (e) { return null; }
+  }
+  return s;
+}
+async function oficinaDesdePlataforma(){   // quien ya entró a la plataforma con su correo no necesita la clave
+  try {
+    const s = await sesionEquipo();
+    if (!s) return false;
+    const codigo = await api('/rest/v1/rpc/traspaso_crear', {method: 'POST', body: {p_modulo: 'test'}, token: s.access_token});
+    const d = await canjear(codigo);
+    if (d.admin_token) { guardar(K_ADMIN, d.admin_token); return true; }
+  } catch (e) {}
+  return false;
+}
+
+async function arrancar(){
+  const hash = location.hash || '';
+  let quiere = /(?:^#|&)oficina(?:&|$)/i.test(hash) ? 'oficina' : null;
+  const m = hash.match(/[#&]traspaso=([0-9a-f-]{36})/i);
+  if (m) {
+    const resto = hash.slice(1).split('&').filter(p => p && !/^traspaso=/i.test(p)).join('&');
+    history.replaceState(null, '', location.pathname + location.search + (resto ? '#' + resto : ''));
+    pintar(cargando('Entrando…'));
+    try {
+      const d = await canjear(m[1]);
+      if (d.tipo === 'asesor' && d.token) { guardar(K_ASESOR, d.token); borrar(K_TEST); quiere = 'asesor'; }
+      else if (d.admin_token) { guardar(K_ADMIN, d.admin_token); quiere = 'oficina'; }
+    } catch (e) { /* el enlace ya se usó o venció: sigue con la sesión que haya */ }
+  }
+  if (quiere !== 'oficina' && tokenAsesor()) return iniciarAsesor();
+  if (tokenAdmin()) return iniciarOficina();
+  if (leer(K_STAFF)) { pintar(cargando('Entrando…')); if (await oficinaDesdePlataforma()) return iniciarOficina(); }
+  return quiere === 'oficina' ? pantallaClave() : pantallaEntrar();
+}
+
+/* =====================================================================
+   Entrar
+   ===================================================================== */
+function pantallaEntrar(msg){
+  const cel = h('input', {id: 'cel', type: 'tel', inputmode: 'numeric', autocomplete: 'tel-national', 'aria-describedby': 'ayuda'});
+  const error = h('p', {class: 'error', role: 'alert'}, msg || '');
+  const boton = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
+  const form = h('form', {class: 'acceso', novalidate: true},
+    h('p', {class: 'marca'}, 'Equipo Arequipa'),
+    h('h1', {}, 'Test del Nivel 0'),
+    h('p', {class: 'apoyo', id: 'ayuda'}, 'Escribe tu celular, el mismo con el que te inscribiste.'),
+    h('label', {for: 'cel'}, 'Tu celular'), cel, boton, error,
+    h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaClave()}, 'Soy de la oficina')));
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    error.textContent = '';
+    const v = cel.value.replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
+    if (!/^9\d{8}$/.test(v)) { error.textContent = 'Escribe tu celular de 9 dígitos.'; cel.focus(); return; }
+    boton.disabled = true; boton.textContent = 'Entrando…';
+    try {
+      const r = await rpc('ts_login', {p_celular: v, p_ctx: contexto()});
+      if (r.alcance === 'plataforma') { guardar(K_ASESOR, r.token); borrar(K_TEST); }
+      else { guardar(K_TEST, r.token); }
+      await iniciarAsesor();
+    } catch (e) {
+      error.textContent = mensaje(e);
+      boton.disabled = false; boton.textContent = 'Entrar';
+    }
+  });
+  pintar(form);
+  cel.focus();
+}
+
+function pantallaClave(msg){
+  const clave = h('input', {id: 'clave', type: 'password', autocomplete: 'current-password'});
+  const error = h('p', {class: 'error', role: 'alert'}, msg || '');
+  const boton = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
+  const form = h('form', {class: 'acceso', novalidate: true},
+    h('p', {class: 'marca'}, 'Equipo Arequipa'),
+    h('h1', {}, 'Test del Nivel 0 · Oficina'),
+    h('p', {class: 'apoyo'}, 'Entra con la clave de administrador, la misma del Nivel Cero. Si ya entraste a la plataforma con tu correo, ábrelo desde ahí.'),
+    h('label', {for: 'clave'}, 'Clave'), clave, boton, error,
+    h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi celular')));
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    error.textContent = '';
+    if (!clave.value) { error.textContent = 'Escribe la clave.'; return; }
+    boton.disabled = true; boton.textContent = 'Entrando…';
+    try {
+      const tok = await rpc('admin_login', {p_clave: clave.value});
+      guardar(K_ADMIN, tok);
+      await iniciarOficina();
+    } catch (e) {
+      error.textContent = mensaje(e);
+      boton.disabled = false; boton.textContent = 'Entrar';
+    }
+  });
+  pintar(form);
+  clave.focus();
+}
+
+function pantallaError(msg, reintentar){
+  pintar(h('header', {class: 'barra'}, h('span', {class: 'marca'}, 'Test del Nivel 0')),
+    h('main', {},
+      h('h1', {}, 'No se pudo cargar'),
+      h('p', {class: 'apoyo', style: 'margin-top:8px'}, msg),
+      h('button', {class: 'boton', type: 'button', onclick: reintentar}, 'Reintentar')));
+}
+
+/* =====================================================================
+   Asesor
+   ===================================================================== */
+let E = null;   // lo último de ts_estado
+
+function barraAsesor(){
+  const conPlataforma = !!leer(K_ASESOR);
+  return h('header', {class: 'barra'},
+    h('span', {class: 'marca'}, 'Test del Nivel 0'),
+    conPlataforma
+      ? h('a', {class: 'lado', href: '/'}, 'Inicio')
+      : h('button', {class: 'lado', type: 'button', onclick: () => { borrar(K_TEST); pantallaEntrar(); }}, 'Salir'));
+}
+
+async function iniciarAsesor(){
+  pintar(cargando());
+  try { E = await rpc('ts_estado', {p_token: tokenAsesor()}); }
+  catch (e) {
+    if (/venci/i.test(e.message)) { borrar(K_TEST); borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu celular.'); }
+    return pantallaError(mensaje(e), iniciarAsesor);
+  }
+  pantallaEstado();
+}
+
+function enlacesConsulta(cfg){
+  const l = (cfg && cfg.recursos) || [];
+  if (!l.length) return null;
+  return h('div', {class: 'recursos'}, l.filter(x => x && x.url).map(x =>
+    h('a', {href: x.url, target: '_blank', rel: 'noopener'}, x.nombre || x.url)));
+}
+
+function comoFunciona(cfg){
+  return h('section', {},
+    h('h2', {}, 'Cómo es el test'),
+    h('ul', {class: 'reglas'},
+      h('li', {}, `Son ${cfg.pasos || 'unas 30'} preguntas, una por una: precios y promociones, inicial y cuotas, zonas de crédito, pagos, Empiece Ya, comisiones y autocompra, y cómo responder a las objeciones.`),
+      h('li', {}, 'Es a libro abierto: ten a la mano la lista de precios y las promociones vigentes.'),
+      h('li', {}, 'Si fallas, te decimos dónde encontrar la respuesta y te sale otra pregunta del mismo tema.'),
+      h('li', {}, `Tu nota es preguntas ÷ respuestas × 100: cada fallo la baja. Apruebas con ${cfg.nota_minima} o más.`),
+      h('li', {}, 'Puedes rendirlo las veces que quieras dentro de tu plazo. Si cierras la página, sigues donde te quedaste.')),
+    enlacesConsulta(cfg));
+}
+
+function historial(){
+  const l = (E && E.historial) || [];
+  if (!l.length) return null;
+  return h('section', {},
+    h('h2', {}, 'Tus intentos'),
+    h('ul', {class: 'historial'}, l.map(x => h('li', {},
+      h('span', {}, corta(x.fecha)),
+      h('strong', {}, `${x.nota} · ${x.aprobado ? 'aprobado' : 'no aprobado'}`)))));
+}
+
+function pantallaEstado(){
+  const d = E || {}, w = d.ventana || {}, cfg = d.config || {}, c = w.clases || {};
+  const nombre = primerNombre(d.nombre);
+  const premio = minus(cfg.premio || 'botella de acero inoxidable');
+  const error = h('p', {class: 'error', role: 'alert'});
+  let tarjeta;
+
+  if (d.estado === 'habilitado') {
+    const it = d.intento;
+    const boton = h('button', {class: 'boton', type: 'button'}, it ? 'Continuar mi test' : (w.intentos ? 'Intentar de nuevo' : 'Empezar el test'));
+    boton.addEventListener('click', () => empezar(boton, error));
+    tarjeta = h('section', {class: 'tarjeta medio'},
+      h('h2', {}, it ? 'Tienes un test a medias' : '¡Tu test está habilitado!'),
+      it ? h('p', {}, `Vas en la pregunta ${it.paso} de ${it.total}. Sigue donde te quedaste.`)
+         : h('p', {}, `Completaste tus 5 clases. Aprueba el test con ${cfg.nota_minima} o más y ganas tu ${premio}.`),
+      h('p', {class: 'plazo'}, `Tienes hasta el ${largo(w.hasta)}: ${quedan(w.dias)}.`),
+      w.mejor != null ? h('p', {class: 'apoyo'}, `Tu mejor nota hasta ahora: ${w.mejor}.`) : null,
+      boton, error);
+  } else if (d.estado === 'aprobado') {
+    const b = w.botella;
+    tarjeta = h('section', {class: 'tarjeta ok'},
+      h('h2', {}, `¡Aprobaste tu test con ${w.nota}! 🏆`),
+      b === 'entregada'
+        ? h('p', {}, `Recibiste tu ${premio} el ${corta(w.botella_entregada_en)}. ¡Felicitaciones!`)
+        : h('p', {}, `Ganaste tu ${premio}: te espera en la oficina. Pasa a recogerla cuando vengas.`),
+      h('p', {class: 'apoyo'}, 'Ahora ve por tu Empiece Ya.'));
+  } else if (d.estado === 'vencido') {
+    tarjeta = h('section', {class: 'tarjeta alto'},
+      h('h2', {}, 'Tu plazo para el test venció'),
+      h('p', {}, `Tenías hasta el ${largo(w.hasta)} para aprobarlo.` + (w.mejor != null ? ` Tu mejor nota fue ${w.mejor}.` : '')),
+      h('p', {class: 'apoyo'}, 'Si crees que es un error, habla con tu líder.'));
+  } else if (d.estado === 'clases') {
+    const faltan = Math.max((c.meta || 5) - (c.validas || 0), 0);
+    if (c.estado === 'vencio') {
+      tarjeta = h('section', {class: 'tarjeta'},
+        h('h2', {}, 'Tu plazo de clases ya cerró'),
+        h('p', {}, `Llegaste a ${c.validas || 0} de ${c.meta || 5} clases hasta el ${largo(c.vence)}. El test es para quienes completan sus ${c.meta || 5} clases dentro de su plazo.`),
+        h('p', {class: 'apoyo'}, 'Igual sigue capacitándote: te ayudará con tu Empiece Ya.'));
+    } else if (c.estado === 'sin_seguimiento') {
+      tarjeta = h('section', {class: 'tarjeta'},
+        h('h2', {}, 'Este test no aplica para ti'),
+        h('p', {}, 'Te inscribiste antes de que empezara el seguimiento del Nivel Cero.'));
+    } else {
+      tarjeta = h('section', {class: 'tarjeta'},
+        h('h2', {}, 'Primero, tus 5 clases'),
+        h('p', {}, `Llevas ${c.validas || 0} de ${c.meta || 5} clases` + (faltan ? `: te ${faltan === 1 ? 'falta 1' : 'faltan ' + faltan}.` : '.')
+          + (c.vence ? ` Tienes hasta el ${largo(c.vence)}.` : '')),
+        h('p', {}, `Al completarlas se habilita tu test: tendrás ${cfg.dias_ventana || 15} días para aprobarlo y ganar tu ${premio}.`));
+    }
+  } else if (d.estado === 'no_aplica') {
+    tarjeta = h('section', {class: 'tarjeta ok'},
+      h('h2', {}, 'No necesitas rendir el test'),
+      h('p', {}, 'Completaste tus 5 clases antes de que empezara el test. Tu botella sigue como antes: consulta en la oficina.'));
+  } else if (d.estado === 'excluido') {
+    tarjeta = h('section', {class: 'tarjeta'},
+      h('h2', {}, 'Tu test no está habilitado'),
+      h('p', {}, 'Si crees que es un error, habla con tu líder.'));
+  } else {   // no_inscrito
+    tarjeta = h('section', {class: 'tarjeta'},
+      h('h2', {}, 'No encontramos tu inscripción'),
+      h('p', {}, 'El test es para los nuevos asesores que completan sus 5 clases del Nivel Cero, y con este número no encontramos tu inscripción.'),
+      h('p', {class: 'apoyo'}, 'Si te afiliaste hace poco, avísale a tu líder para que te registre.'),
+      h('button', {class: 'boton sec', type: 'button', onclick: () => { borrar(K_TEST); pantallaEntrar(); }}, 'Entrar con otro número'));
+  }
+
+  pintar(barraAsesor(), h('main', {},
+    h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
+    tarjeta,
+    ['habilitado', 'vencido'].includes(d.estado) ? comoFunciona(cfg) : null,
+    historial()));
+}
+
+async function empezar(boton, error){
+  boton.disabled = true; boton.textContent = 'Preparando tu test…';
+  error.textContent = '';
+  try {
+    const it = await rpc('ts_iniciar', {p_token: tokenAsesor()});
+    Q.modo = 'asesor'; Q.intento = it;
+    pantallaPregunta();
+  } catch (e) {
+    error.textContent = mensaje(e);
+    boton.disabled = false; boton.textContent = 'Intentar de nuevo';
+  }
+}
+
+/* =====================================================================
+   El test: una pregunta por pantalla (lo mismo para el asesor y la práctica de la oficina)
+   ===================================================================== */
+const Q = {modo: 'asesor', intento: null};
+
+function enviarRespuesta(resp){
+  const it = Q.intento;
+  return Q.modo === 'practica'
+    ? rpc('ts_admin_responder', {p_token: tokenAdmin(), p_intento: it.id, p_pregunta: it.pregunta.id, p_respuesta: resp})
+    : rpc('ts_responder', {p_token: tokenAsesor(), p_intento: it.id, p_pregunta: it.pregunta.id, p_respuesta: resp});
+}
+function salirDelTest(){ return Q.modo === 'practica' ? iniciarOficina() : iniciarAsesor(); }
+
+function cabeceraTest(it){
+  const hechos = Math.max(0, (it.paso || 1) - 1);
+  const pct = it.total ? Math.round(100 * hechos / it.total) : 0;
+  return h('div', {},
+    h('div', {class: 'avance'},
+      h('span', {}, h('strong', {}, `Pregunta ${it.paso} de ${it.total}`)),
+      h('span', {}, (it.pregunta && it.pregunta.bloque_nombre) || '')),
+    h('div', {class: 'barra-av', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': it.total, 'aria-valuenow': hechos,
+      'aria-label': `Llevas ${hechos} de ${it.total} preguntas`}, h('span', {style: `width:${pct}%`})));
+}
+
+function pantallaPregunta(){
+  const it = Q.intento;
+  if (!it) return salirDelTest();
+  if (it.fin) return pantallaFin();
+  const q = it.pregunta;
+  if (!q) return salirDelTest();
+
+  const elegidas = new Set();          // single y multi
+  const pares = {};                    // emparejar: item -> nombre
+  const campos = {};                   // escribir: campo -> texto
+  const boton = h('button', {class: 'boton', type: 'button', disabled: true}, 'Responder');
+  const nota = h('p', {class: 'pista', role: 'status'});
+  const zona = h('div', {'aria-live': 'polite'});
+  let cuerpo, botonesOpcion = [];
+
+  function listo(){
+    if (q.tipo === 'single' || q.tipo === 'multi') return elegidas.size > 0;
+    if (q.tipo === 'emparejar') {
+      const v = Object.values(pares).filter(Boolean);
+      const dup = new Set(v).size !== v.length;
+      nota.textContent = dup ? 'Cada nombre va con un solo producto.' : '';
+      return v.length === (q.items || []).length && !dup;
+    }
+    if (q.tipo === 'escribir') return (q.campos || []).every(c => String(campos[c.id] || '').replace(/\D/g, '').length >= 6);
+    return false;
+  }
+  const revisar = () => { boton.disabled = !listo(); };
+
+  if (q.tipo === 'single' || q.tipo === 'multi') {
+    const multi = q.tipo === 'multi';
+    botonesOpcion = (q.opciones || []).map((o, i) => {
+      const b = h('button', {type: 'button', class: 'opcion', role: multi ? 'checkbox' : 'radio', 'aria-checked': 'false', 'data-id': o.id},
+        h('span', {class: 'letra', 'aria-hidden': 'true'}, LETRAS[i] || '•'), h('span', {}, o.t));
+      b.addEventListener('click', () => {
+        if (multi) {
+          if (elegidas.has(o.id)) elegidas.delete(o.id); else elegidas.add(o.id);
+        } else { elegidas.clear(); elegidas.add(o.id); }
+        botonesOpcion.forEach(x => x.setAttribute('aria-checked', elegidas.has(x.getAttribute('data-id')) ? 'true' : 'false'));
+        revisar();
+      });
+      return b;
+    });
+    cuerpo = h('div', {class: 'opciones' + (multi ? ' multi' : ''), role: multi ? 'group' : 'radiogroup', 'aria-labelledby': 'q-texto'}, botonesOpcion);
+  } else if (q.tipo === 'emparejar') {
+    cuerpo = h('div', {class: 'pares'}, (q.items || []).map((x, i) => {
+      const sel = h('select', {id: 'par-' + x.id},
+        h('option', {value: ''}, 'Elige su nombre…'),
+        (q.nombres || []).map(n => h('option', {value: n.id}, n.t)));
+      sel.addEventListener('change', () => { pares[x.id] = sel.value; revisar(); });
+      return h('div', {class: 'par'},
+        h('img', {src: x.foto, alt: `Producto ${i + 1}`, loading: 'lazy'}),
+        h('div', {}, h('label', {for: 'par-' + x.id}, `Producto ${i + 1}`), sel));
+    }));
+  } else if (q.tipo === 'escribir') {
+    cuerpo = h('div', {}, (q.campos || []).map(c => {
+      const inp = h('input', {id: 'campo-' + c.id, type: 'text', inputmode: 'numeric', autocomplete: 'off', spellcheck: 'false'});
+      inp.addEventListener('input', () => { campos[c.id] = inp.value; revisar(); });
+      return h('div', {}, h('label', {for: 'campo-' + c.id}, c.label), inp);
+    }));
+  } else {
+    cuerpo = h('p', {class: 'error'}, 'Esta pregunta no se puede mostrar. Sal y vuelve a entrar.');
+  }
+
+  function respuesta(){
+    if (q.tipo === 'single') return [...elegidas][0];
+    if (q.tipo === 'multi') return [...elegidas];
+    if (q.tipo === 'emparejar') return Object.assign({}, pares);
+    if (q.tipo === 'escribir') return Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, String(v).replace(/\D/g, '')]));
+    return null;
+  }
+
+  boton.addEventListener('click', async () => {
+    if (!listo()) return;
+    boton.disabled = true; boton.textContent = 'Revisando…';
+    let r;
+    try { r = await enviarRespuesta(respuesta()); }
+    catch (e) {
+      boton.disabled = false; boton.textContent = 'Responder';
+      if (/venci|Sesion invalida/i.test(e.message)) return salirDelTest();
+      aviso(mensaje(e), true);
+      return;
+    }
+    if (r.desfase || r.ok == null) { Q.intento = r.intento; return pantallaPregunta(); }
+    Q.intento = r.intento;
+    mostrarResultado(r);
+  });
+
+  function mostrarResultado(r){
+    boton.remove();
+    botonesOpcion.forEach(b => {
+      b.disabled = true;
+      if (elegidas.has(b.getAttribute('data-id')) && (r.ok || q.tipo === 'single')) b.classList.add(r.ok ? 'bien' : 'mal');
+    });
+    cuerpo.querySelectorAll('select, input').forEach(x => { x.disabled = true; });
+    const fin = !!(Q.intento && Q.intento.fin);
+    const seguir = h('button', {class: 'boton', type: 'button', onclick: () => pantallaPregunta()},
+      fin ? 'Ver mi nota' : r.ok ? 'Siguiente' : 'Otra pregunta');
+    zona.replaceChildren(r.ok
+      ? h('div', {class: 'resultado'},
+          h('h3', {}, '¡Correcto!'),
+          r.dato ? h('p', {}, r.dato) : null,
+          seguir)
+      : h('div', {class: 'resultado mal'},
+          h('h3', {}, 'No es la respuesta.'),
+          r.logica ? h('p', {}, h('strong', {}, 'Cómo encontrarla: '), r.logica) : null,
+          fin ? null : h('p', {class: 'apoyo'}, 'Ahora te toca otra pregunta del mismo tema.'),
+          seguir));
+    seguir.focus({preventScroll: true});
+    zona.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }
+
+  pintar(
+    h('header', {class: 'barra'},
+      h('span', {class: 'marca'}, Q.modo === 'practica' ? 'Práctica de la oficina' : 'Test del Nivel 0'),
+      h('span', {class: 'apoyo chico'}, it.intentos ? `${it.aciertos} de ${it.intentos} bien` : '')),
+    h('main', {},
+      cabeceraTest(it),
+      q.foto ? h('figure', {class: 'foto'}, h('img', {src: q.foto, alt: 'Foto del producto o la promoción'})) : null,
+      q.sub ? h('p', {class: 'sub'}, q.sub) : null,
+      h('h1', {class: 'texto-q', id: 'q-texto'}, q.texto),
+      q.tipo === 'multi' ? h('p', {class: 'pista'}, 'Marca todas las que correspondan.') : null,
+      cuerpo, nota, boton, zona,
+      h('p', {class: 'salir-q'}, h('button', {type: 'button', onclick: salirDelTest},
+        Q.modo === 'practica' ? 'Volver a la oficina' : 'Salir y seguir después'))));
+}
+
+function pantallaFin(){
+  const it = Q.intento, f = it.fin || {};
+  const practica = Q.modo === 'practica';
+  const errores = (f.por_bloque || []).filter(b => b.errores > 0);
+  const repetir = h('button', {class: 'boton', type: 'button'}, practica ? 'Otra práctica' : 'Intentar de nuevo');
+  const error = h('p', {class: 'error', role: 'alert'});
+  repetir.addEventListener('click', () => practica ? practicar(repetir, error) : empezar(repetir, error));
+  pintar(
+    h('header', {class: 'barra'}, h('span', {class: 'marca'}, practica ? 'Práctica de la oficina' : 'Test del Nivel 0')),
+    h('main', {},
+      h('h1', {}, f.aprobado ? '¡Aprobaste! 🎉' : 'Esta vez no llegaste'),
+      h('div', {class: 'nota'}, h('strong', {}, f.nota), h('span', {}, `de 100 · apruebas con ${f.nota_minima}`)),
+      f.aprobado
+        ? h('p', {style: 'margin-top:12px'}, practica ? 'Así lo vería un asesor que aprueba.' : 'Ganaste tu botella de acero: te espera en la oficina. Pasa a recogerla cuando vengas.')
+        : h('p', {style: 'margin-top:12px'}, 'Repasa lo que te costó y vuelve a intentarlo: tus intentos no tienen límite dentro de tu plazo.'),
+      h('div', {class: 'datos'},
+        h('div', {class: 'dato'}, h('b', {}, num(f.pasos)), h('span', {}, 'preguntas')),
+        h('div', {class: 'dato'}, h('b', {}, num(f.intentos)), h('span', {}, 'respuestas')),
+        h('div', {class: 'dato'}, h('b', {}, num(f.errores)), h('span', {}, f.errores === 1 ? 'error' : 'errores')),
+        h('div', {class: 'dato'}, h('b', {}, num(f.minutos)), h('span', {}, 'minutos'))),
+      errores.length ? h('section', {},
+        h('h2', {}, 'Dónde fallaste'),
+        h('ul', {class: 'bloques-err'}, errores.map(b => h('li', {}, h('span', {}, b.nombre), h('strong', {}, plural(b.errores, 'error', 'errores')))))) : null,
+      f.aprobado && !practica ? null : repetir, error,
+      h('button', {class: 'boton sec', type: 'button', onclick: salirDelTest}, practica ? 'Volver a la oficina' : 'Volver')));
+}
+
+/* =====================================================================
+   Oficina
+   ===================================================================== */
+const O = {d: null, pestana: leer(K_PESTANA) || 'resultados', abierto: null, detalle: {}, foco: null};
+const ESTADO = {
+  habilitado: ['Test habilitado', 'medio'], aprobado: ['Aprobó', 'ok'], vencido: ['Se le venció', 'alto'],
+  clases: ['En clases', ''], no_aplica: ['No aplica', ''], excluido: ['Fuera del test', '']};
+
+async function iniciarOficina(silencioso){
+  if (!tokenAdmin()) return pantallaClave();
+  if (!silencioso) pintar(cargando());
+  try { O.d = await rpc('ts_admin_datos', {p_token: tokenAdmin()}); }
+  catch (e) {
+    if (/Sesion invalida/i.test(e.message)) { borrar(K_ADMIN); return pantallaClave('Tu sesión de oficina venció. Entra de nuevo.'); }
+    return pantallaError(mensaje(e), () => iniciarOficina());
+  }
+  pantallaOficina(!!silencioso);
+}
+
+function pantallaOficina(mantener){
+  const P = [['resultados', 'Resultados'], ['practica', 'Probar'], ['pasos', 'Preguntas'], ['ajustes', 'Ajustes']];
+  const tabs = h('div', {class: 'pestanas', role: 'tablist', 'aria-label': 'Secciones'}, P.map(([k, t]) =>
+    h('button', {type: 'button', role: 'tab', 'aria-selected': O.pestana === k ? 'true' : 'false',
+      onclick: () => { O.pestana = k; guardar(K_PESTANA, k); O.foco = null; pantallaOficina(); }}, t)));
+  const vista = O.pestana === 'practica' ? vistaPractica() : O.pestana === 'pasos' ? vistaPasos()
+    : O.pestana === 'ajustes' ? vistaAjustes() : vistaResultados();
+  const nodos = [
+    h('header', {class: 'barra'},
+      h('span', {class: 'marca'}, 'Test del Nivel 0 · Oficina'),
+      h('button', {class: 'lado', type: 'button', onclick: () => { borrar(K_ADMIN); pantallaClave(); }}, 'Salir')),
+    h('main', {}, tabs, vista)];
+  if (mantener) repintar(O.foco, ...nodos); else pintar(...nodos);
+}
+
+/* ----- resultados */
+function vistaResultados(){
+  const d = O.d, ps = d.personas || [], cfg = d.config || {};
+  const est = x => (x.test || {}).estado;
+  const hab = ps.filter(x => est(x) === 'habilitado');
+  const urge = hab.filter(x => (x.test.dias || 0) <= 3);
+  const apr = ps.filter(x => est(x) === 'aprobado');
+  const porEntregar = apr.filter(x => x.test.botella === 'por_entregar');
+  const ven = ps.filter(x => est(x) === 'vencido');
+  const otros = ps.filter(x => !['habilitado', 'aprobado', 'vencido'].includes(est(x)));
+  const eb = (d.errores_bloque || []).filter(b => b.respuestas > 0);
+
+  return h('div', {},
+    h('p', {class: 'apoyo', style: 'margin-top:14px'},
+      `Quien completa sus 5 clases tiene ${cfg.dias_ventana} días para aprobar con ${cfg.nota_minima} o más. Al aprobar, su botella pasa a Premios como «por entregar». Hoy el test tiene ${(d.plan || []).length} preguntas.`),
+    h('div', {class: 'cifras'},
+      cifra(hab.length, 'con el test habilitado' + (urge.length ? ` · ${urge.length} vence${urge.length === 1 ? '' : 'n'} en 3 días o menos` : '')),
+      cifra(apr.length, 'aprobaron' + (porEntregar.length ? ` · ${porEntregar.length} botella${porEntregar.length === 1 ? '' : 's'} por entregar` : '')),
+      cifra(ven.length, 'se les venció sin aprobar'),
+      cifra(d.en_clases || 0, 'haciendo sus 5 clases')),
+    eb.length ? h('section', {},
+      h('h2', {}, 'Dónde fallan más'),
+      h('ul', {class: 'barras'}, eb.slice().sort((a, b) => b.errores / b.respuestas - a.errores / a.respuestas).map(b => {
+        const pct = Math.round(100 * b.errores / b.respuestas);
+        return h('li', {},
+          h('div', {class: 'fila'}, h('span', {}, b.nombre), h('strong', {}, `${pct} % (${b.errores} de ${b.respuestas})`)),
+          h('div', {class: 'pista-b', 'aria-hidden': 'true'}, h('span', {style: `width:${pct}%`})));
+      }))) : null,
+    ps.length ? [
+      grupoPersonas('Con el test habilitado', hab),
+      grupoPersonas('Aprobaron', apr),
+      grupoPersonas('Se les venció', ven),
+      grupoPersonas('Otros', otros)]
+    : h('div', {class: 'tarjeta'},
+        h('p', {}, h('strong', {}, 'Todavía nadie llegó al test.')),
+        h('p', {class: 'apoyo'}, `Cuando alguien complete sus 5 clases (desde el ${corta(cfg.aplica_desde)}), aparecerá aquí con su plazo de ${cfg.dias_ventana} días.`)));
+}
+function cifra(n, t){ return h('div', {class: 'cifra'}, h('b', {}, num(n)), h('span', {}, t)); }
+
+function grupoPersonas(t, l){
+  if (!l.length) return null;
+  return h('section', {}, h('h2', {}, `${t} (${l.length})`), h('ul', {class: 'personas'}, l.map(filaPersona)));
+}
+
+function lineaPersona(x){
+  const t = x.test || {}, p = [];
+  if (t.estado === 'habilitado') p.push(`hasta el ${corta(t.hasta)} (${quedan(t.dias)})` + (t.hasta_editado ? ' · plazo cambiado' : ''));
+  if (t.estado === 'vencido') p.push(`venció el ${corta(t.hasta)}`);
+  if (t.estado === 'aprobado') p.push(`aprobó con ${t.nota} el ${corta(t.aprobado_en)}`);
+  if (t.estado === 'clases') p.push(`${x.validas || 0} de 5 clases`);
+  if (t.intentos) p.push(plural(t.intentos, 'intento', 'intentos') + (t.mejor != null && t.estado !== 'aprobado' ? ` · mejor ${t.mejor}` : ''));
+  if (t.abierto) p.push('rindiendo ahora');
+  if (t.botella === 'por_entregar') p.push('botella por entregar');
+  if (t.botella === 'entregada') p.push(`botella entregada el ${corta(t.botella_entregada_en)}`);
+  return p.join(' · ');
+}
+
+function filaPersona(x){
+  const t = x.test || {}, [etq, cls] = ESTADO[t.estado] || [t.estado || '', ''];
+  const abierto = O.abierto === x.id;
+  return h('li', {class: 'persona'},
+    h('button', {type: 'button', 'aria-expanded': abierto ? 'true' : 'false', 'data-foco': 'p-' + x.id,
+      onclick: () => { O.abierto = abierto ? null : x.id; O.foco = 'p-' + x.id; pantallaOficina(true); }},
+      h('span', {class: 'nombre'}, titulo(x.nombre)), h('span', {class: 'chip ' + cls}, etq),
+      h('span', {class: 'linea', style: 'display:block'}, lineaPersona(x)),
+      x.afiliador ? h('span', {class: 'linea', style: 'display:block'}, 'Lo afilió ' + titulo(x.afiliador)) : null),
+    abierto ? detallePersona(x) : null);
+}
+
+function detallePersona(x){
+  const t = x.test || {};
+  const caja = h('div', {class: 'detalle'});
+  const datos = [];
+  if (x.celular) datos.push('Celular ' + x.celular);
+  if (x.codigo) datos.push('código ' + x.codigo);
+  if (x.logro_fecha) datos.push('5.ª clase el ' + corta(x.logro_fecha));
+  if (datos.length) caja.append(h('p', {class: 'apoyo chico', style: 'margin-top:10px'}, datos.join(' · ')));
+  if (t.nota_persona) caja.append(h('p', {style: 'margin-top:8px'}, h('strong', {}, 'Nota: '), t.nota_persona));
+
+  // intentos
+  const ints = x.intentos || [];
+  caja.append(h('h4', {}, 'Intentos'));
+  if (!ints.length) caja.append(h('p', {class: 'apoyo chico'}, 'Todavía no lo rinde.'));
+  else caja.append(h('ul', {class: 'intentos'}, ints.map(i => {
+    const errs = (i.por_bloque || []).filter(b => b.errores > 0).map(b => `${b.nombre}: ${b.errores}`).join(' · ');
+    const li = h('li', {},
+      h('div', {}, h('strong', {}, i.terminado ? `${i.nota} · ${i.aprobado ? 'aprobado' : 'no aprobado'}` : `En curso: va en la ${Math.min(i.paso + 1, i.pasos)} de ${i.pasos}`),
+        h('span', {class: 'apoyo chico'}, ` · ${corta(String(i.iniciado).slice(0, 10))} · ${plural(i.intentos, 'respuesta', 'respuestas')}`)),
+      errs ? h('p', {class: 'apoyo chico'}, 'Falló en ' + errs) : null);
+    const acc = h('div', {class: 'acciones'});
+    const ver = h('button', {class: 'mini sec', type: 'button', 'data-foco': 'v-' + i.id}, O.detalle[i.id] ? 'Ocultar respuestas' : 'Ver respuestas');
+    ver.addEventListener('click', async () => {
+      O.foco = 'v-' + i.id;
+      if (O.detalle[i.id]) { delete O.detalle[i.id]; return pantallaOficina(true); }
+      ver.disabled = true;
+      try { O.detalle[i.id] = await rpc('ts_admin_intento', {p_token: tokenAdmin(), p_id: i.id}); pantallaOficina(true); }
+      catch (e) { ver.disabled = false; aviso(mensaje(e), true); }
+    });
+    acc.append(ver);
+    if (!i.terminado) {
+      const anular = h('button', {class: 'mini sec', type: 'button'}, 'Anular este intento');
+      anular.addEventListener('click', async () => {
+        if (!confirm('¿Anular este intento? La próxima vez empezará de cero.')) return;
+        anular.disabled = true;
+        try { await rpc('ts_admin_anular', {p_token: tokenAdmin(), p_intento: i.id}); aviso('Intento anulado'); iniciarOficina(true); }
+        catch (e) { anular.disabled = false; aviso(mensaje(e), true); }
+      });
+      acc.append(anular);
+    }
+    li.append(acc);
+    const det = O.detalle[i.id];
+    if (det) li.append(h('ul', {class: 'respuestas'}, (det.detalle || []).map(r =>
+      h('li', {}, h('span', {class: r.ok ? 'si' : 'no'}, r.ok ? '✓' : '✗'), h('span', {}, `${r.titulo || r.paso}`), h('span', {class: 'apoyo'}, `· ${r.bloque}`)))));
+    return li;
+  })));
+
+  // plazo y exclusión
+  if (x.logro_fecha && ['habilitado', 'vencido', 'excluido'].includes(t.estado)) {
+    caja.append(h('h4', {}, 'Plazo'));
+    const f = h('input', {type: 'date', value: t.hasta || '', 'aria-label': 'Nuevo plazo'});
+    const g = h('button', {class: 'mini', type: 'button'}, 'Guardar plazo');
+    g.addEventListener('click', () => cambiarPersona(x, {hasta: f.value}, g, 'Plazo guardado'));
+    caja.append(h('p', {class: 'apoyo chico'}, `Su plazo normal termina el ${corta(sumar(x.logro_fecha, O.d.config.dias_ventana))}. Dale más días si hace falta.`),
+      h('div', {class: 'acciones'}, f, g,
+        t.hasta_editado ? h('button', {class: 'mini sec', type: 'button', onclick: ev => cambiarPersona(x, {hasta: ''}, ev.currentTarget, 'Volvió a su plazo normal')}, 'Volver al plazo normal') : null));
+  }
+  if (x.estado_n0 !== 'excluido' && ['habilitado', 'vencido', 'excluido'].includes(t.estado)) {
+    const fuera = t.estado === 'excluido';
+    caja.append(h('div', {class: 'acciones'}, h('button', {class: 'mini sec', type: 'button',
+      onclick: ev => cambiarPersona(x, {excluido: !fuera}, ev.currentTarget, fuera ? 'Volvió al test' : 'Quedó fuera del test')},
+      fuera ? 'Volver a incluir en el test' : 'Sacar del test (no gana la botella)')));
+  }
+  // nota
+  caja.append(h('h4', {}, 'Nota de la oficina'));
+  const ta = h('textarea', {'aria-label': 'Nota'}); ta.value = t.nota_persona || '';
+  const gn = h('button', {class: 'mini sec', type: 'button'}, 'Guardar nota');
+  gn.addEventListener('click', () => cambiarPersona(x, {nota: ta.value}, gn, 'Nota guardada'));
+  caja.append(ta, h('div', {class: 'acciones'}, gn));
+  return caja;
+}
+function sumar(iso, n){ const d = fecha(iso); d.setUTCDate(d.getUTCDate() + Number(n || 0)); return d.toISOString().slice(0, 10); }
+
+async function cambiarPersona(x, cambios, boton, ok){
+  boton.disabled = true;
+  try {
+    x.test = Object.assign({}, x.test, await rpc('ts_admin_persona', {p_token: tokenAdmin(), p_inscrito: x.id, p_cambios: cambios}));
+    aviso(ok);
+    iniciarOficina(true);
+  } catch (e) { boton.disabled = false; aviso(mensaje(e), true); }
+}
+
+/* ----- práctica */
+function vistaPractica(){
+  const boton = h('button', {class: 'boton', type: 'button'}, 'Empezar una práctica');
+  const error = h('p', {class: 'error', role: 'alert'});
+  boton.addEventListener('click', () => practicar(boton, error));
+  return h('section', {class: 'tarjeta'},
+    h('h2', {}, 'Rinde el test como un asesor'),
+    h('p', {}, 'Es el mismo test, armado con la lista de precios, las promociones, las zonas y el Empiece Ya de hoy. No cuenta para nadie ni da premio.'),
+    O.d.practicas ? h('p', {class: 'apoyo'}, `Prácticas hechas: ${O.d.practicas}.`) : null,
+    boton, error);
+}
+async function practicar(boton, error){
+  boton.disabled = true; boton.textContent = 'Preparando…'; error.textContent = '';
+  try {
+    Q.modo = 'practica'; Q.intento = await rpc('ts_admin_practicar', {p_token: tokenAdmin()});
+    pantallaPregunta();
+  } catch (e) { error.textContent = mensaje(e); boton.disabled = false; boton.textContent = 'Empezar una práctica'; }
+}
+
+/* ----- pasos (qué preguntas salen) */
+function vistaPasos(){
+  const d = O.d, plan = new Set(d.plan || []), grupos = [];
+  for (const p of d.pasos || []) {
+    let g = grupos.find(x => x.b === p.bloque);
+    if (!g) { g = {b: p.bloque, n: p.bloque_nombre, l: []}; grupos.push(g); }
+    g.l.push(p);
+  }
+  const cuentasVacias = !((d.config || {}).cuentas || []).length;
+  return h('div', {},
+    h('p', {class: 'apoyo', style: 'margin-top:14px'},
+      `Cada fila es una pregunta del test, en este orden. Hoy salen ${plan.size}. Las de precios, promociones, cuotas, zonas y Empiece Ya se arman solas con lo vigente; las de texto tienen variantes para cuando alguien falla.`),
+    grupos.map(g => h('section', {},
+      h('h3', {class: 'grupo-t'}, g.n),
+      h('ul', {class: 'pasos-b'}, g.l.map(p => {
+        const sw = h('button', {type: 'button', class: 'interruptor', role: 'switch', 'aria-checked': p.activo ? 'true' : 'false',
+          'aria-label': p.titulo, 'data-foco': 'sw-' + p.clave});
+        sw.addEventListener('click', async () => {
+          sw.disabled = true; O.foco = 'sw-' + p.clave;
+          try {
+            await rpc('ts_admin_paso', {p_token: tokenAdmin(), p_clave: p.clave, p_activo: !p.activo});
+            aviso(p.activo ? 'Ya no sale: ' + p.titulo : 'Vuelve a salir: ' + p.titulo);
+            iniciarOficina(true);
+          } catch (e) { sw.disabled = false; aviso(mensaje(e), true); }
+        });
+        let nota = p.variantes ? plural(p.variantes, 'variante', 'variantes') : 'se arma con lo vigente';
+        if (p.clave === 'cuentas' && cuentasVacias) nota = 'sale cuando cargues las cuentas en Ajustes';
+        else if (p.activo && !plan.has(p.clave)) nota += ' · hoy no se puede armar';
+        return h('li', {}, h('span', {class: 't'}, p.titulo, h('span', {class: 'v'}, nota)), sw);
+      })))));
+}
+
+/* ----- ajustes */
+function vistaAjustes(){
+  const c = O.d.config || {};
+  const nota = h('input', {id: 'a-nota', type: 'number', min: 50, max: 100, value: c.nota_minima});
+  const dias = h('input', {id: 'a-dias', type: 'number', min: 1, max: 90, value: c.dias_ventana});
+  const premio = h('input', {id: 'a-premio', type: 'text', value: c.premio || ''});
+  const desde = h('input', {id: 'a-desde', type: 'date', value: c.aplica_desde || ''});
+  const cuentas = (c.cuentas || []).map(x => ({banco: x.banco || '', validos: (x.validos || []).join('\n')}));
+  const recursos = (c.recursos || []).map(x => ({nombre: x.nombre || '', url: x.url || ''}));
+  const cajaC = h('div', {}), cajaR = h('div', {});
+  function pintarCuentas(){
+    cajaC.replaceChildren(...cuentas.map((x, i) => {
+      const b = h('input', {type: 'text', placeholder: 'Banco (p. ej. BCP)', 'aria-label': 'Banco'}); b.value = x.banco;
+      b.addEventListener('input', () => { x.banco = b.value; });
+      const v = h('textarea', {placeholder: 'Números válidos, uno por línea (cuenta y CCI)', 'aria-label': 'Números válidos'}); v.value = x.validos;
+      v.addEventListener('input', () => { x.validos = v.value; });
+      return h('div', {class: 'fila-edit'}, b, v,
+        h('div', {class: 'acciones', style: 'margin-top:0'}, h('button', {class: 'mini sec', type: 'button', onclick: () => { cuentas.splice(i, 1); pintarCuentas(); }}, 'Quitar')));
+    }));
+  }
+  function pintarRecursos(){
+    cajaR.replaceChildren(...recursos.map((x, i) => {
+      const n = h('input', {type: 'text', placeholder: 'Nombre (p. ej. Zonas de crédito)', 'aria-label': 'Nombre del enlace'}); n.value = x.nombre;
+      n.addEventListener('input', () => { x.nombre = n.value; });
+      const u = h('input', {type: 'url', placeholder: 'https://…', 'aria-label': 'Dirección del enlace'}); u.value = x.url;
+      u.addEventListener('input', () => { x.url = u.value; });
+      return h('div', {class: 'fila-edit'}, n, u,
+        h('div', {class: 'acciones', style: 'margin-top:0'}, h('button', {class: 'mini sec', type: 'button', onclick: () => { recursos.splice(i, 1); pintarRecursos(); }}, 'Quitar')));
+    }));
+  }
+  pintarCuentas(); pintarRecursos();
+  const error = h('p', {class: 'error', role: 'alert'});
+  const boton = h('button', {class: 'boton', type: 'button'}, 'Guardar ajustes');
+  boton.addEventListener('click', async () => {
+    error.textContent = '';
+    const n = Number(nota.value), dd = Number(dias.value);
+    if (!(n >= 50 && n <= 100)) { error.textContent = 'La nota mínima va de 50 a 100.'; return; }
+    if (!(dd >= 1 && dd <= 90)) { error.textContent = 'Los días van de 1 a 90.'; return; }
+    const cs = cuentas.map(x => ({banco: x.banco.trim(), validos: x.validos.split(/\n+/).map(s => s.replace(/\D/g, '')).filter(s => s.length >= 6)}))
+      .filter(x => x.banco && x.validos.length);
+    const rs = recursos.map(x => ({nombre: x.nombre.trim(), url: x.url.trim()})).filter(x => /^https?:\/\//i.test(x.url));
+    boton.disabled = true; boton.textContent = 'Guardando…';
+    try {
+      O.d.config = await rpc('ts_admin_config', {p_token: tokenAdmin(), p_cambios: {
+        nota_minima: n, dias_ventana: dd, premio: premio.value, aplica_desde: desde.value || null, cuentas: cs, recursos: rs}});
+      aviso('Ajustes guardados');
+      iniciarOficina(true);
+    } catch (e) { error.textContent = mensaje(e); boton.disabled = false; boton.textContent = 'Guardar ajustes'; }
+  });
+  return h('div', {},
+    h('label', {for: 'a-nota'}, 'Nota para aprobar'), nota,
+    h('p', {class: 'apoyo chico', style: 'margin-top:6px'}, 'Nota = preguntas ÷ respuestas × 100. Con 32 preguntas, 3 errores dan 91 y 4 errores, 89.'),
+    h('label', {for: 'a-dias'}, 'Días para rendirlo (desde su 5.ª clase)'), dias,
+    h('label', {for: 'a-premio'}, 'Premio al aprobar'), premio,
+    h('label', {for: 'a-desde'}, 'Aplica a quien completa sus clases desde'), desde,
+    h('p', {class: 'apoyo chico', style: 'margin-top:6px'}, 'Quien las completó antes no rinde test.'),
+    h('h2', {}, 'Cuentas de Rena Ware'),
+    h('p', {class: 'apoyo chico'}, 'Para la pregunta en que el asesor escribe los números de cuenta. Sin cuentas, esa pregunta no sale.'),
+    cajaC,
+    h('div', {class: 'acciones'}, h('button', {class: 'mini sec', type: 'button', onclick: () => { cuentas.push({banco: '', validos: ''}); pintarCuentas(); }}, 'Agregar cuenta')),
+    h('h2', {}, 'Enlaces para consultar'),
+    h('p', {class: 'apoyo chico'}, 'El asesor los ve antes de empezar: el test es a libro abierto.'),
+    cajaR,
+    h('div', {class: 'acciones'}, h('button', {class: 'mini sec', type: 'button', onclick: () => { recursos.push({nombre: '', url: ''}); pintarRecursos(); }}, 'Agregar enlace')),
+    boton, error);
+}
+
+arrancar();
+</script>
+</body>
+</html>

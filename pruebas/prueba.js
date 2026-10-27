@@ -14,7 +14,10 @@ const MODS = [
   {id:'importar-pedidos',nombre:'Subir reporte de Rena Ware',descripcion:'Carga.',url:'#importar',roles:['admin','asistente'],orden:5,acceso:'libre'},
   {id:'equipo',nombre:'Premios',descripcion:'Premios.',url:'https://panel-equipo.pages.dev',roles:['admin','asistente'],orden:7,acceso:'supabase'},
   {id:'empiece-ya',nombre:'Ganadores Empiece Ya',descripcion:'Ganadores.',url:'https://empiece-ya.nelson1614.workers.dev',roles:['admin','asistente'],orden:8,acceso:'libre'},
-  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:12,acceso:'supabase'}];
+  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:12,acceso:'supabase'},
+  {id:'test',nombre:'Test del Nivel 0',descripcion:'Test.',url:'https://renaware-plataforma.nelson1614.workers.dev/test/',roles:['admin','asistente','asesor'],orden:13,acceso:'asesor'}];
+// Lo que devuelve ts_estado al asesor (null = no responde, como hoy en las pruebas viejas)
+let TEST = null;
 const HOY = {rol:'admin', nombre:'Nelson Portugal Román',
   periodo:{numero:22,inicio:'2026-10-15',fin:'2026-10-28',hoy:'2026-10-21'}, oficial:{pb:19,puntos:5684,pedidos:14},
   items:[
@@ -46,6 +49,7 @@ function crear(prep){
         if (u.startsWith('/rest/v1/rpc/hoy')) return auth.includes('jwt-') ? r(HOY) : r({message:'JWT expired'}, 401);
         if (u.startsWith('/rest/v1/plataforma_modulos')) return r(auth.includes('jwt-') ? MODS : MODS.filter(m => m.roles.includes('asesor')));
         if (u.startsWith('/rest/v1/rpc/asesor_login')) return b.p_celular === '987654321' ? r({token:'tok-1', nombre:ASESOR.nombre, celular:'987654321'}) : r({message:'Ese numero no esta habilitado'}, 400);
+        if (u.startsWith('/rest/v1/rpc/ts_estado')) return TEST ? r(TEST) : r({message:'sin mock'}, 404);
         if (u.startsWith('/rest/v1/rpc/asesor_inicio')) return b.p_token === 'tok-1' ? r(ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')) return b.p_token === 'tok-1' ? r(CODIGO) : r({message:'Tu sesión venció.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear')) return auth.includes('jwt-') ? r(CODIGO) : r({message:'JWT expired'}, 401);
@@ -70,7 +74,7 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   ok(d.querySelectorAll('.lista .item').length === 3, 'Muestra los pendientes de Hoy');
   const grupos = [...d.querySelectorAll('h3.grupo')].map(x => x.textContent);
   ok(grupos.join('|') === 'Ventas|Equipo|Oficina', 'Módulos agrupados en Ventas, Equipo y Oficina (' + grupos.join(', ') + ')');
-  ok(d.querySelectorAll('.mod').length === 7, 'El admin ve sus 7 módulos');
+  ok(d.querySelectorAll('.mod').length === 8, 'El admin ve sus 8 módulos (con el Test del Nivel 0 en Equipo)');
 
   // Módulo con traspaso: crea código y navega con #traspaso
   const premios = [...d.querySelectorAll('a.mod')].find(a => a.textContent.includes('Premios'));
@@ -114,6 +118,27 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   const crear2 = llamadas.filter(c => c.u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')).pop();
   ok(crear2 && JSON.parse(crear2.opts.body).p_token === 'tok-1', 'Crea el código con el token del asesor');
   ok(idas[0] === 'https://renaware-peru.nelson1614.workers.dev#traspaso=' + CODIGO, 'Abre precios con traspaso de asesor');
+  ok(!d.querySelector('.aviso-test'), 'Asesor fuera del Nivel Cero: sin aviso ni módulo del test');
+
+  // ---- Asesor nuevo con el test habilitado: aviso arriba y módulo ----
+  TEST = {nombre: 'ELENA', estado: 'habilitado', intento: null,
+    ventana: {estado: 'habilitado', hasta: '2026-11-11', dias: 2, botella: null}};
+  ({w, d, llamadas, idas} = crear());
+  await espera(60);
+  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
+  const av = d.querySelector('.aviso-test');
+  ok(av && av.textContent.includes('Tu test del Nivel 0 está habilitado') && av.textContent.includes('te quedan 2 días'), 'Aviso del test habilitado con sus días');
+  ok(d.querySelectorAll('.mod').length === 2 && [...d.querySelectorAll('.mod')].some(a => a.textContent.includes('Test del Nivel 0')), 'Ve el módulo del test');
+  av.querySelector('a.abrir').click(); await espera(120);
+  ok(idas[0] === 'https://renaware-plataforma.nelson1614.workers.dev/test/#traspaso=' + CODIGO, 'El aviso abre el test con traspaso');
+
+  // ---- Aprobó: su botella lo espera ----
+  TEST = {nombre: 'ELENA', estado: 'aprobado', ventana: {estado: 'aprobado', nota: 94, botella: 'por_entregar'}};
+  ({w, d, llamadas, idas} = crear());
+  await espera(60);
+  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
+  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Aprobaste tu test del Nivel 0 con 94'), 'Aprobó: aviso de la botella por recoger');
+  TEST = null;
 
   console.log(fallas ? `\n${fallas} PRUEBA(S) FALLARON` : '\nTODAS LAS PRUEBAS PASARON');
   process.exit(fallas ? 1 : 0);

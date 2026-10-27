@@ -8,11 +8,20 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 - `public/index.html` — el hub: acceso único, pantalla **Hoy** (lo que hay que
   atender, ordenado por urgencia), módulos por grupo, carga del reporte de
   pedidos (`#importar`) y conciliación con Rena Ware (`#conciliar`).
+- `public/test/index.html` — el **Test del Nivel 0** (`/test/`): el asesor lo
+  rinde y la oficina ve resultados, prueba el test, apaga preguntas y ajusta
+  (`/test/#oficina`). Ver más abajo.
 - `public/_headers`, `public/404.html` — configuración.
 - `wrangler.toml` — dice que el sitio son los archivos de `public/`.
 - `sql/` — copia de las migraciones de la base aplicadas desde este chat (las demás están en el historial de Supabase).
 - `supabase/functions/traspaso/` — la Edge Function que canjea los códigos de traspaso.
 - `pruebas/prueba.js` — pruebas del hub con un Supabase simulado (`node pruebas/prueba.js`, necesita `npm install jsdom`).
+- `pruebas/prueba_test.js` — pruebas del test (`node pruebas/prueba_test.js`), con
+  `pruebas/simulador_test.js` (el Supabase simulado del test). `pruebas/capturas_test.js
+  <carpeta>` saca capturas en un celular con Chromium (necesita playwright).
+- `sql/pruebas/test_nivel0_simulacion.sql` — simulación completa en la base real:
+  inscrito de prueba con 5 clases, rinde con 2 errores, premio, sincronías. Termina
+  con un error a propósito para que todo se deshaga.
 
 ## Cómo se publica
 
@@ -57,3 +66,40 @@ Las reglas viven en la base, no en la página:
 
 El motor de concursos de agosto quedó apagado (sus disparadores están
 deshabilitados; migración `archivar_motor_agosto_sin_drop`). Premios (`pr_*`) lo reemplaza.
+
+## Test del Nivel 0 (`/test/`)
+
+Quien completa sus **5 clases** del Nivel Cero tiene **15 días** (desde su 5.ª
+clase) para aprobar un test con **90 o más**. Al aprobar, su **botella de acero**
+entra a Premios (`pr_premios`, programa «Nivel Cero», nivel «Nivel 0») como
+recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
+
+- **Mecánica** (la del quiz anterior): una pregunta por pantalla, 5 opciones; si
+  falla, se le explica dónde encontrar la respuesta (sin decírsela) y sale otra
+  del mismo tema hasta acertar. Nota = preguntas ÷ respuestas × 100. Intentos
+  ilimitados dentro del plazo; si cierra la página, sigue donde quedó.
+- **Contenido**: 33 pasos en 7 bloques (`ts_pasos`): productos y precios,
+  inicial/saldo/cuotas, crédito y zonas, cuentas y pagos, Empiece Ya, comisiones
+  y autocompra, frase de oro y objeciones. Precios, promociones (con su foto y
+  regalo), cuotas, zonas y Empiece Ya se arman en vivo (`ts_generar`) con la lista
+  vigente, `reglas_credito`/`factores_credito`, `zc_*` y el Empiece Ya de Premios
+  (`pr_catalogo`) que le toca por su fecha de ingreso. Las de texto viven en
+  `ts_banco`, con variantes. La de cuentas sale cuando se cargan en Ajustes.
+- **Entrar**: el asesor con su celular. Si ya está en el equipo, entra con la
+  sesión de la plataforma (`rw_asesor_token`); si es nuevo y aún no figura, basta
+  con estar inscrito en el Nivel Cero (`ts_login` da una sesión solo para el test,
+  `rw_test_token`). La oficina llega desde la plataforma (traspaso) o con la clave
+  de admin.
+- **Sin premios repetidos**: si su Empiece Ya (que trae botella) ya se entregó, la
+  botella del Nivel 0 se cierra sola («Se entregó junto con su Empiece Ya»); si la
+  del Nivel 0 se entregó primero, su Empiece Ya pendiente queda con la nota
+  «Entregar sin botella». Lo que se marque entregado en Premios se ve en Nivel
+  Cero y al revés (disparadores `trg_ts_premios` y `trg_ts_n0_estado`). Cron
+  diario `ts_sync_diario` (06:07 de Lima) por si llega el código o el Empiece Ya después.
+- **Datos**: `ts_config` (nota, días, premio, desde cuándo aplica, cuentas,
+  enlaces de consulta), `ts_pasos`, `ts_banco`, `ts_personas` (plazo corregido o
+  fuera del test), `ts_intentos`. Funciones web: `ts_login`, `ts_estado`,
+  `ts_iniciar`, `ts_responder` (asesor) y `ts_admin_*` (oficina). El estado del
+  test de cada inscrito viaja en `n0_inscritos_json` (llave `test`), que leen
+  Nivel Cero y Bienvenida. En «Hoy» aparece quien tiene el test por vencer.
+- SQL en `sql/20261027_test_0*.sql`.

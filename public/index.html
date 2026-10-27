@@ -126,6 +126,8 @@
   .mini.secundario{background:transparent;color:var(--acero-2);border-color:var(--borde)}
   .mini:disabled{opacity:.6;cursor:default}
   .aviso-ok{color:var(--ok);font-weight:700;margin-top:14px}
+  /* Test del Nivel 0 en el inicio del asesor */
+  .aviso-test{margin-top:18px}
 </style>
 </head>
 <body>
@@ -330,7 +332,7 @@ function tarjetaModulo(m){
 function listaModulos(mods){
   if (!mods.length) return h('p', {class: 'apoyo'}, 'Aún no tienes módulos asignados.');
   const GRUPO = {cotizador: 'Ventas', registro: 'Ventas', 'admin-registros': 'Ventas', pedidos: 'Ventas', 'importar-pedidos': 'Ventas', conciliar: 'Ventas',
-    premios: 'Equipo', equipo: 'Equipo', 'empiece-ya': 'Equipo', 'nivel-cero': 'Equipo', bienvenida: 'Equipo',
+    premios: 'Equipo', equipo: 'Equipo', 'empiece-ya': 'Equipo', 'nivel-cero': 'Equipo', bienvenida: 'Equipo', test: 'Equipo',
     reparaciones: 'Oficina', facturacion: 'Oficina'};
   const grupos = [];
   for (const m of mods) {
@@ -430,25 +432,49 @@ async function inicioEquipo(s){
 
 async function inicioAsesor(tok){
   pintar(cargando());
-  let d, mods;
+  let d, mods, test;
   try {
-    [d, mods] = await Promise.all([
+    [d, mods, test] = await Promise.all([
       api('/rest/v1/rpc/asesor_inicio', {method: 'POST', body: {p_token: tok}}),
-      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden')
+      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden'),
+      api('/rest/v1/rpc/ts_estado', {method: 'POST', body: {p_token: tok}}).catch(() => null)   // el test no frena el inicio
     ]);
   } catch (e) {
     if (/venció|vencio/i.test(e.message)) { borrar(K_ASESOR); return pantallaAcceso(mensaje(e)); }
     return pantallaError(mensaje(e), () => iniciar());
   }
-  const propios = (mods || []).filter(m => (m.roles || []).includes('asesor'));
+  let propios = (mods || []).filter(m => (m.roles || []).includes('asesor'));
+  // El test del Nivel 0 es solo para los nuevos que están en el Nivel Cero
+  if (!test || !test.estado || test.estado === 'no_inscrito') propios = propios.filter(m => m.id !== 'test');
   const nombre = primerNombre(d.nombre);
   pintar(barra(), h('main', {},
     h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
+    avisoTest(test, propios.find(m => m.id === 'test')),
     bloquePeriodo(d.periodo),
     h('h2', {}, 'Tus puntos según Rena Ware'),
     puntosAsesor(d.puntos || []),
     h('h2', {}, 'Accesos'),
     listaModulos(propios)));
+}
+
+/* Aviso del Test del Nivel 0: con el test abierto (o la botella ganada) va arriba de todo */
+function avisoTest(t, m){
+  const w = t && t.ventana;
+  if (!w) return null;
+  if (t.estado === 'habilitado') {
+    const resta = w.dias <= 0 ? 'hoy es el último día' : w.dias === 1 ? 'te queda 1 día' : `te quedan ${w.dias} días`;
+    const texto = t.intento ? 'Continuar mi test' : 'Rendir mi test';
+    return h('section', {class: 'item medio aviso-test'},
+      h('h3', {}, t.intento ? 'Termina tu test del Nivel 0' : 'Tu test del Nivel 0 está habilitado'),
+      h('p', {}, `Apruébalo y ganas tu botella de acero. Tienes hasta el ${largo(w.hasta)}: ${resta}.`),
+      m ? enlaceModulo(m, {class: 'abrir'}, texto) : h('a', {class: 'abrir', href: '/test/'}, texto));
+  }
+  if (t.estado === 'aprobado' && w.botella === 'por_entregar') {
+    return h('section', {class: 'item aviso-test'},
+      h('h3', {}, 'Tu botella de acero te espera'),
+      h('p', {}, `Aprobaste tu test del Nivel 0 con ${w.nota}. Pasa a recogerla a la oficina.`));
+  }
+  return null;
 }
 
 /* ---------- importador del reporte de pedidos de Rena Ware ---------- */
