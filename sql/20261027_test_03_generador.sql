@@ -473,7 +473,7 @@ begin
     o := ts_opc_soles(corr, array[ts_cuota(g.precio, 12, pct, rg), (g.precio - v_ini) / 12.0, g.precio / 12.0, v_ini]);
     return ts_q(p_paso, format('Si el cliente da %s de inicial (el 20 %%), ¿cuánto sería la cuota en 12 cuotas?', ts_soles(v_ini)),
       o -> 'correctas', o -> 'incorrectas',
-      'Para una inicial mayor usa la calculadora: ingresa el precio del producto, la inicial (el monto del 20 %) y 12 cuotas. El resultado es la cuota.',
+      'En Precios y promociones abre el producto, entra a «Crédito», escribe esa inicial en lugar de la mínima y lee la cuota a 12 meses.',
       jsonb_build_object('foto', g.foto, 'sub', g.nombre, 'usa', jsonb_build_array(g.codigo)));
   end if;
 
