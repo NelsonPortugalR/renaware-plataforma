@@ -20,8 +20,9 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
   `pruebas/simulador_test.js` (el Supabase simulado del test). `pruebas/capturas_test.js
   <carpeta>` saca capturas en un celular con Chromium (necesita playwright).
 - `sql/pruebas/test_nivel0_simulacion.sql` — simulación completa en la base real:
-  inscrito de prueba con 5 clases, rinde con 2 errores, premio, sincronías. Termina
-  con un error a propósito para que todo se deshaga.
+  inscrito de prueba con 5 clases, rinde con 2 errores, premio, sincronías (también
+  al deshacer entregas), entrada solo con el Nivel Cero, doble inicio, anulación y
+  número bloqueado. Termina con un error a propósito para que todo se deshaga.
 
 ## Cómo se publica
 
@@ -77,7 +78,12 @@ recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
 - **Mecánica** (la del quiz anterior): una pregunta por pantalla, 5 opciones; si
   falla, se le explica dónde encontrar la respuesta (sin decírsela) y sale otra
   del mismo tema hasta acertar. Nota = preguntas ÷ respuestas × 100. Intentos
-  ilimitados dentro del plazo; si cierra la página, sigue donde quedó.
+  ilimitados dentro del plazo; si cierra la página, sigue donde quedó. Un solo
+  intento abierto a la vez (índice `ts_intentos_uno_abierto`); si una pregunta no
+  se puede armar con la data del día, ese paso sale del intento (`ts_generar_seguro`).
+- **Que la correcta no se note**: en los montos (`ts_opc_soles`) la correcta cae en
+  cualquier lugar de menor a mayor; en los textos no es la más larga ni la más
+  corta; las de «marca todas» muestran una mezcla distinta en cada reintento.
 - **Contenido**: 33 pasos en 7 bloques (`ts_pasos`): productos y precios,
   inicial/saldo/cuotas, crédito y zonas, cuentas y pagos, Empiece Ya, comisiones
   y autocompra, frase de oro y objeciones. Precios, promociones (con su foto y
@@ -93,13 +99,16 @@ recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
 - **Sin premios repetidos**: si su Empiece Ya (que trae botella) ya se entregó, la
   botella del Nivel 0 se cierra sola («Se entregó junto con su Empiece Ya»); si la
   del Nivel 0 se entregó primero, su Empiece Ya pendiente queda con la nota
-  «Entregar sin botella». Lo que se marque entregado en Premios se ve en Nivel
-  Cero y al revés (disparadores `trg_ts_premios` y `trg_ts_n0_estado`). Cron
-  diario `ts_sync_diario` (06:07 de Lima) por si llega el código o el Empiece Ya después.
+  «Entregar sin botella» (también el que se carga después, al instante). Si se
+  deshace una entrega, el cruce se deshace. Solo cuenta el Empiece Ya de su
+  ingreso. Lo que se marque entregado en Premios se ve en Nivel Cero y al revés
+  (disparadores `trg_ts_premios` y `trg_ts_n0_estado`). Cron diario
+  `ts_sync_diario` (06:07 de Lima) como respaldo.
 - **Datos**: `ts_config` (nota, días, premio, desde cuándo aplica, cuentas,
   enlaces de consulta), `ts_pasos`, `ts_banco`, `ts_personas` (plazo corregido o
   fuera del test), `ts_intentos`. Funciones web: `ts_login`, `ts_estado`,
   `ts_iniciar`, `ts_responder` (asesor) y `ts_admin_*` (oficina). El estado del
   test de cada inscrito viaja en `n0_inscritos_json` (llave `test`), que leen
   Nivel Cero y Bienvenida. En «Hoy» aparece quien tiene el test por vencer.
-- SQL en `sql/20261027_test_0*.sql`.
+- SQL en `sql/20261027_test_*.sql` (el `10_revision` trae los ajustes tras la
+  revisión independiente y reemplaza las versiones anteriores de esas funciones).

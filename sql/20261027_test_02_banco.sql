@@ -4,6 +4,8 @@
 -- Empiece Ya, comisiones y objeciones, de las indicaciones de Nelson.
 -- La correcta no puede destacar por su largo (ni la más larga ni la más corta)
 -- y la lógica guía dónde buscar sin dar la respuesta.
+-- Las de «marca todas» tienen más inválidas que las que se muestran, para que
+-- el reintento no sea la misma pregunta. Dos versiones por paso donde se pudo.
 -- Se reescribe con "on conflict do update" para poder corregir textos.
 -- =====================================================================
 
@@ -13,7 +15,12 @@ insert into public.ts_banco (id, paso, texto, correctas, incorrectas, n_incorrec
 ('medios_inicial_1', 'medios_inicial',
  '¿Por qué medios puede el cliente entregar la inicial? (marca todas las respuestas válidas)',
  '["Yape a tu número (luego lo depositas a Rena Ware)", "Te lo entrega en efectivo", "Transferencia a las cuentas de Rena Ware", "Tarjeta, con un link de pago que pides a tu líder"]',
- '["Cheque a fecha, que se cobra después", "Pagaré firmado por el cliente", "Criptomonedas a la billetera de la oficina"]', 1,
+ '["Cheque a fecha, que se cobra después", "Pagaré firmado por el cliente", "Criptomonedas a una billetera digital de la oficina", "Recién cuando le llegue su pedido", "Queda pendiente para tu próxima visita"]', 1,
+ 'La inicial se cobra en el momento: vale todo lo que llega en el acto, a ti o a las cuentas de Rena Ware. Lo que se cobraría después o por fuera del sistema, no vale.'),
+('medios_inicial_2', 'medios_inicial',
+ 'Tu cliente quiere dar su inicial hoy mismo. ¿Cómo te la puede entregar? (marca todas las respuestas válidas)',
+ '["En efectivo, que te entrega a ti", "Por Yape a tu número (tú lo depositas)", "Transferencia a las cuentas de Rena Ware", "Con tarjeta, por el link de pago de tu líder"]',
+ '["Con un cheque a fecha, para cobrarlo después", "Con un pagaré firmado", "Pagándola recién cuando le llegue el pedido", "Dejándola pendiente para tu próxima visita", "Con criptomonedas, a una billetera digital"]', 1,
  'La inicial se cobra en el momento: vale todo lo que llega en el acto, a ti o a las cuentas de Rena Ware. Lo que se cobraría después o por fuera del sistema, no vale.'),
 ('prepago_1', 'prepago',
  '¿El cliente puede adelantar el pago de su crédito?',
@@ -42,7 +49,12 @@ insert into public.ts_banco (id, paso, texto, correctas, incorrectas, n_incorrec
 ('medios_saldo_1', 'medios_saldo',
  'Al pagar el saldo contra entrega, ¿qué medios puede usar el cliente? (marca todas las respuestas válidas)',
  '["Efectivo al entregador", "Tarjeta (el entregador lleva POS)", "Transferencia a Rena Ware y mostrar el voucher", "Yape al entregador (si el monto no es alto)"]',
- '["Cheque al entregador, para cobrarlo después", "Con el número de contrato de otro cliente", "Un pagaré que el entregador cobra después"]', 1,
+ '["Cheque al entregador, para cobrarlo después", "Con el número de contrato de otro cliente", "Un pagaré que el entregador cobra después", "Pagándote a ti la semana siguiente", "Dejando su DNI en garantía hasta pagar"]', 1,
+ 'El saldo se paga al recibir el pedido: vale lo que se cobra en ese momento, al entregador o a Rena Ware con su comprobante. Lo que se cobraría después, o no es del cliente, no vale.'),
+('medios_saldo_2', 'medios_saldo',
+ 'Tu cliente compró al contado y hoy le llega su pedido. ¿Cómo puede pagar su saldo? (marca todas las respuestas válidas)',
+ '["En efectivo, al entregador", "Con tarjeta, en el POS del entregador", "Transferencia a Rena Ware, con su voucher", "Yape al entregador, si el monto no es alto"]',
+ '["Con un cheque, para que lo cobren después", "Con el número de contrato de un familiar", "Con un pagaré que se cobra a fin de mes", "Pagándote a ti la próxima semana", "Con vales de consumo de un supermercado"]', 1,
  'El saldo se paga al recibir el pedido: vale lo que se cobra en ese momento, al entregador o a Rena Ware con su comprobante. Lo que se cobraría después, o no es del cliente, no vale.'),
 ('pago_cuotas_1', 'pago_cuotas',
  'Si el cliente compró en cuotas, ¿cómo paga la cuota mensual?',
@@ -92,12 +104,12 @@ insert into public.ts_banco (id, paso, texto, correctas, incorrectas, n_incorrec
  '¿Qué pasa cuando te autocompras (compras para ti o tu familia)?',
  '["Te descuentan tu comisión × 1.18: te sale más barato y los puntos suman para tus premios"]',
  '["Pagas el precio normal de cliente y la comisión te la depositan recién al mes siguiente", "Te sale más barato, pero esos puntos ya no cuentan para tus premios ni para tu Empiece Ya", "No se puede: la comisión solo se gana vendiéndole a otras personas", "Te descuentan el 15 % del precio de lista, pero esa compra no te suma ningún punto"]', 4,
- 'Tu comisión sale del valor comisionable del cuadro de comisiones. En la autocompra esa comisión, con IGV, se descuenta del precio. Piensa también si esa compra cuenta para tus premios.'),
+ 'Abre un producto en Precios y promociones y entra a «Precio Autocompra»: compara «Menos tu descuento» con tu comisión de ese producto, y fíjate qué dice de los puntos.'),
 ('auto_que_2', 'auto_que',
  '¿Cómo se calcula tu precio de autocompra?',
  '["Precio de cliente menos tu comisión por 1.18"]',
  '["Precio de cliente menos el 15 % del precio", "Precio de cliente menos el 10 % del precio", "Es el mismo precio que paga cualquier cliente", "Precio de cliente menos los S/ 70 de tu afiliación"]', 4,
- 'Tu comisión sale del valor comisionable del cuadro de comisiones. En la autocompra esa comisión, con IGV, se descuenta del precio de cliente.'),
+ 'Abre un producto en Precios y promociones y entra a «Precio Autocompra»: compara «Menos tu descuento» con tu comisión de ese producto, la del cuadro de comisiones.'),
 
 -- ---------------- Frase de oro y objeciones ----------------
 ('frase_oro_1', 'frase_oro',
@@ -114,6 +126,11 @@ insert into public.ts_banco (id, paso, texto, correctas, incorrectas, n_incorrec
  '¿Cuáles son las 3 objeciones que más te van a decir al sacar una cita?',
  '["«Es caro», «Ya tengo» y «Se me quema todo / necesito un repuesto»"]',
  '["«No me gusta el acero», «No cocino mucho» y «Vivo muy lejos de aquí»", "«No tengo tiempo», «No conozco la marca» y «No uso ollas»", "«Mi esposo decide», «Ya compré otra marca» y «No me gustan las visitas»", "Ninguna: si la frase de oro es buena, nadie pone objeciones"]', 4,
+ 'Piensa en lo que más te dicen al invitar a ver la demostración: una tiene que ver con el precio, otra con que ya lo tienen y otra con un problema de su equipo.'),
+('objeciones_3_2', 'objeciones_3',
+ 'Al invitar a alguien a ver la demostración, ¿qué 3 respuestas vas a escuchar más?',
+ '["«Es muy caro», «Ya tengo Rena Ware» y «Necesito un repuesto»"]',
+ '["«No me gusta el acero», «Cocino poco» y «Vivo lejos»", "«No tengo tiempo», «No conozco la marca» y «No uso ollas»", "«Mi esposo decide», «Compré otra marca» y «No recibo visitas»", "«Llámame otro día», «Estoy ocupada» y «Mándame fotos por WhatsApp»"]', 4,
  'Piensa en lo que más te dicen al invitar a ver la demostración: una tiene que ver con el precio, otra con que ya lo tienen y otra con un problema de su equipo.'),
 ('obj_caro_1', 'obj_caro',
  'Te dicen: «Es caro». ¿Qué respondes?',

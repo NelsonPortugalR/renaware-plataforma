@@ -6,7 +6,7 @@ const CODIGO_STAFF = '99999999-2222-4333-8444-555555555555';
 function servidor(cfg = {}){
   const S = {
     estado: cfg.estado || 'habilitado', qn: 0, intento: null, historial: [], plan: cfg.plan || ['identificar', 'precio_general', 'medios_inicial', 'cuentas'],
-    tokens: new Set(['tok-hub', 'tok-test']), admin: new Set(['adm-1']), pasosActivos: {}, practicas: 0, llamadas: []
+    tokens: new Set(['tok-hub', 'tok-test']), admin: new Set(['adm-1']), pasosActivos: {}, practicas: 0, llamadas: [], anulados: new Set()
   };
   const BLOQUE = {identificar: 'productos', precio_general: 'productos', medios_inicial: 'credito', cuentas: 'pagos'};
   const NOMBRE = {productos: 'Productos y precios', credito: 'Inicial, saldo y cuotas', pagos: 'Cuentas y pagos'};
@@ -69,7 +69,7 @@ function servidor(cfg = {}){
     botella: S.estado === 'aprobado' ? 'por_entregar' : null, botella_entregada_en: null, hasta_editado: false,
     clases: {validas: S.estado === 'clases' ? 3 : 5, meta: 5, vence: '2026-11-14', estado: S.estado === 'clases' ? 'en_curso' : 'logro'}});
   const config = {nota_minima: 90, dias_ventana: 15, premio: 'Botella de acero inoxidable', pasos: 4,
-    recursos: [{nombre: 'Precios y promociones', url: 'https://renaware-peru.nelson1614.workers.dev'}]};
+    recursos: cfg.recursos || [{nombre: 'Precios y promociones', url: 'https://renaware-peru.nelson1614.workers.dev'}]};
   const PERSONAS = [
     {id: 'p1', nombre: 'FLEY ELVIS MEDINA SOTO', celular: '900947503', codigo: null, afiliador: 'Benilda Medina', inicio: '2026-10-15',
      logro_fecha: '2026-10-27', validas: 5, estado_n0: 'logro',
@@ -99,8 +99,10 @@ function servidor(cfg = {}){
     }
     switch (rpc) {
       case 'ts_login':
-        if (b.p_celular === '900947503') return {d: {token: 'tok-test', nombre: 'FLEY ELVIS MEDINA SOTO', celular: '900947503', alcance: 'test'}};
-        if (b.p_celular === '987654321') return {d: {token: 'tok-hub', nombre: 'Elena', celular: '987654321', alcance: 'plataforma'}};
+        // como la base: no devuelve el nombre (no se puede averiguar de quién es un número)
+        if (b.p_celular === '900947503') return {d: {token: 'tok-test', celular: '900947503', alcance: 'test'}};
+        if (b.p_celular === '987654321') return {d: {token: 'tok-hub', celular: '987654321', alcance: 'plataforma'}};
+        if (b.p_celular === '900000000') return error('Ese número está bloqueado. Habla con tu líder.');
         return error('No encontramos tu inscripción en el Nivel Cero con ese número. Avísale a tu líder.');
       case 'admin_login': return b.p_clave === 'clave' ? {d: 'adm-1'} : error('Clave incorrecta');
       case 'ts_estado':
@@ -114,6 +116,7 @@ function servidor(cfg = {}){
         return {d: vista(S.intento)};
       case 'ts_responder':
         if (!asesorOk(b.p_token)) return error('Tu sesión venció. Vuelve a entrar con tu celular.');
+        if (S.anulados.has(b.p_intento)) return error('Ese intento se anuló. Vuelve a empezar tu test.');
         if (!S.intento || S.intento.id !== b.p_intento) return error('Ese test no es tuyo.');
         return {d: responder(S.intento, b.p_pregunta, b.p_respuesta)};
       case 'ts_admin_datos': return S.admin.has(b.p_token) ? {d: admDatos()} : error('Sesion invalida');
@@ -124,7 +127,10 @@ function servidor(cfg = {}){
                                                                 {paso: 'precio_general', titulo: 'Precio en la lista general', bloque: 'Productos y precios', ok: true}]}};
       case 'ts_admin_practicar': S.practicas++; S.practica = nuevo('oficina'); return {d: vista(S.practica)};
       case 'ts_admin_responder': return {d: responder(S.practica, b.p_pregunta, b.p_respuesta)};
-      case 'ts_admin_anular': return {d: null};
+      case 'ts_admin_anular':
+        S.anulados.add(b.p_intento);
+        if (S.intento && S.intento.id === b.p_intento) S.intento = null;
+        return {d: null};
       case 'traspaso_crear': return (headers.Authorization || '').includes('jwt-') ? {d: CODIGO_STAFF} : error('JWT expired', 401);
     }
     return {st: 404, d: {message: 'sin mock ' + u}};

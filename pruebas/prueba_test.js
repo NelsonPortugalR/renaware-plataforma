@@ -122,6 +122,36 @@ const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn)
   ok(texto(d).includes('¡Aprobaste tu test con 100! 🏆') && texto(d).includes('te espera en la oficina'), 'Estado aprobado: botella por recoger');
   ok(texto(d).includes('Tus intentos') && d.querySelectorAll('.historial li').length === 2, 'Historial con sus 2 intentos');
 
+  // ---------- 3b. La oficina anula el intento mientras responde: vuelve a su estado con el aviso ----------
+  {
+    const s3 = servidor();
+    const c3 = crear({srv: s3, prep: x => x.localStorage.setItem('rw_test_token', JSON.stringify('tok-test'))});
+    await espera(50);
+    boton(c3.d, 'Empezar el test').click(); await espera(60);
+    await s3.manejar('/rest/v1/rpc/ts_admin_anular', {p_token: 'adm-1', p_intento: s3.S.intento.id}, {});
+    const sl = c3.d.querySelectorAll('.par select'); elegir(c3.w, sl[0], 'n2'); elegir(c3.w, sl[1], 'n1');
+    boton(c3.d, 'Responder').click(); await espera(80);
+    ok(c3.d.getElementById('toast').textContent.includes('Ese intento se anuló') && boton(c3.d, 'Empezar el test'),
+      'Intento anulado por la oficina: avisa y vuelve a su estado para empezar de nuevo');
+  }
+
+  // ---------- 3c. Enlaces de consulta: solo los http(s) ----------
+  {
+    const s4 = servidor({recursos: [{nombre: 'Malo', url: 'javascript:alert(1)'}, {nombre: 'Bueno', url: 'https://bien.example'}]});
+    const c4 = crear({srv: s4, prep: x => x.localStorage.setItem('rw_test_token', JSON.stringify('tok-test'))});
+    await espera(50);
+    const as = c4.d.querySelectorAll('.recursos a');
+    ok(as.length === 1 && as[0].textContent === 'Bueno', 'Enlaces de consulta: no muestra los que no son http(s)');
+  }
+
+  // ---------- 3d. Número bloqueado ----------
+  {
+    const c5 = crear();
+    await espera(40);
+    escribir(c5.w, c5.d.getElementById('cel'), '900000000'); enviar(c5.w, c5.d); await espera(60);
+    ok(texto(c5.d).includes('Ese número está bloqueado') && !c5.w.localStorage.getItem('rw_test_token'), 'Número bloqueado: no entra');
+  }
+
   // ---------- 4. Llega desde la plataforma con #traspaso y test a medias ----------
   const srv2 = servidor();
   srv2.S.intento = (() => { const it = {id: 'int-x', origen: 'asesor', plan: srv2.S.plan.slice(), idx: 1, intentos: 1, aciertos: 1, q: null, fin: null}; return it; })();
@@ -170,6 +200,11 @@ const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn)
   ok(d.querySelectorAll('.respuestas li').length === 2, 'Ver respuestas de un intento');
   const fechaPlazo = d.querySelector('.detalle input[type="date"]');
   ok(texto(d).includes('Su plazo normal termina el 11/11'), 'Dice cuándo termina su plazo normal');
+  const antes = llamadas(S, 'ts_admin_persona').length;
+  fechaPlazo.value = '';
+  boton(d, 'Guardar plazo').click(); await espera(40);
+  ok(llamadas(S, 'ts_admin_persona').length === antes && d.getElementById('toast').textContent.includes('Elige la fecha'),
+    'Plazo sin fecha: no lo guarda y pide la fecha');
   fechaPlazo.value = '2026-11-20';
   boton(d, 'Guardar plazo').click(); await espera(60);
   const cambio = llamadas(S, 'ts_admin_persona').pop().b;

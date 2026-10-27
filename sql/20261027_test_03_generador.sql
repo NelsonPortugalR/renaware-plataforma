@@ -126,21 +126,31 @@ $$;
 -- ---------- zonas de crédito en Arequipa (de la lista vigente) ----------
 create or replace function public.ts_zonas_aqp() returns table(nombre text, credito boolean)
 language sql stable set search_path = public as $$
-  with cand(nombre) as (values
-    ('Arequipa (Cercado)'), ('Alto Selva Alegre'), ('Cayma'), ('Cerro Colorado'), ('Characato'), ('Chiguata'),
-    ('Jacobo Hunter'), ('La Joya'), ('Mariano Melgar'), ('Miraflores'), ('Mollebaya'), ('Paucarpata'), ('Pocsi'),
-    ('Polobaya'), ('Quequeña'), ('Sabandía'), ('Sachaca'), ('San Juan de Siguas'), ('San Juan de Tarucani'),
-    ('Santa Isabel de Siguas'), ('Santa Rita de Siguas'), ('Socabaya'), ('Tiabaya'), ('Uchumayo'), ('Vítor'),
-    ('Yanahuara'), ('Yarabamba'), ('Yura'), ('José Luis Bustamante y Rivero'), ('Majes (El Pedregal)'),
-    ('Mollendo'), ('Camaná'), ('Chivay'), ('Cocachacra'), ('Mejía'), ('Punta de Bombón'), ('Aplao')),
-  ok as (
-    select ts_norm(d.distrito) as k from zc_distritos d
-     where d.activo and not d.todo_restringido and not d.solo_urbana and ts_norm(d.departamento) = 'AREQUIPA'
-    union
-    select ts_norm(a) from zc_distritos d, unnest(d.alias) a
-     where d.activo and not d.todo_restringido and not d.solo_urbana and ts_norm(d.departamento) = 'AREQUIPA')
-  select c.nombre, ts_norm(regexp_replace(c.nombre, '\s*\(.*\)$', '')) in (select k from ok)
-    from cand c
+  -- Distritos de Arequipa para la pregunta de zonas: sí o no, sin medias tintas. Los de
+  -- «solo zona urbana» no salen (hay crédito en una parte). El nombre va sin paréntesis.
+  with cand(nombre, clave) as (values
+    ('Cercado de Arequipa', 'Arequipa'), ('Alto Selva Alegre', null), ('Cayma', null), ('Cerro Colorado', null),
+    ('Characato', null), ('Chiguata', null), ('Jacobo Hunter', null), ('La Joya', null), ('Mariano Melgar', null),
+    ('Miraflores', null), ('Mollebaya', null), ('Paucarpata', null), ('Pocsi', null), ('Polobaya', null),
+    ('Quequeña', null), ('Sabandía', null), ('Sachaca', null), ('San Juan de Siguas', null),
+    ('San Juan de Tarucani', null), ('Santa Isabel de Siguas', null), ('Santa Rita de Siguas', null),
+    ('Socabaya', null), ('Tiabaya', null), ('Uchumayo', null), ('Vítor', null), ('Yanahuara', null),
+    ('Yarabamba', null), ('Yura', null), ('José Luis Bustamante y Rivero', null), ('Majes', null),
+    ('Mollendo', null), ('Camaná', null), ('Chivay', null), ('Cocachacra', null), ('Mejía', null),
+    ('Punta de Bombón', null), ('Aplao', null)),
+  dist as (
+    select ts_norm(d.distrito) as k, d.todo_restringido, d.solo_urbana from zc_distritos d
+     where d.activo and ts_norm(d.departamento) = 'AREQUIPA'
+    union all
+    select ts_norm(a), d.todo_restringido, d.solo_urbana from zc_distritos d, unnest(d.alias) a
+     where d.activo and ts_norm(d.departamento) = 'AREQUIPA'),
+  c as (
+    select c.nombre,
+           bool_or(not x.todo_restringido and not x.solo_urbana) as si,
+           bool_or(x.solo_urbana and not x.todo_restringido) as urbana
+      from cand c left join dist x on x.k = ts_norm(coalesce(c.clave, c.nombre))
+     group by c.nombre)
+  select nombre, coalesce(si, false) from c where not coalesce(urbana, false) or coalesce(si, false)
 $$;
 
 -- ---------- programa Empiece Ya que le toca a una fecha de ingreso (Premios · pr_catalogo) ----------
@@ -226,31 +236,39 @@ $$;
 -- 1 correcta + n distractores en soles, distintos entre sí, a partir de errores creíbles.
 create or replace function public.ts_opc_soles(p_correcto numeric, p_cand numeric[], p_n int default 4)
 returns jsonb language plpgsql volatile set search_path = public as $$
--- Las opciones quedan separadas entre sí (mín. 4 % de la correcta), para que no salgan
--- cuatro montos casi iguales y la correcta se note por ser "la distinta".
-declare v_ok int := round(p_correcto)::int; v_vistos int[]; v_dis jsonb := '[]'::jsonb; c numeric; v int; k int := 1;
-        v_gap int := greatest(2, round(abs(p_correcto) * 0.04)::int); f numeric;
+-- Opciones de montos. Las falsas salen primero de los errores típicos (p_cand) y, si faltan, de
+-- montos cercanos con un poco de azar. La correcta cae en cualquier lugar de menor a mayor
+-- (cuántas van por debajo se sortea), y todas quedan separadas (mín. 4 % de la correcta):
+-- así no se nota por ser la del medio, la segunda más alta ni "la distinta".
+declare v_ok int := round(p_correcto)::int; v_vistos int[];
+        v_gap int := greatest(2, round(abs(p_correcto) * 0.04)::int);
+        v_bajo int[] := '{}'; v_alto int[] := '{}'; c numeric; v int; k int; n_bajo int;
 begin
   v_vistos := array[v_ok];
   for c in select x from unnest(p_cand) x where x is not null order by random() loop
     v := round(c)::int;
     if v > 0 and not exists (select 1 from unnest(v_vistos) w where abs(w - v) < v_gap) then
       v_vistos := v_vistos || v;
-      v_dis := v_dis || jsonb_build_array(ts_soles(v));
-      exit when jsonb_array_length(v_dis) >= p_n;
+      if v < v_ok then v_bajo := v_bajo || v; else v_alto := v_alto || v; end if;
     end if;
   end loop;
-  -- relleno: por encima y por debajo de la correcta, alternando
-  while jsonb_array_length(v_dis) < p_n and k <= 40 loop
-    f := case when k % 2 = 1 then 1 + 0.12 * ((k + 1) / 2) else 1 - 0.09 * (k / 2) end;
-    v := round(v_ok * f)::int;
-    if v > 0 and not exists (select 1 from unnest(v_vistos) w where abs(w - v) < v_gap) then
-      v_vistos := v_vistos || v;
-      v_dis := v_dis || jsonb_build_array(ts_soles(v));
+  k := 1;
+  while (cardinality(v_bajo) < p_n or cardinality(v_alto) < p_n) and k <= 14 loop
+    v := round(v_ok * (1 - (0.06 + random() * 0.03) * k))::int;
+    if cardinality(v_bajo) < p_n and v > 0 and not exists (select 1 from unnest(v_vistos) w where abs(w - v) < v_gap) then
+      v_vistos := v_vistos || v; v_bajo := v_bajo || v;
+    end if;
+    v := round(v_ok * (1 + (0.06 + random() * 0.04) * k))::int;
+    if cardinality(v_alto) < p_n and not exists (select 1 from unnest(v_vistos) w where abs(w - v) < v_gap) then
+      v_vistos := v_vistos || v; v_alto := v_alto || v;
     end if;
     k := k + 1;
   end loop;
-  return jsonb_build_object('correctas', jsonb_build_array(ts_soles(v_ok)), 'incorrectas', v_dis);
+  n_bajo := least(cardinality(v_bajo), floor(random() * (p_n + 1))::int);
+  if p_n - n_bajo > cardinality(v_alto) then n_bajo := least(cardinality(v_bajo), p_n - cardinality(v_alto)); end if;
+  return jsonb_build_object('correctas', jsonb_build_array(ts_soles(v_ok)),
+    'incorrectas', (select coalesce(jsonb_agg(ts_soles(x)), '[]'::jsonb)
+                      from unnest(v_bajo[1:n_bajo] || v_alto[1:p_n - n_bajo]) x));
 end $$;
 
 -- n textos al azar de una lista, sin repetir y sin los que se excluyen (p. ej. la correcta)
@@ -309,26 +327,38 @@ begin
       select * into b from ts_banco where paso = p_paso and activo order by random() limit 1;
     end if;
     if not found then return null; end if;
+    if jsonb_array_length(b.correctas) > 1 then
+      -- marca varias: algunas válidas al azar (de 2 a todas) y el resto inválidas, hasta 5 opciones;
+      -- así el reintento no es la misma pregunta y no siempre hay una sola inválida
+      nn := least(jsonb_array_length(b.correctas), 2 + floor(random() * (jsonb_array_length(b.correctas) - 1))::int);
+      nn := greatest(nn, 5 - jsonb_array_length(b.incorrectas));
+      v_correctas := (select jsonb_agg(v) from (select value as v from jsonb_array_elements(b.correctas) order by random() limit nn) s);
+      v_incorrectas := (select coalesce(jsonb_agg(v), '[]'::jsonb)
+                          from (select value as v from jsonb_array_elements(b.incorrectas) order by random() limit 5 - nn) s);
+      return ts_q(p_paso, b.texto, v_correctas, v_incorrectas, b.logica,
+                  jsonb_build_object('usa', jsonb_build_array(b.id), 'tipo', 'multi'));
+    end if;
     v_incorrectas := (select coalesce(jsonb_agg(v), '[]'::jsonb)
                         from (select value as v from jsonb_array_elements(b.incorrectas) order by random()
                               limit b.n_incorrectas) s);
-    return ts_q(p_paso, b.texto, b.correctas, v_incorrectas, b.logica,
-                jsonb_build_object('usa', jsonb_build_array(b.id))
-                || case when jsonb_array_length(b.correctas) > 1 then jsonb_build_object('tipo', 'multi') else '{}'::jsonb end);
+    return ts_q(p_paso, b.texto, b.correctas, v_incorrectas, b.logica, jsonb_build_object('usa', jsonb_build_array(b.id)));
   end if;
 
   -- ===== Productos y precios =====
   if p_paso = 'identificar' then
-    -- solo productos principales (sin repuestos ni cartuchos) y uno por familia,
-    -- para que no salgan dos ollas o dos sartenes que en foto se ven iguales
+    -- solo productos principales (sin repuestos ni cartuchos) y uno por tipo (ollas, sartenes,
+    -- agua y aire, equipos, cubiertos y útiles), para que no salgan dos que en foto se ven iguales
     t_items := '[]'::jsonb; i := 0;
     for g in
       select * from (
         select distinct on (f.fam) gg.*
           from ts_generales() gg
-          cross join lateral (select coalesce(
-                   substring(lower(gg.nombre) from '(cooker|sartén|juego|sauc|filtr|rena lite|rena sig)'),
-                   lower(split_part(gg.nombre, ' ', 1))) as fam) f
+          cross join lateral (select case
+                   when lower(gg.nombre) ~ '(inducción|multi cooker|nutrex|tetera)' then 'equipos'
+                   when lower(gg.nombre) ~ '(filtr|botella|aqua|purificador)' then 'agua_aire'
+                   when lower(gg.nombre) ~ '(sartén|wok|parrilla|grill)' then 'sartenes'
+                   when lower(gg.nombre) ~ '(cubiertos|cuchillos|útiles|espátulas|bandeja|rena lite)' then 'utiles'
+                   else 'ollas' end as fam) f
          where gg.foto is not null and gg.precio >= 450
            and gg.nombre !~* '(cartucho|repuesto|elemento|alojamiento|bandas|pre filtro)'
            and not (gg.codigo = any(v_us))
@@ -339,6 +369,21 @@ begin
       t_items := t_items || jsonb_build_array(jsonb_build_object('id', 'i' || i, 'codigo', g.codigo,
                                                                  'nombre', g.nombre, 'foto', g.foto));
     end loop;
+    -- si algún tipo se quedó sin productos (cambió la lista), se completa con otros
+    if i < 5 then
+      for g in
+        select gg.* from ts_generales() gg
+         where gg.foto is not null and gg.precio >= 450
+           and gg.nombre !~* '(cartucho|repuesto|elemento|alojamiento|bandas|pre filtro)'
+           and not (gg.codigo = any(v_us))
+           and not exists (select 1 from jsonb_array_elements(t_items) e where e ->> 'codigo' = gg.codigo)
+         order by random() limit 5 - i
+      loop
+        i := i + 1;
+        t_items := t_items || jsonb_build_array(jsonb_build_object('id', 'i' || i, 'codigo', g.codigo,
+                                                                   'nombre', g.nombre, 'foto', g.foto));
+      end loop;
+    end if;
     if i < 5 then
       if cardinality(v_us) > 0 then return ts_generar(p_paso, p_ctx, '[]'::jsonb); end if;
       return null;
@@ -380,8 +425,7 @@ begin
             order by abs(p - pr.precio) limit 14));
     return ts_q(p_paso, '¿Cuánto cuesta esta promoción?', o -> 'correctas', o -> 'incorrectas',
       format('Las promociones vigentes están en la lista «%s»: ubica la promoción por su número y lee su precio.', pr.lista_nombre),
-      jsonb_build_object('foto', pr.foto, 'sub', pr.etiqueta || ' · ' || pr.componentes, 'usa', jsonb_build_array(pr.codigo),
-        'dato', case when pr.regalo is not null then format('Y si la toma ahora, se lleva de regalo: %s.', pr.regalo) end));
+      jsonb_build_object('foto', pr.foto, 'sub', pr.etiqueta || ' · ' || pr.componentes, 'usa', jsonb_build_array(pr.codigo)));
   end if;
 
   if p_paso = 'regalo_promo' then
@@ -389,10 +433,13 @@ begin
       from ts_promos() pp where pp.regalo is not null
      group by pp.regalo, pp.lista_nombre order by count(*) desc limit 1;
     if v_reg is null then return null; end if;
+    -- los regalos inventados no pueden parecerse al real (si el real trae botella, no va «Una botella de acero»)
     v_incorrectas := ts_algunos(
       array(select distinct btrim(p.regalo) from productos p where nullif(btrim(p.regalo), '') is not null)
-        || array['Ninguno: el regalo es solo para la lista general', 'Una botella de acero', 'Un descuento del 15 %',
-                 'Un pack de 12 Rena Lite', 'Una tetera de 3 L'],
+        || array(select d.t from (values ('Ninguno: el regalo es solo para la lista general', 'ninguno'),
+                                         ('Una botella de acero', 'botella'), ('Un descuento del 15 %', 'descuento'),
+                                         ('Un pack de 12 Rena Lite', 'rena lite'), ('Una tetera de 3 L', 'tetera')) d(t, k)
+                  where lower(v_reg) not like '%' || d.k || '%'),
       4, array[v_reg]);
     return ts_q(p_paso, format('Si tu cliente toma una promoción de la lista «%s», ¿qué regalo se lleva?', v_lista),
       jsonb_build_array(v_reg), v_incorrectas,
@@ -405,7 +452,7 @@ begin
     v_found := false;
     if random() < 0.6 then
       select pp.codigo, pp.precio, pp.foto, pp.etiqueta || ' · ' || pp.componentes as sub into x
-        from ts_promos() pp where not (pp.codigo = any(v_us)) order by random() limit 1;
+        from ts_promos() pp where pp.precio > c100 and not (pp.codigo = any(v_us)) order by random() limit 1;
       v_found := found;
     end if;
     if not v_found then
@@ -431,7 +478,7 @@ begin
     if not found then select * into g from ts_generales() gg where gg.precio > 1600 order by random() limit 1; end if;
     if not found then return null; end if;
     v_ini := round(g.precio * pct);
-    o := ts_opc_soles(g.precio - v_ini, array[g.precio, v_ini, g.precio * 0.80, v_ini * 2]);
+    o := ts_opc_soles(g.precio - v_ini, array[g.precio, g.precio + v_ini, v_ini, g.precio - 2 * v_ini, g.precio * 0.5]);
     return ts_q(p_paso, 'Si el cliente da la inicial mínima, ¿cuánto es el saldo a pagar contra entrega?',
       o -> 'correctas', o -> 'incorrectas',
       format('El saldo contra entrega es el precio menos la inicial mínima (el %s %%). Calcúlalo con el precio de la lista.', ts_fmt(pct * 100)),
@@ -470,7 +517,8 @@ begin
     if not found then return null; end if;
     v_ini := round(g.precio * 0.20);
     corr := ts_cuota(g.precio, 12, 0.20, rg);
-    o := ts_opc_soles(corr, array[ts_cuota(g.precio, 12, pct, rg), (g.precio - v_ini) / 12.0, g.precio / 12.0, v_ini]);
+    o := ts_opc_soles(corr, array[ts_cuota(g.precio, 12, pct, rg), (g.precio - v_ini) / 12.0, g.precio / 12.0, v_ini,
+                                  ts_cuota(g.precio, 9, 0.20, rg), ts_cuota(g.precio, 15, 0.20, rg)]);
     return ts_q(p_paso, format('Si el cliente da %s de inicial (el 20 %%), ¿cuánto sería la cuota en 12 cuotas?', ts_soles(v_ini)),
       o -> 'correctas', o -> 'incorrectas',
       'En Precios y promociones abre el producto, entra a «Crédito», escribe esa inicial en lugar de la mínima y lee la cuota a 12 meses.',
@@ -496,23 +544,33 @@ begin
   end if;
 
   if p_paso = 'cuotas_max' then
-    select * into g from ts_generales() gg
-     where cardinality(ts_plazos_validos(gg.precio, pct, rg)) > 0
-       and (ts_plazos_validos(gg.precio, pct, rg))[cardinality(ts_plazos_validos(gg.precio, pct, rg))] < v_max
-       and not (gg.codigo = any(v_us))
-     order by random() limit 1;
-    if not found then
+    -- casi siempre un producto que no llega al plazo más largo (la trampa del quiz anterior),
+    -- pero a veces uno que sí: así el plazo más largo no es siempre la opción falsa
+    v_found := false;
+    if random() < 0.7 then
       select * into g from ts_generales() gg
        where cardinality(ts_plazos_validos(gg.precio, pct, rg)) > 0
          and (ts_plazos_validos(gg.precio, pct, rg))[cardinality(ts_plazos_validos(gg.precio, pct, rg))] < v_max
+         and not (gg.codigo = any(v_us))
        order by random() limit 1;
+      v_found := found;
     end if;
-    if not found then return null; end if;
+    if not v_found then
+      select * into g from ts_generales() gg
+       where cardinality(ts_plazos_validos(gg.precio, pct, rg)) > 0 and not (gg.codigo = any(v_us))
+       order by random() limit 1;
+      v_found := found;
+    end if;
+    if not v_found then
+      select * into g from ts_generales() gg
+       where cardinality(ts_plazos_validos(gg.precio, pct, rg)) > 0 order by random() limit 1;
+      v_found := found;
+    end if;
+    if not v_found then return null; end if;
     vals := ts_plazos_validos(g.precio, pct, rg);
     corr := vals[cardinality(vals)];
     v_incorrectas := (select coalesce(jsonb_agg(v || ' cuotas'), '[]'::jsonb)
-                        from (select v from unnest(plazos) v where v <> corr and v <> v_max order by random() limit 3) s)
-                     || jsonb_build_array(v_max || ' cuotas');
+                        from (select v from unnest(plazos) v where v <> corr order by (v = v_max) desc, random() limit 4) s);
     return ts_q(p_paso, '¿Hasta cuántas cuotas como máximo se puede financiar?',
       jsonb_build_array(corr || ' cuotas'), v_incorrectas,
       format('La cuota mínima es de %s. El máximo de cuotas es el plazo más largo cuya cuota siga siendo de %s o más: mira la cuota de cada plazo en la lista y elige el último que cumpla. Ojo: no siempre es el plazo más alto.', ts_soles(cmin), ts_soles(cmin)),
@@ -523,10 +581,13 @@ begin
     select * into g from ts_generales() gg where gg.precio <= c100 and not (gg.codigo = any(v_us)) order by random() limit 1;
     if not found then select * into g from ts_generales() gg where gg.precio <= c100 order by random() limit 1; end if;
     if not found then return null; end if;
-    o := ts_opc_soles(g.precio, array[g.precio * pct, g.precio * 0.5, g.precio * 0.9, g.precio * 0.2]);
-    return ts_q(p_paso, format('Este producto cuesta %s. ¿Cuánto es su inicial?', ts_soles(g.precio)),
+    -- el precio no va en la pregunta: hay que buscarlo y saber la regla
+    o := ts_opc_soles(g.precio, array[g.precio * pct, g.precio * 0.5, g.precio * 0.2, g.precio * 1.18]
+                                || array(select p from (select distinct gg.precio as p from ts_generales() gg where gg.precio <> g.precio) s
+                                          order by abs(p - g.precio) limit 4));
+    return ts_q(p_paso, '¿Cuánto es la inicial de este producto?',
       o -> 'correctas', o -> 'incorrectas',
-      format('Los pedidos de %s o menos se pagan al 100 %%: tienen que estar cancelados para ser despachados.', ts_soles(c100)),
+      format('Busca su precio en la lista. Los pedidos de %s o menos se pagan al 100 %%: tienen que estar cancelados para ser despachados.', ts_soles(c100)),
       jsonb_build_object('foto', g.foto, 'sub', g.nombre, 'usa', jsonb_build_array(g.codigo)));
   end if;
 
@@ -656,49 +717,51 @@ begin
 
   -- ===== Comisiones y autocompra =====
   if p_paso = 'auto_ejemplo' then
+    -- una promoción grande al azar (como la gourmet con filtro): cuánto te descuentan; los puntos van en el dato
     select pp.codigo, pp.etiqueta, pp.componentes, pp.precio, pp.puntos, pp.vc, pp.foto into x
       from ts_promos() pp
-     where not (pp.codigo = any(v_us))
-     order by (pp.componentes ilike '%gourmet%' and (pp.componentes ilike '%aqua%' or pp.componentes ilike '%filtro%')) desc,
-              pp.puntos desc
-     limit 1;
+     where pp.vc > 0 and pp.puntos >= n1_ppv and not (pp.codigo = any(v_us))
+     order by random() limit 1;
     v_found := found;
     if not v_found then
       select gg.codigo, gg.nombre as etiqueta, gg.nombre as componentes, gg.precio, gg.puntos, gg.vc, gg.foto into x
-        from ts_generales() gg where not (gg.codigo = any(v_us)) order by gg.puntos desc limit 1;
+        from ts_generales() gg where gg.vc > 0 and gg.precio > 1600 and not (gg.codigo = any(v_us)) order by random() limit 1;
+      v_found := found;
+    end if;
+    if not v_found then
+      select pp.codigo, pp.etiqueta, pp.componentes, pp.precio, pp.puntos, pp.vc, pp.foto into x
+        from ts_promos() pp where pp.vc > 0 and pp.puntos >= n1_ppv order by random() limit 1;
       v_found := found;
     end if;
     if not v_found then return null; end if;
     v_desc := round(x.vc * 0.15 * 1.18);
+    o := ts_opc_soles(v_desc, array[x.vc * 0.15, x.precio * 0.15, x.precio * 0.10, x.precio * 0.15 * 1.18, x.vc * 0.30]);
     return ts_q(p_paso,
-      format('Te autocompras esta promoción (%s), que cuesta %s. ¿Cuánto te descuentan aprox. y cuántos puntos te da?', x.etiqueta, ts_soles(x.precio)),
-      jsonb_build_array(format('Te descuentan unos %s y te da %s puntos', ts_soles(v_desc), ts_fmt(x.puntos))),
-      jsonb_build_array(
-        format('Te descuentan %s (el 15 %% del precio) y te da %s puntos', ts_soles(x.precio * 0.15), ts_fmt(x.puntos)),
-        format('No te descuentan nada, pero te da %s puntos', ts_fmt(x.puntos)),
-        format('Te descuentan unos %s, pero la autocompra no da puntos', ts_soles(v_desc)),
-        format('Te descuentan %s y te da %s puntos', ts_soles(x.vc * 0.15), ts_fmt(round(x.puntos / 2.0)))),
-      'Tu descuento es tu comisión por 1.18, y la comisión sale del valor comisionable del cuadro de comisiones. Además, la autocompra sí suma puntos para tus premios.',
+      format('Te autocompras %s, que cuesta %s. ¿Cuánto te descuentan?',
+             case when x.etiqueta = x.componentes then 'este producto' else 'esta promoción (' || x.etiqueta || ')' end, ts_soles(x.precio)),
+      o -> 'correctas', o -> 'incorrectas',
+      'Tu descuento sale de tu comisión: busca el valor comisionable en el cuadro de comisiones, calcula tu comisión y súmale el IGV. En Precios y promociones, abre la promoción y entra a «Precio Autocompra»: ahí sale como «Menos tu descuento».',
       jsonb_build_object('foto', x.foto, 'sub', x.componentes, 'usa', jsonb_build_array(x.codigo),
         'dato', case
-          when x.puntos >= n2_ppv then format('¡Con %s puntos ya pasas los %s del Nivel II del Empiece Ya: %s (con %s afiliados)!', ts_fmt(x.puntos), ts_fmt(n2_ppv), n2_pr, n2_af)
-          when x.puntos >= n2_ppv * 0.8 then format('Con %s puntos casi llegas a los %s del Nivel II del Empiece Ya: %s (con %s afiliados).', ts_fmt(x.puntos), ts_fmt(n2_ppv), n2_pr, n2_af)
-          when x.puntos >= n1_ppv then format('Con %s puntos ya pasas los %s del Nivel I del Empiece Ya.', ts_fmt(x.puntos), ts_fmt(n1_ppv))
-          else format('Esos %s puntos suman para tu Empiece Ya.', ts_fmt(x.puntos)) end));
+          when x.puntos >= n2_ppv then format('Y además te suma %s puntos: ya pasas los %s del Nivel II del Empiece Ya (%s, con %s afiliados).', ts_fmt(x.puntos), ts_fmt(n2_ppv), n2_pr, n2_af)
+          when x.puntos >= n2_ppv * 0.8 then format('Y además te suma %s puntos: casi llegas a los %s del Nivel II del Empiece Ya (%s, con %s afiliados).', ts_fmt(x.puntos), ts_fmt(n2_ppv), n2_pr, n2_af)
+          when x.puntos >= n1_ppv then format('Y además te suma %s puntos: ya pasas los %s del Nivel I del Empiece Ya.', ts_fmt(x.puntos), ts_fmt(n1_ppv))
+          else format('Y además te suma %s puntos para tu Empiece Ya.', ts_fmt(x.puntos)) end));
   end if;
 
   if p_paso = 'venta_gana' then
+    -- comisión y bono redondeados por separado, para que el dato sume exacto
     select it.*, bk.etiqueta as rango into x from (
-        select pp.codigo, pp.etiqueta || ' · ' || pp.componentes as nombre, pp.etiqueta as corto, pp.precio, pp.puntos, pp.vc,
-               pp.foto, true as es_promo,
-               round(pp.vc * 0.15 + pp.vc * ts_bono_pct(pp.puntos) / 100.0) as total
-          from ts_promos() pp
-        union all
-        select gg.codigo, gg.nombre, gg.nombre, gg.precio, gg.puntos, gg.vc, gg.foto, false,
-               round(gg.vc * 0.15 + gg.vc * ts_bono_pct(gg.puntos) / 100.0)
-          from ts_generales() gg) it
-      join (values ('Entre S/ 500 y S/ 700', 500, 700), ('Entre S/ 800 y S/ 1,000', 800, 999),
-                   ('Entre S/ 1,000 y S/ 1,500', 1000, 1500)) bk(etiqueta, lo, hi)
+        select c.*, c.comision + c.bono as total from (
+          select pp.codigo, pp.etiqueta || ' · ' || pp.componentes as nombre, pp.etiqueta as corto, pp.precio, pp.puntos, pp.vc,
+                 pp.foto, true as es_promo, round(pp.vc * 0.15) as comision, round(pp.vc * ts_bono_pct(pp.puntos) / 100.0) as bono
+            from ts_promos() pp
+          union all
+          select gg.codigo, gg.nombre, gg.nombre, gg.precio, gg.puntos, gg.vc, gg.foto, false,
+                 round(gg.vc * 0.15), round(gg.vc * ts_bono_pct(gg.puntos) / 100.0)
+            from ts_generales() gg) c) it
+      join (values ('Entre S/ 500 y S/ 700', 500, 700), ('Entre S/ 800 y S/ 1,000', 800, 1000),
+                   ('Entre S/ 1,001 y S/ 1,500', 1001, 1500)) bk(etiqueta, lo, hi)
         on it.total between bk.lo and bk.hi
      where not (it.codigo = any(v_us))
      order by it.es_promo desc, random()
@@ -709,12 +772,12 @@ begin
       format('Vendes %s, de %s. Si es tu única venta del período, ¿cuánto ganas aprox. entre comisión y bono?',
              case when x.es_promo then 'esta promoción (' || x.corto || ')' else 'este producto' end, ts_soles(x.precio)),
       jsonb_build_array(x.rango),
-      ts_algunos(array['Entre S/ 500 y S/ 700', 'Entre S/ 800 y S/ 1,000', 'Entre S/ 1,000 y S/ 1,500',
+      ts_algunos(array['Entre S/ 500 y S/ 700', 'Entre S/ 800 y S/ 1,000', 'Entre S/ 1,001 y S/ 1,500',
                        'Menos de S/ 200', 'Más de S/ 3,000'], 4, array[x.rango]),
       'Ganas el 15 % del valor comisionable más un bono según tus puntos del período: 3 % desde 100 puntos, 6 % desde 500 y 9 % desde 1,250. Busca el valor comisionable y los puntos en el cuadro de comisiones y calcula.',
       jsonb_build_object('foto', x.foto, 'sub', x.nombre, 'usa', jsonb_build_array(x.codigo),
         'dato', format('Comisión %s + bono del %s %% (%s) = %s. Además, los puntos suman para tus premios.',
-                       ts_soles(x.vc * 0.15), v_bono, ts_soles(x.vc * v_bono / 100.0), ts_soles(x.total))));
+                       ts_soles(x.comision), v_bono, ts_soles(x.bono), ts_soles(x.total))));
   end if;
 
   return null;

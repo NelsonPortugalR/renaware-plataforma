@@ -467,7 +467,7 @@ async function iniciarAsesor(){
 function enlacesConsulta(cfg){
   const l = (cfg && cfg.recursos) || [];
   if (!l.length) return null;
-  return h('div', {class: 'recursos'}, l.filter(x => x && x.url).map(x =>
+  return h('div', {class: 'recursos'}, l.filter(x => x && /^https?:\/\//i.test(x.url || '')).map(x =>
     h('a', {href: x.url, target: '_blank', rel: 'noopener'}, x.nombre || x.url)));
 }
 
@@ -681,6 +681,8 @@ function pantallaPregunta(){
     catch (e) {
       boton.disabled = false; boton.textContent = 'Responder';
       if (/venci|Sesion invalida/i.test(e.message)) return salirDelTest();
+      // la oficina anuló el intento, o el test ya no está abierto: vuelve a su estado con el aviso
+      if (/anul|no está habilitado|no es tuyo/i.test(e.message)) { aviso(mensaje(e), true); return salirDelTest(); }
       aviso(mensaje(e), true);
       return;
     }
@@ -910,7 +912,10 @@ function detallePersona(x){
     caja.append(h('h4', {}, 'Plazo'));
     const f = h('input', {type: 'date', value: t.hasta || '', 'aria-label': 'Nuevo plazo'});
     const g = h('button', {class: 'mini', type: 'button'}, 'Guardar plazo');
-    g.addEventListener('click', () => cambiarPersona(x, {hasta: f.value}, g, 'Plazo guardado'));
+    g.addEventListener('click', () => {
+      if (!f.value) { aviso('Elige la fecha del nuevo plazo.', true); f.focus(); return; }
+      cambiarPersona(x, {hasta: f.value}, g, 'Plazo guardado');
+    });
     caja.append(h('p', {class: 'apoyo chico'}, `Su plazo normal termina el ${corta(sumar(x.logro_fecha, O.d.config.dias_ventana))}. Dale más días si hace falta.`),
       h('div', {class: 'acciones'}, f, g,
         t.hasta_editado ? h('button', {class: 'mini sec', type: 'button', onclick: ev => cambiarPersona(x, {hasta: ''}, ev.currentTarget, 'Volvió a su plazo normal')}, 'Volver al plazo normal') : null));
