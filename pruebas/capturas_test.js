@@ -61,7 +61,7 @@ const foto_ = async (page, n) => { await page.waitForTimeout(200); await page.sc
   await page.fill('input[inputmode="numeric"]', '1941234567890');
   await page.getByRole('button', {name: 'Responder'}).click();
   await page.getByRole('button', {name: 'Ver mi nota'}).click();
-  await foto_(page, '07-final-no-aprueba');
+  await foto_(page, '07-final');
   // Oficina
   ({page} = await abrir(browser, {preparar: () => localStorage.setItem('rw_test_admin', JSON.stringify('adm-1'))}));
   await foto_(page, '10-oficina-resultados');

@@ -461,18 +461,19 @@ async function inicioAsesor(tok){
 function avisoTest(t, m){
   const w = t && t.ventana;
   if (!w) return null;
+  const conNota = !!(t.config && t.config.exigir_nota);   // por ahora aprueba todo el que lo termina
   if (t.estado === 'habilitado') {
     const resta = w.dias <= 0 ? 'hoy es el último día' : w.dias === 1 ? 'te queda 1 día' : `te quedan ${w.dias} días`;
     const texto = t.intento ? 'Continuar mi test' : 'Rendir mi test';
     return h('section', {class: 'item medio aviso-test'},
       h('h3', {}, t.intento ? 'Termina tu test del Nivel 0' : 'Tu test del Nivel 0 está habilitado'),
-      h('p', {}, `Apruébalo y ganas tu botella de acero. Tienes hasta el ${largo(w.hasta)}: ${resta}.`),
+      h('p', {}, `${conNota ? 'Apruébalo' : 'Termínalo'} y ganas tu botella de acero. Tienes hasta el ${largo(w.hasta)}: ${resta}.`),
       m ? enlaceModulo(m, {class: 'abrir'}, texto) : h('a', {class: 'abrir', href: '/test/'}, texto));
   }
   if (t.estado === 'aprobado' && w.botella === 'por_entregar') {
     return h('section', {class: 'item aviso-test'},
       h('h3', {}, 'Tu botella de acero te espera'),
-      h('p', {}, `Aprobaste tu test del Nivel 0 con ${w.nota}. Pasa a recogerla a la oficina.`));
+      h('p', {}, `${conNota ? 'Aprobaste' : 'Terminaste'} tu test del Nivel 0 con ${w.nota}. Pasa a recogerla a la oficina.`));
   }
   return null;
 }

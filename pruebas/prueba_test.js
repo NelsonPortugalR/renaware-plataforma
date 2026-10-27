@@ -19,6 +19,7 @@ function crear({srv, hash = '', prep} = {}){
       w.scrollTo = () => {};
       w.HTMLElement.prototype.scrollIntoView = function () {};
       w.confirm = () => true;
+      Object.defineProperty(w.navigator, 'clipboard', {configurable: true, value: {writeText: async t => { w.__copiado = t; }}});
       if (prep) prep(w);
       w.fetch = async (url, opts = {}) => {
         const u = String(url).replace(SB, '');
@@ -39,14 +40,16 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
 const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn);
 
 (async () => {
-  // ---------- 1. Sin sesión: entra con el celular (solo test) ----------
-  let {w, d, S} = crear();
+  // ---------- 1. Sin sesión: entra con su DNI (solo test). Este servidor pide nota mínima ----------
+  let {w, d, S} = crear({srv: servidor({exigir: true})});
   await espera(40);
-  ok(d.querySelector('form.acceso') && texto(d).includes('Tu celular'), 'Sin sesión pide el celular');
-  escribir(w, d.getElementById('cel'), '12345'); enviar(w, d); await espera(30);
-  ok(texto(d).includes('9 dígitos'), 'Valida el celular de 9 dígitos');
-  escribir(w, d.getElementById('cel'), '+51 900 947 503'); enviar(w, d); await espera(80);
-  ok(llamadas(S, 'ts_login').pop().b.p_celular === '900947503', 'Normaliza el celular (+51 y espacios)');
+  ok(d.querySelector('form.acceso') && texto(d).includes('Tu DNI') && texto(d).includes('este celular te recordará'), 'Sin sesión pide el DNI (una sola vez)');
+  escribir(w, d.getElementById('dni'), '12345'); enviar(w, d); await espera(30);
+  ok(texto(d).includes('8 dígitos'), 'Valida el DNI de 8 dígitos');
+  escribir(w, d.getElementById('dni'), '87654321'); enviar(w, d); await espera(60);
+  ok(texto(d).includes('No encontramos ese DNI en el Nivel Cero'), 'DNI que no está en el Nivel Cero: lo dice');
+  escribir(w, d.getElementById('dni'), ' 12.345.678 '); enviar(w, d); await espera(80);
+  ok(llamadas(S, 'ts_entrar').pop().b.p_doc === '12345678', 'Normaliza el DNI (puntos y espacios)');
   ok(JSON.parse(w.localStorage.getItem('rw_test_token')) === 'tok-test' && !w.localStorage.getItem('rw_asesor_token'),
     'Sesión solo para el test: va en rw_test_token, no toca la de la plataforma');
   ok(texto(d).includes('Hola, Fley') && texto(d).includes('¡Tu test está habilitado!'), 'Saluda y dice que su test está habilitado');
@@ -144,12 +147,53 @@ const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn)
     ok(as.length === 1 && as[0].textContent === 'Bueno', 'Enlaces de consulta: no muestra los que no son http(s)');
   }
 
-  // ---------- 3d. Número bloqueado ----------
+  // ---------- 3d. Bloqueado, celular de respaldo y «otro día» ----------
   {
     const c5 = crear();
     await espera(40);
-    escribir(c5.w, c5.d.getElementById('cel'), '900000000'); enviar(c5.w, c5.d); await espera(60);
-    ok(texto(c5.d).includes('Ese número está bloqueado') && !c5.w.localStorage.getItem('rw_test_token'), 'Número bloqueado: no entra');
+    escribir(c5.w, c5.d.getElementById('dni'), '11111111'); enviar(c5.w, c5.d); await espera(60);
+    ok(texto(c5.d).includes('Tu acceso está bloqueado') && !c5.w.localStorage.getItem('rw_test_token'), 'Bloqueado: no entra');
+    const c7 = crear();
+    await espera(40);
+    escribir(c7.w, c7.d.getElementById('dni'), '+51 900 947 503'); enviar(c7.w, c7.d); await espera(80);
+    ok(llamadas(c7.S, 'ts_entrar').pop().b.p_doc === '900947503' && texto(c7.d).includes('Hola, Fley'), 'Si escribe su celular en vez del DNI, también entra');
+    const c8 = crear({prep: x => x.localStorage.setItem('rw_test_token', JSON.stringify('tok-test'))});
+    await espera(60);
+    ok(!c8.d.querySelector('form.acceso') && texto(c8.d).includes('Hola, Fley') && !llamadas(c8.S, 'ts_entrar').length,
+      'Otro día entra directo: no le vuelve a pedir el DNI');
+  }
+
+  // ---------- 3e. Como está ahora: sin nota mínima, aprueba al terminar y la nota queda ----------
+  {
+    const s6 = servidor();
+    const c6 = crear({srv: s6, prep: x => x.localStorage.setItem('rw_test_token', JSON.stringify('tok-test'))});
+    await espera(50);
+    ok(texto(c6.d).includes('Termina el test y ganas tu botella') && texto(c6.d).includes('Al terminarlo ganas tu botella'),
+      'Sin nota mínima: termina el test y gana su botella');
+    ok(texto(c6.d).includes('cada respuesta se guarda al momento') && !texto(c6.d).includes('Apruebas con'), 'Avisa que cada respuesta queda guardada');
+    boton(c6.d, 'Empezar el test').click(); await espera(60);
+    // el botón «atrás» del celular vuelve a su estado sin perder nada
+    c6.w.dispatchEvent(new c6.w.PopStateEvent('popstate', {state: null})); await espera(60);
+    ok(texto(c6.d).includes('Tienes un test a medias') && boton(c6.d, 'Continuar mi test'), 'Atrás en el test: vuelve a su estado con el test a medias');
+    boton(c6.d, 'Continuar mi test').click(); await espera(60);
+    ok(texto(c6.d).includes('Pregunta 1 de 4'), 'Continúa en la misma pregunta');
+    const B = t => boton(c6.d, t);
+    let fallo = true;
+    for (let i = 0; i < 8 && s6.S.intento && s6.S.intento.q; i++) {
+      const q = s6.S.intento.q, ops6 = () => [...c6.d.querySelectorAll('.opcion')];
+      if (q.tipo === 'emparejar') { const ss = c6.d.querySelectorAll('.par select'); elegir(c6.w, ss[0], 'n2'); elegir(c6.w, ss[1], 'n1'); }
+      if (q.tipo === 'single') ops6().find(b => b.getAttribute('data-id') === (fallo ? 'o1' : q.clave[0])).click();
+      if (q.tipo === 'single' && fallo) fallo = false;
+      if (q.tipo === 'multi') q.clave.forEach(id => ops6().find(b => b.getAttribute('data-id') === id).click());
+      if (q.tipo === 'escribir') escribir(c6.w, c6.d.querySelector('input[inputmode="numeric"]'), q.clave.c1[0]);
+      B('Responder').click(); await espera(50);
+      (B('Siguiente') || B('Otra pregunta') || B('Ver mi nota')).click(); await espera(40);
+    }
+    ok(texto(c6.d).includes('¡Terminaste tu test! 🎉') && texto(c6.d).includes('80') && texto(c6.d).includes('tu nota queda registrada'),
+      'Termina con un error: aprueba igual y su nota (80) queda registrada');
+    ok(texto(c6.d).includes('Ganaste tu botella de acero') && !B('Intentar de nuevo'), 'Gana su botella y ya no se repite');
+    B('Volver').click(); await espera(60);
+    ok(texto(c6.d).includes('¡Terminaste tu test! Tu nota: 80') && texto(c6.d).includes('Nota 80'), 'Su estado: terminó, con su nota');
   }
 
   // ---------- 4. Llega desde la plataforma con #traspaso y test a medias ----------
@@ -188,14 +232,23 @@ const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn)
   ({w, d, S} = crear({hash: '#traspaso=' + CODIGO_STAFF}));
   await espera(80);
   ok(JSON.parse(w.localStorage.getItem('rw_test_admin')) === 'adm-1', 'Staff: guarda la sesión de oficina del traspaso');
+  ok(texto(d).includes('Enlace para los asesores') && texto(d).includes('https://renaware-plataforma.nelson1614.workers.dev/test/'), 'Oficina: el enlace para los asesores, a la vista');
+  boton(d, 'Copiar enlace').click(); await espera(30);
+  ok(w.__copiado === 'https://renaware-plataforma.nelson1614.workers.dev/test/' && d.getElementById('toast').textContent.includes('Enlace copiado'), 'Copia el enlace');
+  boton(d, 'Copiar mensaje para WhatsApp').click(); await espera(30);
+  ok(/Entra aquí con tu DNI: https:\/\/renaware-plataforma\.nelson1614\.workers\.dev\/test\/$/.test(w.__copiado || ''), 'Copia el mensaje listo para WhatsApp');
+  ok(texto(d).includes('nota promedio (de 1 test)') && texto(d).includes('Lo terminaron'), 'Sin nota mínima: «Lo terminaron» y la nota promedio');
   ok(texto(d).includes('Test del Nivel 0 · Oficina') && d.querySelectorAll('.pestanas button').length === 4, 'Oficina con sus 4 pestañas');
   ok(texto(d).includes('con el test habilitado · 1 vence en 3 días o menos') && texto(d).includes('1 botella por entregar'), 'Cifras: habilitados que vencen y botellas por entregar');
   ok(texto(d).includes('Dónde fallan más') && texto(d).includes('30 % (3 de 10)'), 'Dónde fallan más, por bloque');
   ok(texto(d).includes('Fley Elvis Medina Soto') && texto(d).includes('hasta el 11/11 (quedan 2 días)'), 'Lista de personas con su plazo');
   const fila = [...d.querySelectorAll('.persona > button')].find(b => b.textContent.includes('Fley'));
   fila.click(); await espera(20);
-  ok(texto(d).includes('Intentos') && texto(d).includes('80 · no aprobado') && texto(d).includes('Falló en Productos y precios: 1'), 'Detalle: intentos y dónde falló');
+  ok(texto(d).includes('Intentos') && texto(d).includes('Nota 80 · terminado') && texto(d).includes('Falló en Productos y precios: 1'), 'Detalle: intentos y dónde falló');
   ok(d.activeElement && d.activeElement.getAttribute('data-foco') === 'p-p1', 'Al abrir la ficha el foco se queda en la persona');
+  const wa = [...d.querySelectorAll('a.mini')].find(a => a.textContent === 'Mandarle el enlace por WhatsApp');
+  ok(wa && wa.href.startsWith('https://wa.me/51900947503?text=') && decodeURIComponent(wa.href).includes('Hola Fley')
+    && decodeURIComponent(wa.href).includes('con tu DNI'), 'Le manda el enlace por WhatsApp, con su nombre');
   boton(d, 'Ver respuestas').click(); await espera(40);
   ok(d.querySelectorAll('.respuestas li').length === 2, 'Ver respuestas de un intento');
   const fechaPlazo = d.querySelector('.detalle input[type="date"]');
@@ -227,8 +280,11 @@ const llamadas = (S, fn) => S.llamadas.filter(c => c.u === '/rest/v1/rpc/' + fn)
   const filas = d.querySelectorAll('.fila-edit'), fr = filas[filas.length - 1];
   escribir(w, fr.querySelectorAll('input')[0], 'Zonas de crédito'); escribir(w, fr.querySelectorAll('input')[1], 'https://zonas.example');
   escribir(w, d.getElementById('a-nota'), '91');
+  ok(d.getElementById('a-exigir') && !d.getElementById('a-exigir').checked && texto(d).includes('Hoy el promedio es 94'), 'Ajustes: nota mínima apagada, con el promedio a la vista');
+  d.getElementById('a-exigir').click();
   boton(d, 'Guardar ajustes').click(); await espera(60);
   const aj = llamadas(S, 'ts_admin_config').pop().b.p_cambios;
+  ok(aj.exigir_nota === true, 'Puede volver a pedir nota mínima');
   ok(aj.nota_minima === 91 && aj.cuentas.length === 1 && aj.cuentas[0].validos.join() === '19412345678012,00219401234567801234', 'Guarda nota y cuentas solo con números');
   ok(aj.recursos.length === 2 && aj.recursos[1].url === 'https://zonas.example', 'Guarda los enlaces de consulta');
 

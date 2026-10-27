@@ -128,6 +128,7 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
   const av = d.querySelector('.aviso-test');
   ok(av && av.textContent.includes('Tu test del Nivel 0 está habilitado') && av.textContent.includes('te quedan 2 días'), 'Aviso del test habilitado con sus días');
+  ok(av.textContent.includes('Termínalo y ganas tu botella'), 'Sin nota mínima: «Termínalo y ganas tu botella»');
   ok(d.querySelectorAll('.mod').length === 2 && [...d.querySelectorAll('.mod')].some(a => a.textContent.includes('Test del Nivel 0')), 'Ve el módulo del test');
   av.querySelector('a.abrir').click(); await espera(120);
   ok(idas[0] === 'https://renaware-plataforma.nelson1614.workers.dev/test/#traspaso=' + CODIGO, 'El aviso abre el test con traspaso');
@@ -137,7 +138,13 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   ({w, d, llamadas, idas} = crear());
   await espera(60);
   escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Aprobaste tu test del Nivel 0 con 94'), 'Aprobó: aviso de la botella por recoger');
+  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Terminaste tu test del Nivel 0 con 94'), 'Terminó: aviso de la botella por recoger');
+  // con nota mínima (si la oficina la vuelve a pedir) dice «Aprobaste»
+  TEST = {nombre: 'ELENA', estado: 'aprobado', ventana: {estado: 'aprobado', nota: 94, botella: 'por_entregar'}, config: {exigir_nota: true, nota_minima: 90}};
+  ({w, d, llamadas, idas} = crear());
+  await espera(60);
+  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
+  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Aprobaste tu test del Nivel 0 con 94'), 'Con nota mínima: «Aprobaste»');
   TEST = null;
 
   console.log(fallas ? `\n${fallas} PRUEBA(S) FALLARON` : '\nTODAS LAS PRUEBAS PASARON');

@@ -1,9 +1,10 @@
 -- Simulación completa del Test del Nivel 0 (no deja rastro: termina con un error a propósito
 -- para que todo se deshaga; el resultado sale en el mensaje "SIMULACION_OK {...}").
--- Crea un inscrito de prueba con 5 clases, rinde el test con 2 errores, verifica el premio
--- en Premios y la sincronía con Nivel Cero y con el Empiece Ya (en los dos sentidos y al
--- deshacer entregas). Con un segundo inscrito (solo del Nivel Cero) prueba la entrada al test,
--- el doble inicio y la anulación; con un tercero, que un número bloqueado no entra.
+-- Crea un inscrito de prueba con 5 clases, rinde el test con 5 errores (sin nota mínima
+-- aprueba igual y la nota queda), verifica el premio en Premios y la sincronía con Nivel Cero
+-- y con el Empiece Ya (en los dos sentidos y al deshacer entregas). Con un segundo inscrito
+-- (solo del Nivel Cero) prueba la entrada con DNI, el doble inicio y la anulación; con un
+-- tercero, que un bloqueado no entra.
 do $$
 declare
   v_ins uuid := gen_random_uuid(); v_tok uuid := gen_random_uuid(); v_adm uuid := gen_random_uuid();
@@ -16,10 +17,10 @@ begin
   insert into asesores (celular, nombre, activo) values (cel, 'PRUEBA TEST', true);
   insert into asesor_sesion (token, celular) values (v_tok, cel);
   insert into admin_sesion (token) values (v_adm);
-  insert into n0_inscritos_manual (id, nombre, celular, fecha_inscripcion)
-  values (v_ins, 'Prueba Test Nivel Cero', cel, date '2026-10-15'),
-         (v_ins2, 'Prueba Solo Nivel Cero', cel2, date '2026-10-15'),
-         (v_ins3, 'Prueba Bloqueada', cel3, date '2026-10-15');
+  insert into n0_inscritos_manual (id, nombre, celular, dni, fecha_inscripcion)
+  values (v_ins, 'Prueba Test Nivel Cero', cel, '99999901', date '2026-10-15'),
+         (v_ins2, 'Prueba Solo Nivel Cero', cel2, '99999902', date '2026-10-15'),
+         (v_ins3, 'Prueba Bloqueada', cel3, '99999903', date '2026-10-15');
   insert into n0_clases (fecha, hora) values ('2026-10-21', '19:00'), ('2026-10-23', '19:00'), ('2026-10-27', '19:00');
   insert into n0_asistencias (clase_id, inscrito_id, presente)
   select c.id, i, true from n0_clases c, unnest(array[v_ins, v_ins2, v_ins3]) i
@@ -40,7 +41,7 @@ begin
     end if;
     n_resp := n_resp + 1;
     if n_resp > 90 then raise exception 'bucle sin fin'; end if;
-    if n_resp in (3, 12) then
+    if n_resp in (3, 6, 9, 12, 15) then
       ans := case q ->> 'tipo' when 'single' then to_jsonb('zz'::text) when 'multi' then '["zz"]'::jsonb else '{}'::jsonb end;
       prev_id := q ->> 'id'; prev_paso := q ->> 'paso';
       r := ts_responder(v_tok, t.id, q ->> 'id', ans);
@@ -142,10 +143,18 @@ begin
     'E_yo', (select x -> 'test' from jsonb_array_elements(r -> 'personas') x where x ->> 'id' = v_ins::text),
     'E_errores', r -> 'errores_bloque', 'E_plan', jsonb_array_length(r -> 'plan'));
 
-  -- F) Solo del Nivel Cero: entra con su celular, doble inicio = el mismo intento, la oficina lo anula
-  r := ts_login(cel2, '{}'::jsonb);
+  -- F) Solo del Nivel Cero: entra con su DNI (con puntos), doble inicio = el mismo intento, la oficina lo anula
+  r := ts_entrar(' 99.999.902 ', '{}'::jsonb);
   out := out || jsonb_build_object('F_login', r - 'token');
   v_tok2 := (r ->> 'token')::uuid;
+  out := out || jsonb_build_object('F_estado_dni', ts_estado(v_tok2) -> 'estado',
+                                   'F_sesion_plataforma', coalesce((asesor_sesion_valida(v_tok2) ->> 'ok'), 'false'));
+  begin
+    perform ts_entrar('99999999', '{}'::jsonb);
+    out := out || '{"F_dni_desconocido":"PERMITIDO (mal)"}';
+  exception when others then
+    out := out || jsonb_build_object('F_dni_desconocido', sqlerrm);
+  end;
   a1 := ts_iniciar(v_tok2);
   a2 := ts_iniciar(v_tok2);
   out := out || jsonb_build_object('F_doble_inicio_mismo', a1 ->> 'id' = a2 ->> 'id');
@@ -159,11 +168,11 @@ begin
   a2 := ts_iniciar(v_tok2);
   out := out || jsonb_build_object('F_nuevo_tras_anular', a2 ->> 'id' <> a1 ->> 'id');
 
-  -- I) Número bloqueado: ni entra ni sigue con una sesión vieja
+  -- I) Bloqueado: ni entra (con DNI o celular) ni sigue con una sesión vieja
   insert into asesores (celular, nombre, activo) values (cel3, 'PRUEBA BLOQUEADA', false);
   insert into asesor_sesion (token, celular) values (v_tok3, cel3);
   begin
-    perform ts_login(cel3, '{}'::jsonb);
+    perform ts_entrar('99999903', '{}'::jsonb);
     out := out || '{"I_login_bloqueado":"PERMITIDO (mal)"}';
   exception when others then
     out := out || jsonb_build_object('I_login_bloqueado', sqlerrm);

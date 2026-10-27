@@ -6,6 +6,7 @@ const CODIGO_STAFF = '99999999-2222-4333-8444-555555555555';
 function servidor(cfg = {}){
   const S = {
     estado: cfg.estado || 'habilitado', qn: 0, intento: null, historial: [], plan: cfg.plan || ['identificar', 'precio_general', 'medios_inicial', 'cuentas'],
+    exigir: !!cfg.exigir,   // como la base: por ahora no se pide nota mínima (aprueba al terminar)
     tokens: new Set(['tok-hub', 'tok-test']), admin: new Set(['adm-1']), pasosActivos: {}, practicas: 0, llamadas: [], anulados: new Set()
   };
   const BLOQUE = {identificar: 'productos', precio_general: 'productos', medios_inicial: 'credito', cuentas: 'pagos'};
@@ -53,10 +54,11 @@ function servidor(cfg = {}){
       it.idx++;
       if (it.idx >= it.plan.length) {
         const nota = Math.round(100 * it.plan.length / it.intentos);
-        it.fin = {nota, aprobado: nota >= 90, nota_minima: 90, pasos: it.plan.length, intentos: it.intentos, errores: it.intentos - it.aciertos,
+        const aprobado = !S.exigir || nota >= 90;
+        it.fin = {nota, aprobado, nota_minima: 90, exigir_nota: S.exigir, pasos: it.plan.length, intentos: it.intentos, errores: it.intentos - it.aciertos,
           minutos: 3, por_bloque: [{bloque: 'productos', nombre: 'Productos y precios', respuestas: 3, errores: it.intentos - it.aciertos}]};
         it.q = null;
-        if (it.origen === 'asesor') { S.historial.unshift({fecha: '2026-10-27', nota, aprobado: nota >= 90}); S.intento = null; if (nota >= 90) S.estado = 'aprobado'; }
+        if (it.origen === 'asesor') { S.historial.unshift({fecha: '2026-10-27', nota, aprobado}); S.intento = null; if (aprobado) S.estado = 'aprobado'; }
       } else it.q = pregunta(it.plan[it.idx]);
       return {ok: true, dato: q.dato || null, logica: null, intento: vista(it)};
     }
@@ -68,7 +70,7 @@ function servidor(cfg = {}){
     nota: S.estado === 'aprobado' ? S.historial[0].nota : null, aprobado_en: S.estado === 'aprobado' ? '2026-10-27' : null,
     botella: S.estado === 'aprobado' ? 'por_entregar' : null, botella_entregada_en: null, hasta_editado: false,
     clases: {validas: S.estado === 'clases' ? 3 : 5, meta: 5, vence: '2026-11-14', estado: S.estado === 'clases' ? 'en_curso' : 'logro'}});
-  const config = {nota_minima: 90, dias_ventana: 15, premio: 'Botella de acero inoxidable', pasos: 4,
+  const config = {nota_minima: 90, exigir_nota: S.exigir, dias_ventana: 15, premio: 'Botella de acero inoxidable', pasos: 4,
     recursos: cfg.recursos || [{nombre: 'Precios y promociones', url: 'https://renaware-peru.nelson1614.workers.dev'}]};
   const PERSONAS = [
     {id: 'p1', nombre: 'FLEY ELVIS MEDINA SOTO', celular: '900947503', codigo: null, afiliador: 'Benilda Medina', inicio: '2026-10-15',
@@ -104,6 +106,11 @@ function servidor(cfg = {}){
         if (b.p_celular === '987654321') return {d: {token: 'tok-hub', celular: '987654321', alcance: 'plataforma'}};
         if (b.p_celular === '900000000') return error('Ese número está bloqueado. Habla con tu líder.');
         return error('No encontramos tu inscripción en el Nivel Cero con ese número. Avísale a tu líder.');
+      case 'ts_entrar':
+        // DNI (o su celular): siempre una sesión solo para el test
+        if (b.p_doc === '12345678' || b.p_doc === '900947503') return {d: {token: 'tok-test', alcance: 'test'}};
+        if (b.p_doc === '11111111') return error('Tu acceso está bloqueado. Habla con tu líder.');
+        return error('No encontramos ese DNI en el Nivel Cero. Revísalo o avísale a tu líder.');
       case 'admin_login': return b.p_clave === 'clave' ? {d: 'adm-1'} : error('Clave incorrecta');
       case 'ts_estado':
         if (!asesorOk(b.p_token)) return error('Tu sesión venció. Vuelve a entrar con tu celular.');

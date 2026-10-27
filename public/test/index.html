@@ -83,7 +83,11 @@
     background:var(--acero);color:var(--sobre-acero);cursor:pointer}
   .mini.sec{background:transparent;color:var(--acero-2);border-color:var(--borde)}
   .mini:disabled{opacity:.55;cursor:default}
+  a.mini{display:inline-block;text-decoration:none}
   .acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .check{display:flex;align-items:center;gap:10px}
+  .check input{width:24px;height:24px;margin:0;padding:0;flex:none;accent-color:var(--acero)}
+  .url{margin-top:8px;font-weight:700;word-break:break-all}
   .error{color:var(--alto);font-weight:700;margin-top:14px;min-height:24px}
   .error:empty{min-height:0;margin:0}
   .cargando{padding:40px 0}
@@ -213,8 +217,9 @@
 'use strict';
 /* =====================================================================
    Test del Nivel 0 · Equipo Arequipa
-   Asesor: entra con su celular (o llega ya con sesión desde la plataforma),
-   ve si su test está habilitado y lo rinde pregunta por pregunta.
+   Asesor: entra con su DNI (o llega ya con sesión desde la plataforma); su
+   celular lo recuerda. Ve si su test está habilitado y lo rinde pregunta por
+   pregunta; cada respuesta queda guardada al momento.
    Oficina: resultados, práctica, qué preguntas salen y ajustes.
    Todo lo calcula Supabase (funciones ts_*): la página solo muestra y envía.
    ===================================================================== */
@@ -222,7 +227,8 @@ const SB_URL = 'https://kiexpdaaoegbtesqmaff.supabase.co';
 const SB_KEY = 'sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth';
 const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';   // sesión de oficina de la plataforma (mismo dominio)
 const K_ASESOR = 'rw_asesor_token';                      // sesión de asesor de la plataforma (mismo dominio)
-const K_TEST = 'rw_test_token';                          // sesión solo para el test (nuevos que aún no están en el equipo)
+const K_TEST = 'rw_test_token';                          // sesión solo para el test (entró con su DNI)
+const ENLACE = location.origin + '/test/';               // el enlace que la oficina pasa por WhatsApp
 const K_ADMIN = 'rw_test_admin';                         // sesión de oficina para este módulo (admin_sesion)
 const K_PESTANA = 'rw_test_pestana';
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -374,26 +380,28 @@ async function arrancar(){
 /* =====================================================================
    Entrar
    ===================================================================== */
+// Entra con su DNI (o carné de extranjería); si escribe su celular, también vale.
+// La sesión queda en este celular: otro día entra directo, sin volver a escribir nada.
 function pantallaEntrar(msg){
-  const cel = h('input', {id: 'cel', type: 'tel', inputmode: 'numeric', autocomplete: 'tel-national', 'aria-describedby': 'ayuda'});
+  const doc = h('input', {id: 'dni', type: 'text', inputmode: 'numeric', autocomplete: 'off', spellcheck: 'false',
+    maxlength: 15, 'aria-describedby': 'ayuda'});
   const error = h('p', {class: 'error', role: 'alert'}, msg || '');
   const boton = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
   const form = h('form', {class: 'acceso', novalidate: true},
     h('p', {class: 'marca'}, 'Equipo Arequipa'),
     h('h1', {}, 'Test del Nivel 0'),
-    h('p', {class: 'apoyo', id: 'ayuda'}, 'Escribe tu celular, el mismo con el que te inscribiste.'),
-    h('label', {for: 'cel'}, 'Tu celular'), cel, boton, error,
+    h('p', {class: 'apoyo', id: 'ayuda'}, 'Escribe tu DNI, el mismo con el que te afiliaste. Solo te lo pedimos esta vez: este celular te recordará.'),
+    h('label', {for: 'dni'}, 'Tu DNI'), doc, boton, error,
     h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaClave()}, 'Soy de la oficina')));
   form.addEventListener('submit', async ev => {
     ev.preventDefault();
     error.textContent = '';
-    const v = cel.value.replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
-    if (!/^9\d{8}$/.test(v)) { error.textContent = 'Escribe tu celular de 9 dígitos.'; cel.focus(); return; }
+    const v = doc.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().replace(/^51(?=9\d{8}$)/, '');
+    if (!/^(\d{7,9}|[A-Z0-9]{9,12})$/.test(v)) { error.textContent = 'Escribe tu DNI de 8 dígitos.'; doc.focus(); return; }
     boton.disabled = true; boton.textContent = 'Entrando…';
     try {
-      const r = await rpc('ts_login', {p_celular: v, p_ctx: contexto()});
-      if (r.alcance === 'plataforma') { guardar(K_ASESOR, r.token); borrar(K_TEST); }
-      else { guardar(K_TEST, r.token); }
+      const r = await rpc('ts_entrar', {p_doc: v, p_ctx: contexto()});
+      guardar(K_TEST, r.token);
       await iniciarAsesor();
     } catch (e) {
       error.textContent = mensaje(e);
@@ -401,7 +409,7 @@ function pantallaEntrar(msg){
     }
   });
   pintar(form);
-  cel.focus();
+  doc.focus();
 }
 
 function pantallaClave(msg){
@@ -413,7 +421,7 @@ function pantallaClave(msg){
     h('h1', {}, 'Test del Nivel 0 · Oficina'),
     h('p', {class: 'apoyo'}, 'Entra con la clave de administrador, la misma del Nivel Cero. Si ya entraste a la plataforma con tu correo, ábrelo desde ahí.'),
     h('label', {for: 'clave'}, 'Clave'), clave, boton, error,
-    h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi celular')));
+    h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi DNI')));
   form.addEventListener('submit', async ev => {
     ev.preventDefault();
     error.textContent = '';
@@ -458,7 +466,7 @@ async function iniciarAsesor(){
   pintar(cargando());
   try { E = await rpc('ts_estado', {p_token: tokenAsesor()}); }
   catch (e) {
-    if (/venci/i.test(e.message)) { borrar(K_TEST); borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu celular.'); }
+    if (/venci/i.test(e.message)) { borrar(K_TEST); borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu DNI: sigues donde te quedaste.'); }
     return pantallaError(mensaje(e), iniciarAsesor);
   }
   pantallaEstado();
@@ -471,6 +479,9 @@ function enlacesConsulta(cfg){
     h('a', {href: x.url, target: '_blank', rel: 'noopener'}, x.nombre || x.url)));
 }
 
+// ¿Se pide nota mínima? Si no (por ahora), aprueba todo el que termina y la nota solo se registra.
+const exige = cfg => !!(cfg && cfg.exigir_nota);
+
 function comoFunciona(cfg){
   return h('section', {},
     h('h2', {}, 'Cómo es el test'),
@@ -478,19 +489,22 @@ function comoFunciona(cfg){
       h('li', {}, `Son ${cfg.pasos || 'unas 30'} preguntas, una por una: precios y promociones, inicial y cuotas, zonas de crédito, pagos, Empiece Ya, comisiones y autocompra, y cómo responder a las objeciones.`),
       h('li', {}, 'Es a libro abierto: ten a la mano la lista de precios y las promociones vigentes.'),
       h('li', {}, 'Si fallas, te decimos dónde encontrar la respuesta y te sale otra pregunta del mismo tema.'),
-      h('li', {}, `Tu nota es preguntas ÷ respuestas × 100: cada fallo la baja. Apruebas con ${cfg.nota_minima} o más.`),
-      h('li', {}, 'Puedes rendirlo las veces que quieras dentro de tu plazo. Si cierras la página, sigues donde te quedaste.')),
+      exige(cfg)
+        ? h('li', {}, `Tu nota es preguntas ÷ respuestas × 100: cada fallo la baja. Apruebas con ${cfg.nota_minima} o más, y puedes rendirlo las veces que quieras dentro de tu plazo.`)
+        : h('li', {}, `Al terminarlo ganas tu ${minus(cfg.premio || 'botella de acero')}. Tu nota (preguntas ÷ respuestas × 100) queda registrada.`),
+      h('li', {}, 'No tienes que hacerlo de una vez: cada respuesta se guarda al momento. Si cierras la página o vuelves atrás, sigues donde te quedaste.')),
     enlacesConsulta(cfg));
 }
 
 function historial(){
   const l = (E && E.historial) || [];
   if (!l.length) return null;
+  const cfg = (E && E.config) || {};
   return h('section', {},
-    h('h2', {}, 'Tus intentos'),
+    h('h2', {}, l.length === 1 ? 'Tu test' : 'Tus intentos'),
     h('ul', {class: 'historial'}, l.map(x => h('li', {},
       h('span', {}, corta(x.fecha)),
-      h('strong', {}, `${x.nota} · ${x.aprobado ? 'aprobado' : 'no aprobado'}`)))));
+      h('strong', {}, exige(cfg) ? `${x.nota} · ${x.aprobado ? 'aprobado' : 'no aprobado'}` : `Nota ${x.nota}`)))));
 }
 
 function pantallaEstado(){
@@ -506,15 +520,16 @@ function pantallaEstado(){
     boton.addEventListener('click', () => empezar(boton, error));
     tarjeta = h('section', {class: 'tarjeta medio'},
       h('h2', {}, it ? 'Tienes un test a medias' : '¡Tu test está habilitado!'),
-      it ? h('p', {}, `Vas en la pregunta ${it.paso} de ${it.total}. Sigue donde te quedaste.`)
-         : h('p', {}, `Completaste tus 5 clases. Aprueba el test con ${cfg.nota_minima} o más y ganas tu ${premio}.`),
+      it ? h('p', {}, `Vas en la pregunta ${it.paso} de ${it.total}. Tus respuestas están guardadas: sigue donde te quedaste.`)
+         : h('p', {}, exige(cfg) ? `Completaste tus 5 clases. Aprueba el test con ${cfg.nota_minima} o más y ganas tu ${premio}.`
+                                 : `Completaste tus 5 clases. Termina el test y ganas tu ${premio}.`),
       h('p', {class: 'plazo'}, `Tienes hasta el ${largo(w.hasta)}: ${quedan(w.dias)}.`),
       w.mejor != null ? h('p', {class: 'apoyo'}, `Tu mejor nota hasta ahora: ${w.mejor}.`) : null,
       boton, error);
   } else if (d.estado === 'aprobado') {
     const b = w.botella;
     tarjeta = h('section', {class: 'tarjeta ok'},
-      h('h2', {}, `¡Aprobaste tu test con ${w.nota}! 🏆`),
+      h('h2', {}, exige(cfg) ? `¡Aprobaste tu test con ${w.nota}! 🏆` : `¡Terminaste tu test! Tu nota: ${w.nota} 🏆`),
       b === 'entregada'
         ? h('p', {}, `Recibiste tu ${premio} el ${corta(w.botella_entregada_en)}. ¡Felicitaciones!`)
         : h('p', {}, `Ganaste tu ${premio}: te espera en la oficina. Pasa a recogerla cuando vengas.`),
@@ -522,7 +537,7 @@ function pantallaEstado(){
   } else if (d.estado === 'vencido') {
     tarjeta = h('section', {class: 'tarjeta alto'},
       h('h2', {}, 'Tu plazo para el test venció'),
-      h('p', {}, `Tenías hasta el ${largo(w.hasta)} para aprobarlo.` + (w.mejor != null ? ` Tu mejor nota fue ${w.mejor}.` : '')),
+      h('p', {}, `Tenías hasta el ${largo(w.hasta)} para ${exige(cfg) ? 'aprobarlo' : 'terminarlo'}.` + (w.mejor != null ? ` Tu mejor nota fue ${w.mejor}.` : '')),
       h('p', {class: 'apoyo'}, 'Si crees que es un error, habla con tu líder.'));
   } else if (d.estado === 'clases') {
     const faltan = Math.max((c.meta || 5) - (c.validas || 0), 0);
@@ -540,7 +555,7 @@ function pantallaEstado(){
         h('h2', {}, 'Primero, tus 5 clases'),
         h('p', {}, `Llevas ${c.validas || 0} de ${c.meta || 5} clases` + (faltan ? `: te ${faltan === 1 ? 'falta 1' : 'faltan ' + faltan}.` : '.')
           + (c.vence ? ` Tienes hasta el ${largo(c.vence)}.` : '')),
-        h('p', {}, `Al completarlas se habilita tu test: tendrás ${cfg.dias_ventana || 15} días para aprobarlo y ganar tu ${premio}.`));
+        h('p', {}, `Al completarlas se habilita tu test: tendrás ${cfg.dias_ventana || 15} días para ${exige(cfg) ? 'aprobarlo' : 'hacerlo'} y ganar tu ${premio}.`));
     }
   } else if (d.estado === 'no_aplica') {
     tarjeta = h('section', {class: 'tarjeta ok'},
@@ -553,9 +568,9 @@ function pantallaEstado(){
   } else {   // no_inscrito
     tarjeta = h('section', {class: 'tarjeta'},
       h('h2', {}, 'No encontramos tu inscripción'),
-      h('p', {}, 'El test es para los nuevos asesores que completan sus 5 clases del Nivel Cero, y con este número no encontramos tu inscripción.'),
+      h('p', {}, 'El test es para los nuevos asesores que completan sus 5 clases del Nivel Cero, y con estos datos no encontramos tu inscripción.'),
       h('p', {class: 'apoyo'}, 'Si te afiliaste hace poco, avísale a tu líder para que te registre.'),
-      h('button', {class: 'boton sec', type: 'button', onclick: () => { borrar(K_TEST); pantallaEntrar(); }}, 'Entrar con otro número'));
+      h('button', {class: 'boton sec', type: 'button', onclick: () => { borrar(K_TEST); pantallaEntrar(); }}, 'Entrar con otro DNI'));
   }
 
   pintar(barraAsesor(), h('main', {},
@@ -589,7 +604,23 @@ function enviarRespuesta(resp){
     ? rpc('ts_admin_responder', {p_token: tokenAdmin(), p_intento: it.id, p_pregunta: it.pregunta.id, p_respuesta: resp})
     : rpc('ts_responder', {p_token: tokenAsesor(), p_intento: it.id, p_pregunta: it.pregunta.id, p_respuesta: resp});
 }
-function salirDelTest(){ return Q.modo === 'practica' ? iniciarOficina() : iniciarAsesor(); }
+// El botón «atrás» del celular, dentro del test, vuelve a su estado en vez de cerrar la página:
+// lo respondido ya está guardado y al volver sigue en la misma pregunta.
+let enTest = false;
+function entrarAlTest(){
+  if (enTest) return;
+  enTest = true;
+  try { history.pushState({rwTest: 1}, ''); } catch (e) {}
+}
+window.addEventListener('popstate', () => {
+  if (!enTest) return;
+  enTest = false;
+  if (Q.modo === 'practica') iniciarOficina(); else iniciarAsesor();
+});
+function salirDelTest(){
+  if (enTest) { enTest = false; try { history.back(); } catch (e) {} }
+  return Q.modo === 'practica' ? iniciarOficina() : iniciarAsesor();
+}
 
 function cabeceraTest(it){
   const hechos = Math.max(0, (it.paso || 1) - 1);
@@ -608,6 +639,7 @@ function pantallaPregunta(){
   if (it.fin) return pantallaFin();
   const q = it.pregunta;
   if (!q) return salirDelTest();
+  entrarAlTest();
 
   const elegidas = new Set();          // single y multi
   const pares = {};                    // emparejar: item -> nombre
@@ -733,17 +765,20 @@ function pantallaPregunta(){
 function pantallaFin(){
   const it = Q.intento, f = it.fin || {};
   const practica = Q.modo === 'practica';
+  const conNota = !!f.exigir_nota;
   const errores = (f.por_bloque || []).filter(b => b.errores > 0);
   const repetir = h('button', {class: 'boton', type: 'button'}, practica ? 'Otra práctica' : 'Intentar de nuevo');
   const error = h('p', {class: 'error', role: 'alert'});
   repetir.addEventListener('click', () => practica ? practicar(repetir, error) : empezar(repetir, error));
+  entrarAlTest();
   pintar(
     h('header', {class: 'barra'}, h('span', {class: 'marca'}, practica ? 'Práctica de la oficina' : 'Test del Nivel 0')),
     h('main', {},
-      h('h1', {}, f.aprobado ? '¡Aprobaste! 🎉' : 'Esta vez no llegaste'),
-      h('div', {class: 'nota'}, h('strong', {}, f.nota), h('span', {}, `de 100 · apruebas con ${f.nota_minima}`)),
+      h('h1', {}, !conNota ? '¡Terminaste tu test! 🎉' : f.aprobado ? '¡Aprobaste! 🎉' : 'Esta vez no llegaste'),
+      h('div', {class: 'nota'}, h('strong', {}, f.nota),
+        h('span', {}, conNota ? `de 100 · apruebas con ${f.nota_minima}` : 'de 100 · tu nota queda registrada')),
       f.aprobado
-        ? h('p', {style: 'margin-top:12px'}, practica ? 'Así lo vería un asesor que aprueba.' : 'Ganaste tu botella de acero: te espera en la oficina. Pasa a recogerla cuando vengas.')
+        ? h('p', {style: 'margin-top:12px'}, practica ? 'Así lo vería un asesor que termina el test.' : 'Ganaste tu botella de acero: te espera en la oficina. Pasa a recogerla cuando vengas.')
         : h('p', {style: 'margin-top:12px'}, 'Repasa lo que te costó y vuelve a intentarlo: tus intentos no tienen límite dentro de tu plazo.'),
       h('div', {class: 'datos'},
         h('div', {class: 'dato'}, h('b', {}, num(f.pasos)), h('span', {}, 'preguntas')),
@@ -802,14 +837,19 @@ function vistaResultados(){
   const ven = ps.filter(x => est(x) === 'vencido');
   const otros = ps.filter(x => !['habilitado', 'aprobado', 'vencido'].includes(est(x)));
   const eb = (d.errores_bloque || []).filter(b => b.respuestas > 0);
+  const con = exige(cfg);
+  const prom = promedio(ps);
 
   return h('div', {},
+    cajaEnlace(),
     h('p', {class: 'apoyo', style: 'margin-top:14px'},
-      `Quien completa sus 5 clases tiene ${cfg.dias_ventana} días para aprobar con ${cfg.nota_minima} o más. Al aprobar, su botella pasa a Premios como «por entregar». Hoy el test tiene ${(d.plan || []).length} preguntas.`),
+      con ? `Quien completa sus 5 clases tiene ${cfg.dias_ventana} días para aprobar con ${cfg.nota_minima} o más. Al aprobar, su botella pasa a Premios como «por entregar». Hoy el test tiene ${(d.plan || []).length} preguntas.`
+          : `Quien completa sus 5 clases tiene ${cfg.dias_ventana} días para hacer el test. Por ahora aprueba todo el que lo termina y su nota queda registrada; su botella pasa a Premios como «por entregar». Hoy el test tiene ${(d.plan || []).length} preguntas.`),
     h('div', {class: 'cifras'},
       cifra(hab.length, 'con el test habilitado' + (urge.length ? ` · ${urge.length} vence${urge.length === 1 ? '' : 'n'} en 3 días o menos` : '')),
-      cifra(apr.length, 'aprobaron' + (porEntregar.length ? ` · ${porEntregar.length} botella${porEntregar.length === 1 ? '' : 's'} por entregar` : '')),
-      cifra(ven.length, 'se les venció sin aprobar'),
+      cifra(apr.length, (con ? 'aprobaron' : 'lo terminaron') + (porEntregar.length ? ` · ${porEntregar.length} botella${porEntregar.length === 1 ? '' : 's'} por entregar` : '')),
+      prom ? cifra(prom.nota, `nota promedio (de ${plural(prom.n, 'test', 'tests')})`) : null,
+      cifra(ven.length, con ? 'se les venció sin aprobar' : 'se les venció sin terminar'),
       cifra(d.en_clases || 0, 'haciendo sus 5 clases')),
     eb.length ? h('section', {},
       h('h2', {}, 'Dónde fallan más'),
@@ -821,7 +861,7 @@ function vistaResultados(){
       }))) : null,
     ps.length ? [
       grupoPersonas('Con el test habilitado', hab),
-      grupoPersonas('Aprobaron', apr),
+      grupoPersonas(con ? 'Aprobaron' : 'Lo terminaron', apr),
       grupoPersonas('Se les venció', ven),
       grupoPersonas('Otros', otros)]
     : h('div', {class: 'tarjeta'},
@@ -829,6 +869,37 @@ function vistaResultados(){
         h('p', {class: 'apoyo'}, `Cuando alguien complete sus 5 clases (desde el ${corta(cfg.aplica_desde)}), aparecerá aquí con su plazo de ${cfg.dias_ventana} días.`)));
 }
 function cifra(n, t){ return h('div', {class: 'cifra'}, h('b', {}, num(n)), h('span', {}, t)); }
+// Promedio de la nota de quienes terminaron (para decidir luego cuánto pedir)
+function promedio(ps){
+  const l = (ps || []).map(x => x.test || {}).filter(t => t.estado === 'aprobado' && t.nota != null).map(t => Number(t.nota));
+  return l.length ? {nota: Math.round(l.reduce((a, b) => a + b, 0) / l.length), n: l.length} : null;
+}
+
+// El enlace del test, igual para todos: se copia y se pega en WhatsApp
+function mensajeEnlace(nombre, hasta){
+  return `¡Hola${nombre ? ' ' + nombre : ''}! 👋 Ya puedes hacer tu Test del Nivel 0 y ganar tu botella de acero`
+    + (hasta ? ` (tienes hasta el ${largo(hasta)})` : '') + `. Entra aquí con tu DNI: ${ENLACE}`;
+}
+async function copiar(texto, ok){
+  let listo = false;
+  try { await navigator.clipboard.writeText(texto); listo = true; } catch (e) {}
+  if (!listo) {     // sin permiso del portapapeles: el método de siempre
+    const ta = h('textarea', {readonly: true, style: 'position:fixed;top:0;left:0;opacity:0'});
+    ta.value = texto; document.body.append(ta); ta.select();
+    try { listo = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+  }
+  aviso(listo ? ok : 'No se pudo copiar: mantén presionado el enlace para copiarlo.', !listo);
+}
+function cajaEnlace(){
+  return h('section', {class: 'tarjeta medio'},
+    h('h2', {}, 'Enlace para los asesores'),
+    h('p', {class: 'apoyo chico'}, 'Es el mismo para todos. Lo abren, ponen su DNI una sola vez y su celular los recuerda. Cada respuesta queda guardada: si salen, siguen donde se quedaron.'),
+    h('p', {class: 'url'}, ENLACE),
+    h('div', {class: 'acciones'},
+      h('button', {class: 'mini', type: 'button', onclick: () => copiar(ENLACE, 'Enlace copiado')}, 'Copiar enlace'),
+      h('button', {class: 'mini sec', type: 'button', onclick: () => copiar(mensajeEnlace(), 'Mensaje copiado')}, 'Copiar mensaje para WhatsApp')));
+}
 
 function grupoPersonas(t, l){
   if (!l.length) return null;
@@ -839,7 +910,7 @@ function lineaPersona(x){
   const t = x.test || {}, p = [];
   if (t.estado === 'habilitado') p.push(`hasta el ${corta(t.hasta)} (${quedan(t.dias)})` + (t.hasta_editado ? ' · plazo cambiado' : ''));
   if (t.estado === 'vencido') p.push(`venció el ${corta(t.hasta)}`);
-  if (t.estado === 'aprobado') p.push(`aprobó con ${t.nota} el ${corta(t.aprobado_en)}`);
+  if (t.estado === 'aprobado') p.push(`${exige(O.d && O.d.config) ? 'aprobó' : 'lo terminó'} con ${t.nota} el ${corta(t.aprobado_en)}`);
   if (t.estado === 'clases') p.push(`${x.validas || 0} de 5 clases`);
   if (t.intentos) p.push(plural(t.intentos, 'intento', 'intentos') + (t.mejor != null && t.estado !== 'aprobado' ? ` · mejor ${t.mejor}` : ''));
   if (t.abierto) p.push('rindiendo ahora');
@@ -849,7 +920,9 @@ function lineaPersona(x){
 }
 
 function filaPersona(x){
-  const t = x.test || {}, [etq, cls] = ESTADO[t.estado] || [t.estado || '', ''];
+  const t = x.test || {};
+  let [etq, cls] = ESTADO[t.estado] || [t.estado || '', ''];
+  if (t.estado === 'aprobado' && !exige(O.d && O.d.config)) etq = 'Lo terminó';
   const abierto = O.abierto === x.id;
   return h('li', {class: 'persona'},
     h('button', {type: 'button', 'aria-expanded': abierto ? 'true' : 'false', 'data-foco': 'p-' + x.id,
@@ -869,6 +942,16 @@ function detallePersona(x){
   if (x.logro_fecha) datos.push('5.ª clase el ' + corta(x.logro_fecha));
   if (datos.length) caja.append(h('p', {class: 'apoyo chico', style: 'margin-top:10px'}, datos.join(' · ')));
   if (t.nota_persona) caja.append(h('p', {style: 'margin-top:8px'}, h('strong', {}, 'Nota: '), t.nota_persona));
+  // con el test habilitado: mandarle el enlace por WhatsApp, ya escrito con su nombre y su plazo
+  const cel = String(x.celular || '').replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
+  if (t.estado === 'habilitado') {
+    const msg = mensajeEnlace(primerNombre(x.nombre), t.hasta);
+    caja.append(h('div', {class: 'acciones'},
+      /^9\d{8}$/.test(cel)
+        ? h('a', {class: 'mini', href: `https://wa.me/51${cel}?text=${encodeURIComponent(msg)}`, target: '_blank', rel: 'noopener'}, 'Mandarle el enlace por WhatsApp')
+        : null,
+      h('button', {class: 'mini sec', type: 'button', onclick: () => copiar(msg, 'Mensaje copiado')}, 'Copiar su mensaje')));
+  }
 
   // intentos
   const ints = x.intentos || [];
@@ -877,7 +960,8 @@ function detallePersona(x){
   else caja.append(h('ul', {class: 'intentos'}, ints.map(i => {
     const errs = (i.por_bloque || []).filter(b => b.errores > 0).map(b => `${b.nombre}: ${b.errores}`).join(' · ');
     const li = h('li', {},
-      h('div', {}, h('strong', {}, i.terminado ? `${i.nota} · ${i.aprobado ? 'aprobado' : 'no aprobado'}` : `En curso: va en la ${Math.min(i.paso + 1, i.pasos)} de ${i.pasos}`),
+      h('div', {}, h('strong', {}, !i.terminado ? `En curso: va en la ${Math.min(i.paso + 1, i.pasos)} de ${i.pasos}`
+          : exige(O.d.config) ? `${i.nota} · ${i.aprobado ? 'aprobado' : 'no aprobado'}` : `Nota ${i.nota} · terminado`),
         h('span', {class: 'apoyo chico'}, ` · ${corta(String(i.iniciado).slice(0, 10))} · ${plural(i.intentos, 'respuesta', 'respuestas')}`)),
       errs ? h('p', {class: 'apoyo chico'}, 'Falló en ' + errs) : null);
     const acc = h('div', {class: 'acciones'});
@@ -999,6 +1083,8 @@ function vistaPasos(){
 /* ----- ajustes */
 function vistaAjustes(){
   const c = O.d.config || {};
+  const prom = promedio(O.d.personas);
+  const exigir = h('input', {id: 'a-exigir', type: 'checkbox'}); exigir.checked = !!c.exigir_nota;
   const nota = h('input', {id: 'a-nota', type: 'number', min: 50, max: 100, value: c.nota_minima});
   const dias = h('input', {id: 'a-dias', type: 'number', min: 1, max: 90, value: c.dias_ventana});
   const premio = h('input', {id: 'a-premio', type: 'text', value: c.premio || ''});
@@ -1040,13 +1126,17 @@ function vistaAjustes(){
     boton.disabled = true; boton.textContent = 'Guardando…';
     try {
       O.d.config = await rpc('ts_admin_config', {p_token: tokenAdmin(), p_cambios: {
-        nota_minima: n, dias_ventana: dd, premio: premio.value, aplica_desde: desde.value || null, cuentas: cs, recursos: rs}});
+        exigir_nota: exigir.checked, nota_minima: n, dias_ventana: dd, premio: premio.value, aplica_desde: desde.value || null, cuentas: cs, recursos: rs}});
       aviso('Ajustes guardados');
       iniciarOficina(true);
     } catch (e) { error.textContent = mensaje(e); boton.disabled = false; boton.textContent = 'Guardar ajustes'; }
   });
   return h('div', {},
-    h('label', {for: 'a-nota'}, 'Nota para aprobar'), nota,
+    h('label', {class: 'check', for: 'a-exigir'}, exigir, 'Pedir nota mínima para aprobar'),
+    h('p', {class: 'apoyo chico', style: 'margin-top:6px'},
+      'Apagado (como está ahora): aprueba todo el que termina el test y su nota queda registrada. Prendido: aprueba solo con la nota de abajo.'
+      + (prom ? ` Hoy el promedio es ${prom.nota} (de ${plural(prom.n, 'test', 'tests')}).` : '')),
+    h('label', {for: 'a-nota'}, 'Nota para aprobar (cuando se pide)'), nota,
     h('p', {class: 'apoyo chico', style: 'margin-top:6px'}, 'Nota = preguntas ÷ respuestas × 100. Con 32 preguntas, 3 errores dan 91 y 4 errores, 89.'),
     h('label', {for: 'a-dias'}, 'Días para rendirlo (desde su 5.ª clase)'), dias,
     h('label', {for: 'a-premio'}, 'Premio al aprobar'), premio,

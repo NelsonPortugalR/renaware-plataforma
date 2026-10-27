@@ -20,9 +20,9 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
   `pruebas/simulador_test.js` (el Supabase simulado del test). `pruebas/capturas_test.js
   <carpeta>` saca capturas en un celular con Chromium (necesita playwright).
 - `sql/pruebas/test_nivel0_simulacion.sql` — simulación completa en la base real:
-  inscrito de prueba con 5 clases, rinde con 2 errores, premio, sincronías (también
+  inscrito de prueba con 5 clases, rinde con 5 errores (aprueba igual), premio, sincronías (también
   al deshacer entregas), entrada solo con el Nivel Cero, doble inicio, anulación y
-  número bloqueado. Termina con un error a propósito para que todo se deshaga.
+  bloqueado, todo con DNI. Termina con un error a propósito para que todo se deshaga.
 
 ## Cómo se publica
 
@@ -71,7 +71,9 @@ deshabilitados; migración `archivar_motor_agosto_sin_drop`). Premios (`pr_*`) l
 ## Test del Nivel 0 (`/test/`)
 
 Quien completa sus **5 clases** del Nivel Cero tiene **15 días** (desde su 5.ª
-clase) para aprobar un test con **90 o más**. Al aprobar, su **botella de acero**
+clase) para hacer un test. **Por ahora aprueba todo el que lo termina** y su nota
+queda registrada (`ts_config.exigir_nota = false`; prendido, pide `nota_minima`,
+p. ej. el promedio que muestra la oficina). Al aprobar, su **botella de acero**
 entra a Premios (`pr_premios`, programa «Nivel Cero», nivel «Nivel 0») como
 recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
 
@@ -91,11 +93,14 @@ recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
   vigente, `reglas_credito`/`factores_credito`, `zc_*` y el Empiece Ya de Premios
   (`pr_catalogo`) que le toca por su fecha de ingreso. Las de texto viven en
   `ts_banco`, con variantes. La de cuentas sale cuando se cargan en Ajustes.
-- **Entrar**: el asesor con su celular. Si ya está en el equipo, entra con la
-  sesión de la plataforma (`rw_asesor_token`); si es nuevo y aún no figura, basta
-  con estar inscrito en el Nivel Cero (`ts_login` da una sesión solo para el test,
-  `rw_test_token`). La oficina llega desde la plataforma (traspaso) o con la clave
-  de admin.
+- **Entrar**: un solo enlace para todos (`/test/`), que la oficina copia desde
+  Resultados o manda por WhatsApp desde la ficha de cada uno. El asesor pone su
+  **DNI** una sola vez (también vale su celular): `ts_entrar` le da una sesión
+  solo para el test (`ts_sesiones`, guardada como `rw_test_token`; no sirve para
+  la plataforma) y su celular lo recuerda. Si llega desde la plataforma, entra
+  con esa sesión. Cada respuesta se guarda al momento; el botón «atrás» del
+  celular, dentro del test, vuelve a su estado sin perder nada. La oficina llega
+  desde la plataforma (traspaso) o con la clave de admin.
 - **Sin premios repetidos**: si su Empiece Ya (que trae botella) ya se entregó, la
   botella del Nivel 0 se cierra sola («Se entregó junto con su Empiece Ya»); si la
   del Nivel 0 se entregó primero, su Empiece Ya pendiente queda con la nota
@@ -106,7 +111,7 @@ recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
   `ts_sync_diario` (06:07 de Lima) como respaldo.
 - **Datos**: `ts_config` (nota, días, premio, desde cuándo aplica, cuentas,
   enlaces de consulta), `ts_pasos`, `ts_banco`, `ts_personas` (plazo corregido o
-  fuera del test), `ts_intentos`. Funciones web: `ts_login`, `ts_estado`,
+  fuera del test), `ts_intentos`, `ts_sesiones`. Funciones web: `ts_entrar`, `ts_estado`,
   `ts_iniciar`, `ts_responder` (asesor) y `ts_admin_*` (oficina). El estado del
   test de cada inscrito viaja en `n0_inscritos_json` (llave `test`), que leen
   Nivel Cero y Bienvenida. En «Hoy» aparece quien tiene el test por vencer.
