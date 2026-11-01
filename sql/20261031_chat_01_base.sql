@@ -101,7 +101,7 @@ returns jsonb language sql stable security definer set search_path to 'public' a
   select jsonb_build_object('tipo', 'equipo', 'rol', p.rol, 'nombre', p.nombre, 'user_id', p.user_id, 'persona_id', p.persona_id)
   from public.perfiles p where p.user_id = auth.uid() and p.activo limit 1;
 $$;
-revoke execute on function public.chat_quien() from public, anon;
+revoke execute on function public.chat_quien() from public, anon, authenticated;
 
 -- ---------- catálogo que ve el modelo ----------
 create or replace function public.chat_catalogo(p_proyecto text default 'renaware')
