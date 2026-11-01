@@ -1,0 +1,12 @@
+-- Aplicado el 31/10/2026.
+-- plataforma_salud(): chequeo automático de las reglas compartidas (doc claude/plataforma.md):
+--  - tablas que el navegador puede escribir sin sesión (políticas anon/public sin condición de rol)
+--  - tablas con datos de personas legibles sin sesión (fuera de los catálogos)
+--  - tablas sin RLS
+--  - funciones security definer públicas que escriben sin validar sesión
+--  - módulos registrados que no tienen bloque en hoy_items_v2
+-- Hoy muestra una tarjeta al admin mientras haya hallazgos. Ver la definición vigente con:
+--   select pg_get_functiondef('public.plataforma_salud()'::regprocedure);
+-- También se revocó anon/authenticated de loc_tick (lo corre pg_cron) y de las funciones viejas del local
+-- que recibían el nombre como texto (loc_login, loc_domingo_si/no, loc_continuar, loc_aceptar_propuesta):
+-- las reemplazan las versiones con token (ver repo local-equipo-arequipa/sql).
