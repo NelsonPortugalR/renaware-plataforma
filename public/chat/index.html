@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E3A5B">
+<title>Pregúntale · Equipo Arequipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root{
+    --fondo:#F3F5F7; --superficie:#FFFFFF; --tinta:#15232E; --suave:#51606C;
+    --acero:#0E3A5B; --acero-2:#2A6A99; --acero-claro:#D9E3EB; --sobre-acero:#FFFFFF;
+    --borde:#CBD5DD; --alto:#B3261E; --medio:#9A6200; --info:#7A8792; --ok:#1F7A4D;
+    --burbuja-yo:#DCE9F4; --burbuja-chat:#FFFFFF;
+    --fuente:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --medio:#E5B54F; --info:#8E9EAA; --ok:#6CC49A;
+    --burbuja-yo:#22384A; --burbuja-chat:#15212B;
+    color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --medio:#E5B54F; --info:#8E9EAA; --ok:#6CC49A;
+    --burbuja-yo:#22384A; --burbuja-chat:#15212B;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;height:100%}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font-family:var(--fuente);font-size:17px;line-height:1.5;
+    min-height:100%;display:flex;flex-direction:column;
+    padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  h1{font-size:19px;line-height:1.2;margin:0;font-weight:700}
+  p{margin:0}
+  a{color:var(--acero-2)}
+  :focus-visible{outline:3px solid var(--acero-2);outline-offset:2px}
+  .apoyo{color:var(--suave)}
+  .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .oculto{display:none !important}
+
+  .barra{position:sticky;top:0;z-index:5;background:var(--fondo);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;
+    display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--borde)}
+  .barra h1{flex:1;color:var(--acero)}
+  .barra h1 span{display:block;font-size:13px;font-weight:400;color:var(--suave)}
+  .icono{background:none;border:1px solid var(--borde);border-radius:9px;padding:7px 10px;font:inherit;font-size:14.5px;
+    color:var(--acero-2);cursor:pointer;text-decoration:none;white-space:nowrap}
+  .icono:hover{background:var(--acero-claro)}
+
+  .marco{flex:1;width:100%;max-width:680px;margin:0 auto;padding:14px 14px 0;display:flex;flex-direction:column}
+  .hilo{list-style:none;margin:0;padding:0;display:grid;gap:12px;flex:1;align-content:start}
+  .msg{max-width:92%;border-radius:14px;padding:11px 14px 12px;white-space:normal;word-wrap:break-word;overflow-wrap:anywhere}
+  .msg.yo{justify-self:end;background:var(--burbuja-yo);border-bottom-right-radius:4px;white-space:pre-wrap}
+  .msg.chat{justify-self:start;background:var(--burbuja-chat);border:1px solid var(--borde);border-bottom-left-radius:4px}
+  .msg.chat.error{border-color:var(--alto)}
+  .msg.chat.error .texto{color:var(--alto);font-weight:700}
+  .texto p{margin:0 0 8px} .texto p:last-child{margin-bottom:0}
+  .texto ul,.texto ol{margin:4px 0 8px;padding-left:22px} .texto li{margin:2px 0}
+  .texto h3,.texto h4{font-size:17px;margin:8px 0 4px}
+  .texto code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;background:var(--acero-claro);padding:1px 5px;border-radius:5px}
+  .texto pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;background:var(--acero-claro);padding:10px;border-radius:8px;overflow:auto;margin:6px 0}
+  .texto pre code{background:none;padding:0}
+  .texto table{border-collapse:collapse;margin:6px 0;font-size:15px;display:block;overflow:auto;max-width:100%}
+  .texto th,.texto td{border:1px solid var(--borde);padding:4px 8px;text-align:left;vertical-align:top}
+  .texto th{background:var(--acero-claro)}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:13.5px;color:var(--suave)}
+  .chip{border:1px solid var(--borde);border-radius:999px;padding:2px 9px;background:none;font:inherit;font-size:13px;color:var(--acero-2);cursor:pointer}
+  .chip.err{color:var(--alto);border-color:var(--alto)}
+  .chip[aria-expanded="true"]{background:var(--acero-claro)}
+  .detalle{margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--acero-claro);
+    padding:8px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--tinta)}
+  .sin-datos{color:var(--medio);font-weight:700}
+  .hora{font-size:12.5px;color:var(--suave);margin-top:4px}
+  .msg.yo .hora{text-align:right}
+  .pensando .texto{display:flex;gap:6px;align-items:center;color:var(--suave)}
+  .pensando .punto{width:8px;height:8px;border-radius:50%;background:var(--acero-2);animation:late 1.2s infinite ease-in-out}
+  .pensando .punto:nth-child(2){animation-delay:.2s} .pensando .punto:nth-child(3){animation-delay:.4s}
+  @keyframes late{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+  .vacio{padding:24px 6px;display:grid;gap:14px}
+  .vacio h2{font-size:21px;margin:0}
+  .sugerencias{display:grid;gap:8px}
+  .sugerencia{text-align:left;background:var(--superficie);border:1px solid var(--borde);border-radius:12px;padding:11px 14px;font:inherit;
+    font-size:16px;color:var(--tinta);cursor:pointer}
+  .sugerencia:hover{background:var(--acero-claro)}
+
+  .redactar{position:sticky;bottom:0;background:var(--fondo);padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid var(--borde)}
+  .caja{max-width:680px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+  textarea{flex:1;font:inherit;font-size:17px;padding:11px 13px;border:2px solid var(--borde);border-radius:14px;resize:none;
+    background:var(--superficie);color:var(--tinta);max-height:160px;min-height:48px;line-height:1.4}
+  textarea:focus{border-color:var(--acero-2);outline:none}
+  .enviar{border:0;border-radius:14px;background:var(--acero);color:var(--sobre-acero);font:inherit;font-size:17px;font-weight:700;
+    padding:0 18px;height:48px;cursor:pointer}
+  .enviar:disabled{opacity:.55;cursor:default}
+  .nota-pie{max-width:680px;margin:6px auto 0;font-size:12.5px;color:var(--suave);text-align:center}
+
+  /* Conversaciones */
+  .panel{position:fixed;inset:0;background:var(--fondo);z-index:10;overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 24px}
+  .panel .cab{display:flex;align-items:center;gap:10px;margin-bottom:14px;max-width:680px;margin-left:auto;margin-right:auto}
+  .panel .cab h2{flex:1;font-size:20px;margin:0}
+  .convs{list-style:none;margin:0 auto;padding:0;max-width:680px;display:grid;gap:1px;background:var(--borde);border:1px solid var(--borde);border-radius:12px;overflow:hidden}
+  .convs li{background:var(--superficie);display:flex;align-items:center;gap:8px}
+  .convs button.abrir{flex:1;text-align:left;background:none;border:0;padding:13px 14px;font:inherit;color:var(--tinta);cursor:pointer}
+  .convs button.abrir strong{display:block;font-size:16.5px}
+  .convs button.abrir span{display:block;color:var(--suave);font-size:14px}
+  .convs button.archivar{background:none;border:0;padding:12px;font:inherit;font-size:14px;color:var(--suave);cursor:pointer;text-decoration:underline}
+  .acceso{padding:40px 20px;text-align:center;display:grid;gap:12px}
+  .boton{display:inline-block;padding:13px 18px;border-radius:10px;background:var(--acero);color:var(--sobre-acero);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<header class="barra">
+  <a class="icono" href="../" aria-label="Volver a la plataforma">‹ Inicio</a>
+  <h1>Pregúntale<span id="quien">Equipo Arequipa</span></h1>
+  <button class="icono" type="button" id="btn-convs">Conversaciones</button>
+  <button class="icono" type="button" id="btn-nueva">Nueva</button>
+</header>
+<main class="marco" id="app"></main>
+<div class="redactar" id="redactar">
+  <form class="caja" id="form">
+    <label class="sr" for="pregunta">Tu pregunta</label>
+    <textarea id="pregunta" rows="1" placeholder="Pregunta lo que quieras de la plataforma…" autocomplete="off"></textarea>
+    <button class="enviar" type="submit" id="enviar">Enviar</button>
+  </form>
+  <p class="nota-pie">Responde solo con datos de la plataforma y dice de dónde salió cada dato.</p>
+</div>
+<div class="panel oculto" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-titulo"></div>
+<div class="sr" aria-live="polite" id="aviso"></div>
+<noscript>Activa JavaScript para usar el chat.</noscript>
+<script>
+'use strict';
+const SB_URL = 'https://kiexpdaaoegbtesqmaff.supabase.co';
+const SB_KEY = 'sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth';
+const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';   // sesión de oficina de la plataforma (mismo dominio)
+const K_CONV = 'rw_chat_conversacion';                   // conversación abierta en este celular
+const PROYECTO = 'renaware';
+const SUGERENCIAS = [
+  '¿Qué especiales están vigentes y hasta cuándo?',
+  '¿Cuánto cuesta el Especial 16 y cuántos puntos da?',
+  '¿Hay crédito en Cerro Colorado?',
+  '¿Qué premios hay en oficina por entregar?',
+  '¿Qué tengo pendiente hoy?',
+  'Cotiza S/ 4,729 con inicial de S/ 500',
+];
+const app = document.getElementById('app');
+const form = document.getElementById('form');
+const pregunta = document.getElementById('pregunta');
+const enviar = document.getElementById('enviar');
+const panel = document.getElementById('panel');
+const aviso = document.getElementById('aviso');
+
+/* ---------- utilidades ---------- */
+function h(tag, attrs, ...hijos){
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of hijos.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+function leer(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function guardar(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function borrar(k){ try { localStorage.removeItem(k); } catch (e) {} }
+function hora(iso){
+  const d = iso ? new Date(iso) : new Date();
+  return d.toLocaleTimeString('es-PE', {hour: '2-digit', minute: '2-digit'});
+}
+function escapar(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* Markdown ligero y seguro: primero se escapa todo, luego se marcan las formas que usa el modelo. */
+function enlinea(s){
+  return s
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function markdown(texto){
+  const lineas = escapar(texto).replace(/\r/g, '').split('\n');
+  let out = '', i = 0;
+  while (i < lineas.length) {
+    let l = lineas[i];
+    if (/^```/.test(l)) {                                   // bloque de código
+      let j = i + 1, cod = [];
+      while (j < lineas.length && !/^```/.test(lineas[j])) cod.push(lineas[j++]);
+      out += '<pre><code>' + cod.join('\n') + '</code></pre>'; i = j + 1; continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < lineas.length && /^\s*\|[\s:|-]+\|\s*$/.test(lineas[i + 1])) {   // tabla
+      const celdas = x => x.trim().replace(/^\||\|$/g, '').split('|').map(c => enlinea(c.trim()));
+      let html = '<table><thead><tr>' + celdas(l).map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
+      i += 2;
+      while (i < lineas.length && /^\s*\|.*\|\s*$/.test(lineas[i])) { html += '<tr>' + celdas(lineas[i]).map(c => '<td>' + c + '</td>').join('') + '</tr>'; i++; }
+      out += html + '</tbody></table>'; continue;
+    }
+    const m = l.match(/^(#{1,4})\s+(.*)$/);
+    if (m) { out += '<h' + (m[1].length < 3 ? 3 : 4) + '>' + enlinea(m[2]) + '</h' + (m[1].length < 3 ? 3 : 4) + '>'; i++; continue; }
+    if (/^\s*([-*•]|\d+[.)])\s+/.test(l)) {                   // lista
+      const ordenada = /^\s*\d+[.)]\s+/.test(l);
+      let html = ordenada ? '<ol>' : '<ul>';
+      while (i < lineas.length && /^\s*([-*•]|\d+[.)])\s+/.test(lineas[i])) {
+        html += '<li>' + enlinea(lineas[i].replace(/^\s*([-*•]|\d+[.)])\s+/, '')) + '</li>'; i++;
+      }
+      out += html + (ordenada ? '</ol>' : '</ul>'); continue;
+    }
+    if (l.trim() === '') { i++; continue; }
+    let parr = [];                                           // párrafo: líneas seguidas
+    while (i < lineas.length && lineas[i].trim() !== '' && !/^(```|#{1,4}\s|\s*([-*•]|\d+[.)])\s|\s*\|.*\|\s*$)/.test(lineas[i])) parr.push(enlinea(lineas[i++]));
+    out += '<p>' + parr.join('<br>') + '</p>';
+  }
+  return out;
+}
+
+/* ---------- sesión (la misma del hub) ---------- */
+async function api(ruta, {method = 'GET', body, token} = {}){
+  const r = await fetch(SB_URL + ruta, {
+    method,
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + (token || SB_KEY), 'Content-Type': 'application/json'},
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const txt = await r.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+  if (!r.ok) {
+    const msg = (data && (data.motivo || data.message || data.msg || data.error_description || data.error)) || ('Error ' + r.status);
+    const err = new Error(msg); err.status = r.status; err.data = data; throw err;
+  }
+  return data;
+}
+function guardarSesion(s){
+  if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+  guardar(K_STAFF, s);
+  return s;
+}
+async function sesionVigente(){
+  let s = leer(K_STAFF);
+  if (!s || !s.access_token) return null;
+  if (s.expires_at - 60 < Date.now() / 1000) {
+    try {
+      s = guardarSesion(await api('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: {refresh_token: s.refresh_token}}));
+    } catch (e) {
+      if (e instanceof TypeError) throw e;
+      borrar(K_STAFF); return null;
+    }
+  }
+  return s;
+}
+async function rpc(nombre, args){
+  const s = await sesionVigente();
+  if (!s) { const e = new Error('Sin sesión'); e.status = 401; throw e; }
+  return api('/rest/v1/rpc/' + nombre, {method: 'POST', body: args || {}, token: s.access_token});
+}
+function mensajeError(err){
+  const m = (err && err.message) || '';
+  if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
+  return m || 'Algo falló. Intenta de nuevo.';
+}
+
+/* ---------- estado ---------- */
+let conversacionId = leer(K_CONV) || null;
+let mensajes = [];          // [{rol, contenido, herramientas, sin_respuesta, creado_en, error}]
+let ocupado = false;
+let quien = null;
+
+/* ---------- pintar ---------- */
+const hilo = h('ol', {class: 'hilo', 'aria-label': 'Conversación'});
+function pintarVacio(){
+  return h('div', {class: 'vacio'},
+    h('h2', {}, 'Pregunta en tus palabras'),
+    h('p', {class: 'apoyo'}, 'Precios, promociones, repuestos, zonas de crédito, puntos, premios, Empiece Ya, pedidos, clientes, reparaciones, pendientes de hoy… Todo sale de la base de la plataforma.'),
+    h('div', {class: 'sugerencias'}, SUGERENCIAS.map(s =>
+      h('button', {class: 'sugerencia', type: 'button', onclick: () => { pregunta.value = s; enviarPregunta(); }}, s))));
+}
+function burbujaChat(m){
+  const nodo = h('li', {class: 'msg chat' + (m.error ? ' error' : '')},
+    h('div', {class: 'texto', html: m.error ? escapar(m.contenido) : markdown(m.contenido)}));
+  const chips = (m.herramientas || []).map(t => {
+    const chip = h('button', {class: 'chip' + (t.error ? ' err' : ''), type: 'button', 'aria-expanded': 'false',
+      title: t.error ? 'Esta consulta falló' : 'Ver qué se consultó'},
+      t.nombre + (t.filas != null ? ' · ' + t.filas : '') + (t.error ? ' ✕' : ''));
+    const det = h('div', {class: 'detalle oculto'},
+      'Argumentos: ' + JSON.stringify(t.args || {}) + '\n' + (t.error ? 'Error: ' + t.error : 'Filas: ' + (t.filas ?? '—')) + (t.ms != null ? '\nTiempo: ' + t.ms + ' ms' : ''));
+    chip.addEventListener('click', () => { const abierto = det.classList.toggle('oculto'); chip.setAttribute('aria-expanded', String(!abierto)); });
+    return [chip, det];
+  });
+  if (chips.length || m.sin_respuesta) {
+    nodo.append(h('div', {class: 'meta'}, chips.length ? h('span', {}, 'Consultó:') : null, chips.map(c => c[0]),
+      m.sin_respuesta ? h('span', {class: 'sin-datos'}, 'Sin datos para responder del todo') : null));
+    chips.forEach(c => nodo.append(c[1]));
+  }
+  nodo.append(h('p', {class: 'hora'}, hora(m.creado_en)));
+  return nodo;
+}
+function burbujaYo(m){
+  return h('li', {class: 'msg yo'}, m.contenido, h('p', {class: 'hora'}, hora(m.creado_en)));
+}
+function pintar(){
+  hilo.replaceChildren(...mensajes.map(m => m.rol === 'user' ? burbujaYo(m) : burbujaChat(m)));
+  if (ocupado) hilo.append(h('li', {class: 'msg chat pensando', 'aria-label': 'Consultando la base'},
+    h('div', {class: 'texto'}, 'Consultando la base', h('span', {class: 'punto'}), h('span', {class: 'punto'}), h('span', {class: 'punto'}))));
+  app.replaceChildren(mensajes.length || ocupado ? hilo : pintarVacio());
+  enviar.disabled = ocupado;
+  requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
+}
+function pintarSinSesion(){
+  document.getElementById('redactar').classList.add('oculto');
+  app.replaceChildren(h('div', {class: 'acceso'},
+    h('p', {}, h('strong', {}, 'Entra a la plataforma para usar el chat.')),
+    h('p', {class: 'apoyo'}, 'El chat usa tu misma sesión de la plataforma.'),
+    h('p', {}, h('a', {class: 'boton', href: '../'}, 'Ir a la plataforma'))));
+}
+
+/* ---------- conversaciones ---------- */
+async function cargarConversacion(id){
+  conversacionId = id; guardar(K_CONV, id);
+  mensajes = []; pintar();
+  try {
+    const lista = await rpc('chat_conversacion_mensajes', {p_conversacion: id, p_limite: 60});
+    mensajes = (lista || []).map(m => ({rol: m.rol, contenido: m.contenido, herramientas: m.herramientas || [], sin_respuesta: !!m.sin_respuesta, creado_en: m.creado_en}));
+  } catch (e) {
+    if (e.status === 401) return pintarSinSesion();
+    mensajes = [{rol: 'assistant', contenido: 'No pude cargar la conversación: ' + mensajeError(e), error: true, creado_en: new Date().toISOString()}];
+  }
+  pintar();
+}
+function nuevaConversacion(){
+  conversacionId = null; borrar(K_CONV); mensajes = []; pintar(); pregunta.focus();
+}
+async function abrirPanel(){
+  panel.classList.remove('oculto');
+  panel.replaceChildren(h('div', {class: 'cab'}, h('h2', {id: 'panel-titulo'}, 'Conversaciones'),
+    h('button', {class: 'icono', type: 'button', onclick: cerrarPanel}, 'Cerrar')), h('p', {class: 'apoyo'}, 'Cargando…'));
+  let lista = [];
+  try { lista = await rpc('chat_conversaciones_lista', {p_proyecto: PROYECTO, p_limite: 40}) || []; }
+  catch (e) { panel.lastChild.textContent = mensajeError(e); return; }
+  const ul = h('ul', {class: 'convs'}, lista.map(c => h('li', {},
+    h('button', {class: 'abrir', type: 'button', onclick: () => { cerrarPanel(); cargarConversacion(c.id); }},
+      h('strong', {}, c.titulo || 'Sin título'),
+      h('span', {}, (c.mensajes || 0) + (c.mensajes === 1 ? ' mensaje · ' : ' mensajes · ') + new Date(c.actualizado_en).toLocaleDateString('es-PE', {day: 'numeric', month: 'short'}) + ' ' + hora(c.actualizado_en))),
+    h('button', {class: 'archivar', type: 'button', onclick: async ev => {
+      ev.currentTarget.disabled = true;
+      try { await rpc('chat_conversacion_archivar', {p_conversacion: c.id}); if (c.id === conversacionId) nuevaConversacion(); abrirPanel(); }
+      catch (e) { ev.currentTarget.disabled = false; aviso.textContent = mensajeError(e); }
+    }}, 'Archivar'))));
+  panel.lastChild.replaceWith(lista.length ? ul : h('p', {class: 'apoyo'}, 'Todavía no hay conversaciones.'));
+}
+function cerrarPanel(){ panel.classList.add('oculto'); }
+
+/* ---------- preguntar ---------- */
+async function enviarPregunta(){
+  const texto = pregunta.value.trim();
+  if (!texto || ocupado) return;
+  const s = await sesionVigente().catch(() => null);
+  if (!s) return pintarSinSesion();
+  pregunta.value = ''; ajustarAlto();
+  mensajes.push({rol: 'user', contenido: texto, creado_en: new Date().toISOString()});
+  ocupado = true; pintar();
+  let r;
+  try {
+    r = await api('/functions/v1/chat', {method: 'POST', token: s.access_token,
+      body: {proyecto: PROYECTO, conversacion_id: conversacionId, mensaje: texto}});
+  } catch (e) {
+    ocupado = false;
+    if (e.status === 401) { pintar(); return pintarSinSesion(); }
+    mensajes.push({rol: 'assistant', contenido: mensajeError(e), error: true, creado_en: new Date().toISOString()});
+    aviso.textContent = 'Error: ' + mensajeError(e);
+    pintar(); return;
+  }
+  ocupado = false;
+  if (r && r.conversacion_id) { conversacionId = r.conversacion_id; guardar(K_CONV, conversacionId); }
+  mensajes.push({rol: 'assistant', contenido: r.respuesta || '', herramientas: r.herramientas || [], sin_respuesta: !!r.sin_datos, creado_en: new Date().toISOString()});
+  aviso.textContent = 'Respuesta lista.';
+  pintar();
+}
+function ajustarAlto(){
+  pregunta.style.height = 'auto';
+  pregunta.style.height = Math.min(160, pregunta.scrollHeight) + 'px';
+}
+form.addEventListener('submit', ev => { ev.preventDefault(); enviarPregunta(); });
+pregunta.addEventListener('input', ajustarAlto);
+pregunta.addEventListener('keydown', ev => {
+  if (ev.key === 'Enter' && !ev.shiftKey && !/Mobi|Android|iPhone/i.test(navigator.userAgent)) { ev.preventDefault(); enviarPregunta(); }
+});
+document.getElementById('btn-nueva').addEventListener('click', nuevaConversacion);
+document.getElementById('btn-convs').addEventListener('click', abrirPanel);
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !panel.classList.contains('oculto')) cerrarPanel(); });
+
+/* ---------- arranque ---------- */
+(async function arrancar(){
+  let s = null;
+  try { s = await sesionVigente(); } catch (e) { /* sin internet: se intenta igual */ s = leer(K_STAFF); }
+  if (!s) return pintarSinSesion();
+  try {
+    quien = await rpc('mi_perfil');
+    if (quien && quien.nombre) document.getElementById('quien').textContent = quien.nombre.split(/\s+/)[0] + ' · ' + (quien.rol || '');
+  } catch (e) { if (e.status === 401) return pintarSinSesion(); }
+  if (conversacionId) cargarConversacion(conversacionId); else pintar();
+})();
+</script>
+</body>
+</html>

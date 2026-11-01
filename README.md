@@ -11,6 +11,10 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 - `public/test/index.html` — el **Test del Nivel 0** (`/test/`): el asesor lo
   rinde y la oficina ve resultados, prueba el test, apaga preguntas y ajusta
   (`/test/#oficina`). Ver más abajo.
+- `public/chat/index.html` — **Pregúntale** (`/chat/`): el chat en lenguaje
+  natural sobre toda la base. Usa la misma sesión del hub. Ver más abajo.
+- `supabase/functions/chat/` — la Edge Function del chat (el ciclo con la API de Claude).
+- `pruebas/prueba_chat.js` — pruebas del chat (`node pruebas/prueba_chat.js`).
 - `public/_headers`, `public/404.html` — configuración.
 - `wrangler.toml` — dice que el sitio son los archivos de `public/`.
 - `sql/` — copia de las migraciones de la base aplicadas desde este chat (las demás están en el historial de Supabase).
@@ -117,3 +121,40 @@ recibida y por entregar. Pasado el plazo, el test ya no se puede rendir.
   Nivel Cero y Bienvenida. En «Hoy» aparece quien tiene el test por vencer.
 - SQL en `sql/20261027_test_*.sql` (el `10_revision` trae los ajustes tras la
   revisión independiente y reemplaza las versiones anteriores de esas funciones).
+
+## Pregúntale (`/chat/`)
+
+Un chat que responde preguntas en lenguaje natural con lo que hay en la base:
+precios y promociones, repuestos, zonas de crédito, períodos, puntos oficiales,
+registro interno, pedidos, clientes, premios, Empiece Ya, Nivel Cero,
+reparaciones, pendientes de Hoy, seguimientos, facturación, turnos del local.
+Responde solo con datos de las herramientas y dice de dónde salió cada dato;
+cuando no puede, lo marca (`sin_respuesta`) para que esa pregunta se vuelva
+una herramienta o una ficha.
+
+- **El catálogo vive en la base, no en el código.** `chat_herramientas`: una
+  fila por herramienta (nombre, descripción para el modelo, parámetros en JSON
+  Schema, el `SELECT` que la resuelve, roles). Agregar o cambiar una
+  herramienta es editar una fila; apagarla, `activo = false`. En el SQL,
+  `$1` son los argumentos (jsonb) y `$2` quién pregunta (jsonb con `rol`,
+  `nombre`, `user_id`). Tipos integrados: `esquema` (tablas y columnas vivas),
+  `sql_libre` (`sql_lectura`: solo SELECT, con validación) y `fichas`.
+- **`chat_fichas`**: lo que no es tabla (reglas, programas, servicios,
+  horarios), con búsqueda de texto en español; `vigente_hasta` apaga una ficha
+  sola. Lo que cambia con el tiempo no va en fichas: lo dan las herramientas.
+- **`chat_proyectos`**: un contexto por proyecto (prompt del sistema, modelo,
+  pasos máximos). Hoy `renaware`; otro proyecto es otra fila con sus
+  herramientas y fichas. El motor completo es una migración + una Edge
+  Function: se instala igual en otra base.
+- **Seguridad.** Misma identidad del hub (correo → `perfiles`). Cada
+  herramienta corre en `chat_ejecutar`, `security definer`, que valida la
+  sesión, el rol y pone la transacción en **solo lectura** con tiempo máximo:
+  ni el modelo ni un SQL mal armado pueden escribir. `sql_lectura` además
+  rechaza todo lo que no sea un SELECT y las tablas de credenciales y sesiones.
+  Sin políticas RLS en las tablas `chat_*`: todo pasa por RPC.
+- **Edge Function `chat`** (`POST /functions/v1/chat`, Bearer = sesión del
+  hub): pide el catálogo (`chat_catalogo`), corre el ciclo pregunta →
+  herramienta → respuesta con la API de Claude y guarda todo en
+  `chat_conversaciones` / `chat_mensajes` (quién, qué consultó, tokens, tiempo).
+  Secreto: `ANTHROPIC_API_KEY` en Supabase → Edge Functions → Secrets.
+- SQL en `sql/20261031_chat_01..04_*.sql` (base, herramientas, fichas, módulo).
