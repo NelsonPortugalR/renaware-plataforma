@@ -5,9 +5,11 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 
 ## Archivos
 
-- `public/index.html` — el hub: acceso único, pantalla **Hoy** (lo que hay que
-  atender, ordenado por urgencia), módulos por grupo, carga del reporte de
-  pedidos (`#importar`) y conciliación con Rena Ware (`#conciliar`).
+- `public/index.html` — el hub: acceso único, caja **Pregúntale** (abre `/chat/`
+  con la pregunta), pantalla **Hoy** (lo que hay que atender, ordenado por
+  urgencia; a la vista lo urgente y como mínimo 3, el resto con un toque),
+  **Herramientas** por grupo con el globo de pendientes de cada una, carga del
+  reporte de pedidos (`#importar`) y conciliación con Rena Ware (`#conciliar`).
 - `public/test/index.html` — el **Test del Nivel 0** (`/test/`): el asesor lo
   rinde y la oficina ve resultados, prueba el test, apaga preguntas y ajusta
   (`/test/#oficina`). Ver más abajo.
@@ -34,6 +36,31 @@ Sitio estático, sin build. Cloudflare está conectado a este repositorio:
 **cada push a `main` publica**. En Cloudflare el proyecto es un Worker con
 assets (como `renaware-registro`): *Build command* vacío, *Deploy command*
 `npx wrangler deploy`.
+
+## Cómo está armado el menú
+
+De arriba abajo, en el celular:
+
+1. **Hola + período**: el reloj de Rena Ware (día x de 14, cuándo cierra) y el
+   último reporte oficial.
+2. **Pregúntale**: una caja como buscador. Lo que se escriba se abre en `/chat/`
+   ya preguntado. Es la entrada transversal: sirve cuando uno no sabe en qué
+   herramienta está el dato.
+3. **Hoy**: lo que hay que atender, ordenado por urgencia. A la vista lo urgente y
+   como mínimo 3 cosas; «Ver los otros N pendientes» abre el resto, para que las
+   herramientas no queden lejos.
+4. **Herramientas**, agrupadas por lo que la persona está haciendo, no por el
+   sistema: **Vender** (precios, zonas de crédito, registrar), **Pedidos**
+   (revisar registros, pedidos y clientes, subir reporte, conciliar), **Equipo**
+   (premios, Empiece Ya, Nivel Cero, test, bienvenida, local), **Oficina**
+   (reparaciones, facturación). Cada tarjeta lleva un globo con cuántos
+   pendientes de Hoy le tocan y de qué urgencia: el menú también es un tablero.
+   Las asesoras ven solo lo suyo (precios y zonas; test si están en el Nivel
+   Cero; local si son socias) y, con un solo grupo, sin encabezados.
+
+Todo eso sale de `plataforma_modulos` + `plataforma_menu()` + `hoy()`; el hub no
+tiene escrito ningún nombre de módulo salvo `chat` (la caja) y los dos internos
+(`#importar`, `#conciliar`).
 
 ## Cómo funciona el traspaso
 
@@ -64,7 +91,15 @@ Las reglas viven en la base, no en la página:
   (declaraciones, fraccionamientos, comisiones por facturar, reporte FPD).
 - `asesor_inicio(token)` — inicio del asesor; solo sus propios datos.
 - `perfiles` — quién es quién en el equipo de oficina y su rol.
-- `plataforma_modulos` — qué módulos ve cada rol y con qué `acceso` entran. Se editan en la base; el hub agrupa por id (Ventas, Equipo, Oficina).
+- `plataforma_modulos` — el menú: qué ve cada rol, con qué `acceso` entra, bajo
+  qué `grupo` se muestra (Vender, Pedidos, Equipo, Oficina) y, si hace falta,
+  `visible_fn`: una función `(p_token uuid) returns boolean` que decide si se le
+  muestra a esa asesora (`ts_visible`: solo en el Nivel Cero; `loc_visible`: solo
+  socias del local). **El hub no lee la tabla: llama a `plataforma_menu()`**
+  (equipo, con su sesión) o `plataforma_menu(p_token)` (asesora) y pinta lo que
+  vuelve, en el orden de `orden`. Registrar una herramienta nueva es una fila;
+  sin `grupo` cae en «Otros» y `plataforma_salud()` lo avisa en Hoy.
+  `chat` es la única fila que el hub pinta distinto: como la caja Pregúntale.
 - `traspasos`, `traspaso_crear`, `traspaso_crear_asesor`, `traspaso_consumir`, `traspaso_canjear`, `traspaso_canjear_auth` — el traspaso.
 - `importar_pedidos_rw(filas)`, `rw_pedidos`, `rw_importaciones` — carga del reporte oficial.
 - `conciliacion_candidatos()`, `conciliar_confirmar`, `conciliar_seguras`, `conciliar_descartar` — conciliación.

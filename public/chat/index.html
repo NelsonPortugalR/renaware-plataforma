@@ -401,7 +401,16 @@ document.getElementById('btn-convs').addEventListener('click', abrirPanel);
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !panel.classList.contains('oculto')) cerrarPanel(); });
 
 /* ---------- arranque ---------- */
+// La caja «Pregúntale» del inicio llega con la pregunta en el enlace: /chat/#q=<texto>.
+// Se saca del enlace (para que recargar no la repita) y se envía en una conversación nueva.
+function preguntaDelEnlace(){
+  const m = (location.hash || '').match(/[#&]q=([^&]*)/);
+  if (!m) return '';
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  try { return decodeURIComponent(m[1].replace(/\+/g, ' ')).trim(); } catch (e) { return ''; }
+}
 (async function arrancar(){
+  const inicial = preguntaDelEnlace();
   let s = null;
   try { s = await sesionVigente(); } catch (e) { /* sin internet: se intenta igual */ s = leer(K_STAFF); }
   if (!s) return pintarSinSesion();
@@ -409,6 +418,7 @@ document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !panel.c
     quien = await rpc('mi_perfil');
     if (quien && quien.nombre) document.getElementById('quien').textContent = quien.nombre.split(/\s+/)[0] + ' · ' + (quien.rol || '');
   } catch (e) { if (e.status === 401) return pintarSinSesion(); }
+  if (inicial) { nuevaConversacion(); pregunta.value = inicial; ajustarAlto(); return enviarPregunta(); }
   if (conversacionId) cargarConversacion(conversacionId); else pintar();
 })();
 </script>

@@ -78,16 +78,30 @@
   .abrir{display:inline-block;margin-top:8px;padding:6px 0;font-weight:700;text-underline-offset:3px}
   .vacio{background:var(--superficie);border-radius:10px;padding:18px}
   .vacio p + p{margin-top:4px}
+  .ver-mas{display:block;background:none;border:0;padding:12px 0;font:inherit;font-size:16px;font-weight:700;color:var(--acero-2);
+    cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
+  /* Pregúntale: una caja arriba de todo, como un buscador */
+  .preguntar{display:flex;gap:8px;margin-top:22px}
+  .preguntar input{margin:0;font-size:17px;padding:12px 14px;border-radius:12px}
+  .preguntar .mini{flex:none;border-radius:12px;padding:10px 16px}
+  .preguntar-pie{margin-top:7px;font-size:14.5px}
+
+  /* Herramientas: agrupadas por lo que hace la persona (Vender, Pedidos, Equipo, Oficina) */
   .grupo{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave);margin:22px 0 8px;font-weight:700}
   .grupo:first-of-type{margin-top:0}
   .modulos{display:grid;gap:1px;background:var(--borde);border:1px solid var(--borde);border-radius:12px;overflow:hidden}
-  .mod{display:block;background:var(--superficie);padding:15px 16px;color:var(--tinta);text-decoration:none}
+  .mod{display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:center;background:var(--superficie);padding:15px 16px;color:var(--tinta);text-decoration:none}
   a.mod:hover{background:var(--acero-claro)}
-  .mod strong{display:block;font-size:17.5px}
-  .mod span{display:block;color:var(--suave);font-size:15.5px}
+  .mod strong{display:block;font-size:17.5px;grid-column:1}
+  .mod span{display:block;color:var(--suave);font-size:15.5px;grid-column:1}
   .mod.off strong{color:var(--suave)}
   .mod .pronto{font-style:italic;font-size:14.5px;margin-top:2px}
+  /* El dato vivo de cada herramienta: cuántos pendientes de Hoy le tocan */
+  .mod .pend{grid-column:2;grid-row:1 / span 2;font-size:14px;font-weight:700;white-space:nowrap;text-align:right;
+    padding:4px 10px;border-radius:999px;background:var(--acero-claro);color:var(--tinta)}
+  .mod .pend.alto{color:var(--alto)}
+  .mod .pend.medio{color:var(--medio)}
 
   .puntos{list-style:none;margin:0;padding:0;background:var(--superficie);border:1px solid var(--borde);border-radius:12px}
   .puntos li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:13px 16px}
@@ -308,41 +322,77 @@ function bloquePeriodo(p){
       h('span', {class: 'marca-cierre'}, 'cierre')),
     h('p', {class: 'periodo-estado'}, `Día ${dia} de 14. ${cierre}`));
 }
+// Hoy muestra de entrada lo urgente (y como mínimo 3 cosas); el resto se abre con un toque,
+// para que las herramientas queden a la mano en el celular.
+const HOY_A_LA_VISTA = 3;
 function listaItems(items, porId){
   if (!items.length) return h('div', {class: 'vacio'},
     h('p', {}, h('strong', {}, 'Todo en orden por hoy.')),
     h('p', {class: 'apoyo'}, 'Cuando algo necesite atención, aparecerá aquí.'));
-  return h('ul', {class: 'lista'}, items.map(it => {
+  const lis = items.map((it, i) => {
     const m = porId[it.enlace];
-    return h('li', {class: 'item ' + (it.nivel || 'info')},
+    return h('li', {class: 'item ' + (it.nivel || 'info') + (i >= HOY_A_LA_VISTA && it.nivel !== 'alto' ? ' oculto' : '')},
       h('div', {class: 'item-cab'},
         h('h3', {}, h('span', {class: 'sr'}, (NIVEL_SR[it.nivel] || '') + ': '), it.titulo),
         h('span', {class: 'item-modulo'}, it.modulo || '')),
       it.detalle ? h('p', {}, it.detalle) : null,
       it.accion ? h('p', {class: 'accion'}, it.accion) : null,
       m && m.url ? enlaceModulo(m, {class: 'abrir'}, it.boton || ('Abrir ' + minus(m.nombre))) : null);
-  }));
+  });
+  const ul = h('ul', {class: 'lista'}, lis);
+  const escondidos = lis.filter(li => li.classList.contains('oculto')).length;
+  if (!escondidos) return ul;
+  const ver = h('button', {class: 'ver-mas', type: 'button', 'aria-expanded': 'false'},
+    `Ver ${escondidos === 1 ? 'el otro pendiente' : 'los otros ' + escondidos + ' pendientes'}`);
+  ver.addEventListener('click', () => { lis.forEach(li => li.classList.remove('oculto')); ver.remove(); });
+  return h('div', {}, ul, ver);
 }
-function tarjetaModulo(m){
+/* Pregúntale: la caja de pregunta del hub. Abre /chat/ con la pregunta ya escrita (#q=…) */
+function cajaPregunta(m){
+  if (!m || !m.url) return null;
+  const q = h('input', {id: 'q', type: 'search', autocomplete: 'off', enterkeyhint: 'search',
+    placeholder: 'Pregúntale algo…', 'aria-label': 'Pregúntale a la plataforma'});
+  const form = h('form', {class: 'preguntar', onsubmit: ev => {
+    ev.preventDefault();
+    const t = q.value.trim();
+    navegar(m.url + (t ? (m.url.includes('#') ? '&' : '#') + 'q=' + encodeURIComponent(t) : ''));
+  }}, q, h('button', {class: 'mini', type: 'submit'}, 'Preguntar'));
+  return h('section', {}, form,
+    h('p', {class: 'apoyo preguntar-pie'}, 'Precios, zonas, puntos, premios, pendientes: responde con datos de la plataforma.'));
+}
+/* Cuántos pendientes de Hoy le tocan a cada herramienta, y de qué urgencia */
+function pendientesPor(items){
+  const r = {};
+  for (const it of items || []) {
+    if (!it.enlace) continue;
+    const x = r[it.enlace] || (r[it.enlace] = {n: 0, nivel: 'info'});
+    x.n++;
+    if (it.nivel === 'alto' || (it.nivel === 'medio' && x.nivel !== 'alto')) x.nivel = it.nivel;
+  }
+  return r;
+}
+function tarjetaModulo(m, pend){
+  const p = pend && pend[m.id];
+  const dato = p ? h('span', {class: 'pend ' + p.nivel}, h('span', {class: 'sr'}, (NIVEL_SR[p.nivel] || '') + ': '),
+    `${p.n} ${p.n === 1 ? 'pendiente' : 'pendientes'}`) : null;
   return m.url
-    ? enlaceModulo(m, {class: 'mod'}, h('strong', {}, m.nombre), h('span', {}, m.descripcion || ''))
+    ? enlaceModulo(m, {class: 'mod'}, h('strong', {}, m.nombre), h('span', {}, m.descripcion || ''), dato)
     : h('div', {class: 'mod off', 'aria-disabled': 'true'},
         h('strong', {}, m.nombre), h('span', {}, m.descripcion || ''), h('span', {class: 'pronto'}, 'Por conectar'));
 }
-function listaModulos(mods){
-  if (!mods.length) return h('p', {class: 'apoyo'}, 'Aún no tienes módulos asignados.');
-  const GRUPO = {chat: 'Ventas', cotizador: 'Ventas', registro: 'Ventas', 'admin-registros': 'Ventas', pedidos: 'Ventas', 'importar-pedidos': 'Ventas', conciliar: 'Ventas',
-    premios: 'Equipo', equipo: 'Equipo', 'empiece-ya': 'Equipo', 'nivel-cero': 'Equipo', bienvenida: 'Equipo', test: 'Equipo',
-    reparaciones: 'Oficina', facturacion: 'Oficina'};
+// El grupo de cada herramienta viene de la base (plataforma_modulos.grupo), en el orden en que aparecen.
+function listaModulos(mods, items){
+  if (!mods.length) return h('p', {class: 'apoyo'}, 'Aún no tienes herramientas asignadas.');
+  const pend = pendientesPor(items);
   const grupos = [];
   for (const m of mods) {
-    const g = m.grupo || GRUPO[m.id] || 'Otros';
+    const g = m.grupo || 'Otros';
     let x = grupos.find(y => y.nombre === g);
     if (!x) { x = {nombre: g, mods: []}; grupos.push(x); }
     x.mods.push(m);
   }
-  if (grupos.length === 1) return h('div', {class: 'modulos'}, grupos[0].mods.map(tarjetaModulo));
-  return h('div', {}, grupos.map(g => [h('h3', {class: 'grupo'}, g.nombre), h('div', {class: 'modulos'}, g.mods.map(tarjetaModulo))]));
+  if (grupos.length === 1) return h('div', {class: 'modulos'}, grupos[0].mods.map(m => tarjetaModulo(m, pend)));
+  return h('div', {}, grupos.map(g => [h('h3', {class: 'grupo'}, g.nombre), h('div', {class: 'modulos'}, g.mods.map(m => tarjetaModulo(m, pend)))]));
 }
 function puntosAsesor(lista){
   if (!lista.length) return h('p', {class: 'apoyo'},
@@ -409,14 +459,16 @@ async function inicioEquipo(s){
   try {
     [datos, mods] = await Promise.all([
       api('/rest/v1/rpc/hoy', {method: 'POST', body: {}, token: s.access_token}),
-      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden', {token: s.access_token})
+      api('/rest/v1/rpc/plataforma_menu', {method: 'POST', body: {}, token: s.access_token})   // la base decide qué ve cada rol
     ]);
   } catch (e) {
     if (e.status === 401 || /rol asignado|JWT/i.test(e.message)) { borrar(K_STAFF); return pantallaAcceso(mensaje(e)); }
     return pantallaError(mensaje(e), () => iniciar());
   }
-  const propios = (mods || []).filter(m => (m.roles || []).includes(datos.rol));
+  const propios = Array.isArray(mods) ? mods : [];
   const porId = Object.fromEntries(propios.map(m => [m.id, m]));
+  const chat = propios.find(m => m.id === 'chat');          // se pinta como caja de pregunta, no como tarjeta
+  const herramientas = propios.filter(m => m.id !== 'chat');
   const nombre = primerNombre(datos.nombre);
   const of = datos.oficial || {};
   pintar(barra(), h('main', {},
@@ -424,10 +476,11 @@ async function inicioEquipo(s){
     bloquePeriodo(datos.periodo),
     of.pb ? h('p', {class: 'apoyo oficial'},
       `Reporte oficial del PB${of.pb}: ${num(of.puntos)} puntos en ${num(of.pedidos)} pedidos.`) : null,
+    cajaPregunta(chat),
     h('h2', {}, 'Hoy'),
     listaItems(datos.items || [], porId),
-    h('h2', {}, 'Módulos'),
-    listaModulos(propios)));
+    h('h2', {}, 'Herramientas'),
+    listaModulos(herramientas, datos.items || [])));
 }
 
 async function inicioAsesor(tok){
@@ -436,25 +489,27 @@ async function inicioAsesor(tok){
   try {
     [d, mods, test] = await Promise.all([
       api('/rest/v1/rpc/asesor_inicio', {method: 'POST', body: {p_token: tok}}),
-      api('/rest/v1/plataforma_modulos?select=id,nombre,descripcion,url,roles,orden,acceso&order=orden'),
+      // la base decide qué ve esta asesora: el test solo si está en el Nivel Cero, el local solo si es socia
+      api('/rest/v1/rpc/plataforma_menu', {method: 'POST', body: {p_token: tok}}),
       api('/rest/v1/rpc/ts_estado', {method: 'POST', body: {p_token: tok}}).catch(() => null)   // el test no frena el inicio
     ]);
   } catch (e) {
     if (/venció|vencio/i.test(e.message)) { borrar(K_ASESOR); return pantallaAcceso(mensaje(e)); }
     return pantallaError(mensaje(e), () => iniciar());
   }
-  let propios = (mods || []).filter(m => (m.roles || []).includes('asesor'));
-  // El test del Nivel 0 es solo para los nuevos que están en el Nivel Cero
-  if (!test || !test.estado || test.estado === 'no_inscrito') propios = propios.filter(m => m.id !== 'test');
+  const propios = Array.isArray(mods) ? mods : [];
+  const chat = propios.find(m => m.id === 'chat');
+  const herramientas = propios.filter(m => m.id !== 'chat');
   const nombre = primerNombre(d.nombre);
   pintar(barra(), h('main', {},
     h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
     avisoTest(test, propios.find(m => m.id === 'test')),
     bloquePeriodo(d.periodo),
+    cajaPregunta(chat),
     h('h2', {}, 'Tus puntos según Rena Ware'),
     puntosAsesor(d.puntos || []),
-    h('h2', {}, 'Accesos'),
-    listaModulos(propios)));
+    h('h2', {}, 'Herramientas'),
+    listaModulos(herramientas)));
 }
 
 /* Aviso del Test del Nivel 0: con el test abierto (o la botella ganada) va arriba de todo */

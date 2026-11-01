@@ -20,13 +20,14 @@ const RESPUESTA = {
   sin_datos: false,
 };
 
-function crear({sesion = true, chat = () => [RESPUESTA, 200], guardada = []} = {}){
+function crear({sesion = true, chat = () => [RESPUESTA, 200], guardada = [], url = 'https://plataforma.nelson1614.workers.dev/chat/', conv = null} = {}){
   const llamadas = [];
-  const dom = new JSDOM(html, {runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://plataforma.nelson1614.workers.dev/chat/',
+  const dom = new JSDOM(html, {runScripts: 'dangerously', pretendToBeVisual: true, url,
     beforeParse(w){
       w.scrollTo = () => {};
       w.requestAnimationFrame = f => setTimeout(f, 0);
       if (sesion) w.localStorage.setItem(K_STAFF, JSON.stringify({access_token: 'jwt-1', refresh_token: 'r1', expires_at: Math.floor(Date.now() / 1000) + 3600}));
+      if (conv) w.localStorage.setItem('rw_chat_conversacion', JSON.stringify(conv));
       w.fetch = async (url, opts = {}) => {
         const u = String(url).replace(SB, ''); llamadas.push({u, opts});
         const r = (data, status = 200) => ({ok: status < 400, status, text: async () => data === undefined ? '' : JSON.stringify(data)});
@@ -129,6 +130,15 @@ const enviar = (w, d) => d.getElementById('form').dispatchEvent(new w.Event('sub
   // ---- Ninguna escritura directa a tablas ----
   const directas = t.llamadas.filter(l => /^\/rest\/v1\/(?!rpc\/)/.test(l.u));
   ok(directas.length === 0, 'El chat nunca escribe ni lee tablas directo (todo por RPC o la función)');
+
+  // ---- Llega desde la caja «Pregúntale» del inicio: /chat/#q=… ----
+  t = crear({url: 'https://plataforma.nelson1614.workers.dev/chat/#q=' + encodeURIComponent('¿Hay crédito en Cerro Colorado?'), conv: CONV});
+  await espera(160);
+  const desdeHub = t.llamadas.find(l => l.u.startsWith('/functions/v1/chat'));
+  ok(desdeHub && JSON.parse(desdeHub.opts.body).mensaje === '¿Hay crédito en Cerro Colorado?', 'Con #q= en el enlace envía esa pregunta sola, sin escribirla');
+  ok(desdeHub && JSON.parse(desdeHub.opts.body).conversacion_id === null, 'La pregunta del inicio abre una conversación nueva, no sigue la anterior');
+  ok(t.w.location.hash === '' && t.w.location.pathname === '/chat/', 'Quita #q= del enlace para que recargar no la repita');
+  ok(t.d.querySelector('.msg.yo') && t.d.querySelector('.msg.yo').textContent.includes('Cerro Colorado'), 'Muestra la pregunta como propia');
 
   console.log(fallas ? `\n${fallas} prueba(s) fallaron` : '\nTodo en orden');
   process.exit(fallas ? 1 : 0);

@@ -1,21 +1,32 @@
 // Pruebas del hub con un Supabase simulado. Correr: node pruebas/prueba.js
 // (necesita jsdom: npm install jsdom)
-const {JSDOM} = require('jsdom');
+const {JSDOM, VirtualConsole} = require('jsdom');
+// jsdom no sabe navegar a otra página: ese aviso no es una falla (el enlace libre sí navega en el navegador)
+const consola = new VirtualConsole(); consola.sendTo(console, {omitJSDOMErrors: true});
+consola.on('jsdomError', e => { if (!/navigation/i.test(e.message)) console.error(e); });
 const fs = require('fs');
 const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 const SB = 'https://kiexpdaaoegbtesqmaff.supabase.co';
 const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';
 const CODIGO = '2f6d1d8e-0a9b-4c2e-9f1a-123456789abc';
+// Lo que devuelve plataforma_menu(): ya filtrado por rol y por condición (test solo en Nivel Cero, local solo socias)
 const MODS = [
-  {id:'cotizador',nombre:'Precios y promociones',descripcion:'Listas.',url:'https://renaware-peru.nelson1614.workers.dev',roles:['admin','asistente','gestor','asesor'],orden:1,acceso:'asesor'},
-  {id:'registro',nombre:'Registrar venta o afiliado',descripcion:'Formulario.',url:'https://renaware-registro.nelson1614.workers.dev',roles:['admin','asistente'],orden:2,acceso:'libre'},
-  {id:'admin-registros',nombre:'Pedidos y afiliaciones',descripcion:'Revisar.',url:'https://renaware-registro.nelson1614.workers.dev/admin',roles:['admin','asistente'],orden:3,acceso:'supabase'},
-  {id:'importar-pedidos',nombre:'Subir reporte de Rena Ware',descripcion:'Carga.',url:'#importar',roles:['admin','asistente'],orden:5,acceso:'libre'},
-  {id:'equipo',nombre:'Premios',descripcion:'Premios.',url:'https://panel-equipo.pages.dev',roles:['admin','asistente'],orden:7,acceso:'supabase'},
-  {id:'empiece-ya',nombre:'Ganadores Empiece Ya',descripcion:'Ganadores.',url:'https://empiece-ya.nelson1614.workers.dev',roles:['admin','asistente'],orden:8,acceso:'libre'},
-  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:12,acceso:'supabase'},
-  {id:'test',nombre:'Test del Nivel 0',descripcion:'Test.',url:'https://renaware-plataforma.nelson1614.workers.dev/test/',roles:['admin','asistente','asesor'],orden:13,acceso:'asesor'}];
+  {id:'chat',nombre:'Pregúntale',descripcion:'Pregunta en tus palabras.',url:'/chat/',roles:['admin'],orden:0,acceso:'hub',grupo:'Vender'},
+  {id:'cotizador',nombre:'Precios y promociones',descripcion:'Listas.',url:'https://renaware-peru.nelson1614.workers.dev',roles:['admin','asistente','gestor','asesor'],orden:1,acceso:'asesor',grupo:'Vender'},
+  {id:'zonas',nombre:'Zonas de crédito',descripcion:'Dónde sí hay crédito y dónde no.',url:'https://zonas-de-credito.nelson1614.workers.dev',roles:['admin','asistente','gestor','asesor'],orden:2,acceso:'libre',grupo:'Vender'},
+  {id:'registro',nombre:'Registrar venta o afiliado',descripcion:'Formulario.',url:'https://renaware-registro.nelson1614.workers.dev',roles:['admin','asistente'],orden:3,acceso:'libre',grupo:'Vender'},
+  {id:'admin-registros',nombre:'Pedidos y afiliaciones',descripcion:'Revisar.',url:'https://renaware-registro.nelson1614.workers.dev/admin',roles:['admin','asistente'],orden:11,acceso:'supabase',grupo:'Pedidos'},
+  {id:'importar-pedidos',nombre:'Subir reporte de Rena Ware',descripcion:'Carga.',url:'#importar',roles:['admin','asistente'],orden:13,acceso:'hub',grupo:'Pedidos'},
+  {id:'premios',nombre:'Premios',descripcion:'Premios.',url:'https://panel-equipo.pages.dev',roles:['admin','asistente'],orden:21,acceso:'supabase',grupo:'Equipo'},
+  {id:'empiece-ya',nombre:'Ganadores Empiece Ya',descripcion:'Ganadores.',url:'https://empiece-ya.nelson1614.workers.dev',roles:['admin','asistente'],orden:22,acceso:'libre',grupo:'Equipo'},
+  {id:'test',nombre:'Test del Nivel 0',descripcion:'Test.',url:'https://renaware-plataforma.nelson1614.workers.dev/test/',roles:['admin','asistente','asesor'],orden:24,acceso:'asesor',grupo:'Equipo'},
+  {id:'local',nombre:'Local del equipo',descripcion:'Turnos.',url:'https://local-equipo-arequipa.nelson1614.workers.dev',roles:['admin','asistente','asesor'],orden:26,acceso:'libre',grupo:'Equipo'},
+  {id:'facturacion',nombre:'Facturación',descripcion:'Facturas.',url:'https://renaware-facturacion.pages.dev',roles:['admin','gestor'],orden:32,acceso:'supabase',grupo:'Oficina'},
+  {id:'sin-grupo',nombre:'Herramienta nueva',descripcion:'Recién registrada, sin grupo.',url:'https://nueva.nelson1614.workers.dev',roles:['admin'],orden:40,acceso:'libre',grupo:null}];
+const MENU_STAFF = MODS.filter(m => m.roles.includes('admin'));
+// Para la asesora, lo que la base decidió mostrarle (las pruebas lo cambian)
+let MENU_ASESOR = MODS.filter(m => ['cotizador', 'zonas'].includes(m.id));
 // Lo que devuelve ts_estado al asesor (null = no responde, como hoy en las pruebas viejas)
 let TEST = null;
 const HOY = {rol:'admin', nombre:'Nelson Portugal Román',
@@ -23,7 +34,9 @@ const HOY = {rol:'admin', nombre:'Nelson Portugal Román',
   items:[
     {id:'registros-sin-revisar',nivel:'alto',enlace:'admin-registros',modulo:'Pedidos',titulo:'82 registros sin revisar',detalle:'x'},
     {id:'reporte-rw',nivel:'alto',modulo:'Datos oficiales',titulo:'Faltan los reportes de pedidos del PB20 al PB21',detalle:'x',enlace:'importar-pedidos',boton:'Subir el reporte'},
-    {id:'premios-declarados',nivel:'medio',enlace:'equipo',modulo:'Premios',titulo:'6 premios declarados sin confirmar',detalle:'x'}]};
+    {id:'premios-declarados',nivel:'medio',enlace:'premios',modulo:'Premios',titulo:'6 premios declarados sin confirmar',detalle:'x'},
+    {id:'premios-entregar',nivel:'info',enlace:'premios',modulo:'Premios',titulo:'2 premios por entregar',detalle:'x'},
+    {id:'plataforma-salud',nivel:'info',modulo:'Plataforma',titulo:'7 reglas de la plataforma sin cumplir',detalle:'x'}]};
 const ASESOR = {nombre:'Elena Segunda Landázuri Mosquera', codigo:'1723832',
   periodo:{numero:22,inicio:'2026-10-15',fin:'2026-10-28',hoy:'2026-10-21'}, puntos:[{periodo:'2026-PB19 (03-16 sep)',pb:19,puntos:1213,pedidos:2}]};
 
@@ -33,7 +46,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
 
 function crear(prep){
   const llamadas = [], idas = [];
-  const dom = new JSDOM(html, {runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://plataforma.nelson1614.workers.dev/',
+  const dom = new JSDOM(html, {runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://plataforma.nelson1614.workers.dev/', virtualConsole: consola,
     beforeParse(w){
       w.scrollTo = () => {};
       if (prep) prep(w);
@@ -47,7 +60,11 @@ function crear(prep){
           : r({error:'invalid_grant', error_description:'Invalid login credentials'}, 400);
         if (u.startsWith('/auth/v1/logout')) return {ok:true, status:204, text: async () => ''};
         if (u.startsWith('/rest/v1/rpc/hoy')) return auth.includes('jwt-') ? r(HOY) : r({message:'JWT expired'}, 401);
-        if (u.startsWith('/rest/v1/plataforma_modulos')) return r(auth.includes('jwt-') ? MODS : MODS.filter(m => m.roles.includes('asesor')));
+        if (u.startsWith('/rest/v1/rpc/plataforma_menu')) {
+          if (b.p_token) return b.p_token === 'tok-1' ? r(MENU_ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
+          return auth.includes('jwt-') ? r(MENU_STAFF) : r({message:'JWT expired'}, 401);
+        }
+        if (u.startsWith('/rest/v1/plataforma_modulos')) return r({message:'el hub ya no lee la tabla: usa plataforma_menu'}, 401);
         if (u.startsWith('/rest/v1/rpc/asesor_login')) return b.p_celular === '987654321' ? r({token:'tok-1', nombre:ASESOR.nombre, celular:'987654321'}) : r({message:'Ese numero no esta habilitado'}, 400);
         if (u.startsWith('/rest/v1/rpc/ts_estado')) return TEST ? r(TEST) : r({message:'sin mock'}, 404);
         if (u.startsWith('/rest/v1/rpc/asesor_inicio')) return b.p_token === 'tok-1' ? r(ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
@@ -61,37 +78,74 @@ function crear(prep){
   return {w, d: w.document, llamadas, idas};
 }
 const escribir = (w, el, v) => { el.value = v; el.dispatchEvent(new w.Event('input', {bubbles: true})); };
-const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('submit', {bubbles: true, cancelable: true}));
+const enviar = (w, d, sel = 'form') => d.querySelector(sel).dispatchEvent(new w.Event('submit', {bubbles: true, cancelable: true}));
+const textos = (d, sel) => [...d.querySelectorAll(sel)].map(x => x.textContent);
 
 (async () => {
-  // ---- Staff: entra, Hoy, módulos agrupados, traspaso ----
+  // ---- Staff: entra, Hoy, herramientas agrupadas desde la base, traspaso ----
   let {w, d, llamadas, idas} = crear();
   await espera(60);
   ok(d.querySelector('form.acceso'), 'Sin sesión muestra el acceso');
   escribir(w, d.getElementById('dato'), 'nelson1614@gmail.com'); d.getElementById('clave').value = 'clave'; enviar(w, d);
   await espera(150);
   ok(d.querySelector('h1').textContent === 'Hola, Nelson', 'Entra con correo y saluda');
-  ok(d.querySelectorAll('.lista .item').length === 3, 'Muestra los pendientes de Hoy');
-  const grupos = [...d.querySelectorAll('h3.grupo')].map(x => x.textContent);
-  ok(grupos.join('|') === 'Ventas|Equipo|Oficina', 'Módulos agrupados en Ventas, Equipo y Oficina (' + grupos.join(', ') + ')');
-  ok(d.querySelectorAll('.mod').length === 8, 'El admin ve sus 8 módulos (con el Test del Nivel 0 en Equipo)');
+  ok(d.querySelectorAll('.lista .item').length === 5 && d.querySelectorAll('.lista .item:not(.oculto)').length === 3, 'Hoy muestra 3 pendientes a la vista y guarda el resto');
+  const verMas = d.querySelector('.ver-mas');
+  ok(verMas && verMas.textContent === 'Ver los otros 2 pendientes', 'Un botón dice cuántos faltan (' + (verMas && verMas.textContent) + ')');
+  verMas.click();
+  ok(d.querySelectorAll('.lista .item:not(.oculto)').length === 5 && !d.querySelector('.ver-mas'), 'Al tocarlo se ven los 5');
+  ok(!llamadas.some(c => c.u.startsWith('/rest/v1/plataforma_modulos')), 'El menú sale de plataforma_menu(), no de leer la tabla');
+  const grupos = textos(d, 'h3.grupo');
+  ok(grupos.join('|') === 'Vender|Pedidos|Equipo|Oficina|Otros', 'Grupos en el orden de la base: ' + grupos.join(', '));
+  ok(d.querySelectorAll('.mod').length === 11, 'El admin ve sus 11 herramientas (sin contar Pregúntale, que es la caja)');
+  ok(textos(d, '.mod strong').indexOf('Zonas de crédito') === 1 && textos(d, '.mod strong').indexOf('Local del equipo') === 8, 'Zonas de crédito va en Vender y el Local en Equipo');
+  const ultimo = [...d.querySelectorAll('h3.grupo')].pop();
+  ok(ultimo.textContent === 'Otros' && ultimo.nextElementSibling.textContent.includes('Herramienta nueva'), 'Una herramienta registrada sin grupo aparece en «Otros», no desaparece');
+  ok(textos(d, 'h2').join('|') === 'Hoy|Herramientas', 'Secciones: Hoy y Herramientas');
+
+  // Nunca se esconde un pendiente urgente, aunque sean más de 3
+  {
+    const antesItems = HOY.items;
+    HOY.items = [1, 2, 3, 4].map(i => ({id: 'u' + i, nivel: 'alto', modulo: 'x', titulo: 'Urgente ' + i})).concat([{id: 'i1', nivel: 'info', modulo: 'x', titulo: 'Info 1'}]);
+    const t2 = crear(w => w.localStorage.setItem(K_STAFF, JSON.stringify({access_token: 'jwt-1', refresh_token: 'r1', expires_at: Math.floor(Date.now() / 1000) + 3600})));
+    await espera(150);
+    ok(t2.d.querySelectorAll('.lista .item:not(.oculto)').length === 4 && t2.d.querySelector('.ver-mas').textContent === 'Ver el otro pendiente', 'Con 4 urgentes se ven los 4 y solo se guarda el informativo');
+    HOY.items = antesItems;
+  }
+
+  // El dato vivo de cada tarjeta: sus pendientes de Hoy
+  const tarjeta = n => [...d.querySelectorAll('.mod')].find(a => a.querySelector('strong').textContent === n);
+  const pAdmin = tarjeta('Pedidos y afiliaciones').querySelector('.pend');
+  ok(pAdmin && pAdmin.textContent.endsWith('1 pendiente') && pAdmin.classList.contains('alto'), 'Pedidos y afiliaciones marca «1 pendiente» urgente');
+  const pPremios = tarjeta('Premios').querySelector('.pend');
+  ok(pPremios && pPremios.textContent.endsWith('2 pendientes') && pPremios.classList.contains('medio'), 'Premios marca «2 pendientes» con la urgencia más alta de los dos');
+  ok(!tarjeta('Zonas de crédito').querySelector('.pend'), 'Sin pendientes no hay globo');
+  ok(pAdmin.querySelector('.sr').textContent === 'Urgente: ', 'El globo dice la urgencia al lector de pantalla');
+
+  // Pregúntale: la caja abre /chat/ con la pregunta
+  const caja = d.querySelector('form.preguntar');
+  ok(caja && d.querySelector('h1').nextElementSibling.classList.contains('periodo'), 'La caja Pregúntale está arriba, después del período');
+  escribir(w, d.getElementById('q'), '¿Hay crédito en Cerro Colorado?'); enviar(w, d, 'form.preguntar'); await espera(20);
+  ok(idas[0] === '/chat/#q=' + encodeURIComponent('¿Hay crédito en Cerro Colorado?'), 'Preguntar abre el chat con la pregunta en el enlace (' + idas[0] + ')');
+  d.getElementById('q').value = ''; enviar(w, d, 'form.preguntar'); await espera(20);
+  ok(idas[1] === '/chat/', 'Sin texto, Preguntar abre el chat vacío');
+  idas.length = 0;
 
   // Módulo con traspaso: crea código y navega con #traspaso
-  const premios = [...d.querySelectorAll('a.mod')].find(a => a.textContent.includes('Premios'));
+  const premios = tarjeta('Premios');
   premios.click(); await espera(120);
   const crear1 = llamadas.filter(c => c.u.startsWith('/rest/v1/rpc/traspaso_crear')).pop();
-  ok(crear1 && JSON.parse(crear1.opts.body).p_modulo === 'equipo' && crear1.opts.headers.Authorization.includes('jwt-1'), 'Crea el código de traspaso con la sesión del hub');
+  ok(crear1 && JSON.parse(crear1.opts.body).p_modulo === 'premios' && crear1.opts.headers.Authorization.includes('jwt-1'), 'Crea el código de traspaso con la sesión del hub');
   ok(idas[0] === 'https://panel-equipo.pages.dev#traspaso=' + CODIGO, 'Abre Premios con #traspaso=<código> (' + idas[0] + ')');
 
   // Módulo sin traspaso: enlace normal
   const antes = llamadas.length;
-  const registro = [...d.querySelectorAll('a.mod')].find(a => a.textContent.includes('Registrar venta'));
+  const registro = tarjeta('Registrar venta o afiliado');
   const ev = new w.MouseEvent('click', {bubbles: true, cancelable: true}); registro.dispatchEvent(ev); await espera(60);
   ok(!ev.defaultPrevented && llamadas.length === antes, 'Módulo sin traspaso: el enlace navega solo, sin código');
 
   // Módulo con ruta (/admin): el código va después de la ruta
-  const admin = [...d.querySelectorAll('a.mod')].find(a => a.textContent.includes('Pedidos y afiliaciones'));
-  admin.click(); await espera(120);
+  tarjeta('Pedidos y afiliaciones').click(); await espera(120);
   ok(idas[1] === 'https://renaware-registro.nelson1614.workers.dev/admin#traspaso=' + CODIGO, 'Con ruta /admin el código va al final');
 
   // Pendiente de Hoy con módulo externo: también con traspaso
@@ -108,30 +162,36 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   premios.click(); await espera(120);
   ok(idas[3] === 'https://panel-equipo.pages.dev', 'Si no se puede crear el código, abre el módulo sin traspaso');
 
-  // ---- Asesor: solo precios acepta su traspaso ----
+  // ---- Asesora: ve lo que la base le asignó (precios y zonas), sin caja de pregunta ----
   ({w, d, llamadas, idas} = crear());
   await espera(60);
   escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  ok(d.querySelector('h1').textContent === 'Hola, Elena', 'Asesor entra con celular');
-  ok(d.querySelectorAll('.mod').length === 1 && !d.querySelector('h3.grupo'), 'El asesor ve solo precios, sin agrupar');
+  ok(d.querySelector('h1').textContent === 'Hola, Elena', 'Asesora entra con celular');
+  const menuAs = llamadas.find(c => c.u.startsWith('/rest/v1/rpc/plataforma_menu'));
+  ok(menuAs && JSON.parse(menuAs.opts.body).p_token === 'tok-1', 'Pide su menú con su token');
+  ok(d.querySelectorAll('.mod').length === 2 && !d.querySelector('h3.grupo'), 'La asesora ve precios y zonas, sin encabezados (un solo grupo)');
+  ok(!d.querySelector('form.preguntar'), 'Sin Pregúntale en su menú no hay caja de pregunta');
+  ok(!d.querySelector('.pend'), 'Sin pendientes de Hoy, sin globos');
   d.querySelector('a.mod').click(); await espera(120);
   const crear2 = llamadas.filter(c => c.u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')).pop();
-  ok(crear2 && JSON.parse(crear2.opts.body).p_token === 'tok-1', 'Crea el código con el token del asesor');
-  ok(idas[0] === 'https://renaware-peru.nelson1614.workers.dev#traspaso=' + CODIGO, 'Abre precios con traspaso de asesor');
-  ok(!d.querySelector('.aviso-test'), 'Asesor fuera del Nivel Cero: sin aviso ni módulo del test');
+  ok(crear2 && JSON.parse(crear2.opts.body).p_token === 'tok-1', 'Crea el código con el token de la asesora');
+  ok(idas[0] === 'https://renaware-peru.nelson1614.workers.dev#traspaso=' + CODIGO, 'Abre precios con traspaso de asesora');
+  ok(!d.querySelector('.aviso-test'), 'Asesora fuera del Nivel Cero: sin aviso ni módulo del test');
 
-  // ---- Asesor nuevo con el test habilitado: aviso arriba y módulo ----
+  // ---- Asesora nueva con el test habilitado y socia del local: la base le suma test y local ----
   TEST = {nombre: 'ELENA', estado: 'habilitado', intento: null,
     ventana: {estado: 'habilitado', hasta: '2026-11-11', dias: 2, botella: null}};
+  MENU_ASESOR = MODS.filter(m => ['cotizador', 'zonas', 'test', 'local'].includes(m.id));
   ({w, d, llamadas, idas} = crear());
   await espera(60);
   escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
   const av = d.querySelector('.aviso-test');
   ok(av && av.textContent.includes('Tu test del Nivel 0 está habilitado') && av.textContent.includes('te quedan 2 días'), 'Aviso del test habilitado con sus días');
   ok(av.textContent.includes('Termínalo y ganas tu botella'), 'Sin nota mínima: «Termínalo y ganas tu botella»');
-  ok(d.querySelectorAll('.mod').length === 2 && [...d.querySelectorAll('.mod')].some(a => a.textContent.includes('Test del Nivel 0')), 'Ve el módulo del test');
+  ok(textos(d, 'h3.grupo').join('|') === 'Vender|Equipo' && d.querySelectorAll('.mod').length === 4, 'Ve Vender (precios, zonas) y Equipo (test, local)');
   av.querySelector('a.abrir').click(); await espera(120);
   ok(idas[0] === 'https://renaware-plataforma.nelson1614.workers.dev/test/#traspaso=' + CODIGO, 'El aviso abre el test con traspaso');
+  MENU_ASESOR = MODS.filter(m => ['cotizador', 'zonas'].includes(m.id));
 
   // ---- Aprobó: su botella lo espera ----
   TEST = {nombre: 'ELENA', estado: 'aprobado', ventana: {estado: 'aprobado', nota: 94, botella: 'por_entregar'}};
@@ -146,6 +206,11 @@ const enviar = (w, d) => d.querySelector('form').dispatchEvent(new w.Event('subm
   escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
   ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Aprobaste tu test del Nivel 0 con 94'), 'Con nota mínima: «Aprobaste»');
   TEST = null;
+
+  // ---- Sesión de asesora vencida según la base: vuelve al acceso ----
+  ({w, d, llamadas, idas} = crear(w => w.localStorage.setItem('rw_asesor_token', JSON.stringify('tok-viejo'))));
+  await espera(150);
+  ok(d.querySelector('form.acceso') && d.getElementById('error').textContent.includes('venció'), 'Token vencido: la base lo dice y el hub pide entrar de nuevo');
 
   console.log(fallas ? `\n${fallas} PRUEBA(S) FALLARON` : '\nTODAS LAS PRUEBAS PASARON');
   process.exit(fallas ? 1 : 0);
