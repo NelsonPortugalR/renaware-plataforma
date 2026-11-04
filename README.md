@@ -16,6 +16,12 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
   (`/test/#oficina`). Ver más abajo.
 - `public/chat/index.html` — **Pregúntale** (`/chat/`): el chat en lenguaje
   natural sobre toda la base. Usa la misma sesión del hub. Ver más abajo.
+- `public/entrenamientos/index.html` — **Entrenamientos** (`/entrenamientos/`):
+  módulos y lecciones con sus materiales, las **Listas** (documentos para ver,
+  enviar y descargar; `#listas`) y el **Horario** de la semana (`#horario`).
+  Asesor con su celular, oficina con la sesión de la plataforma o la clave. Ver más abajo.
+- `pruebas/prueba_entrenamientos.py` — pruebas de Entrenamientos en un Chromium real
+  con un Supabase simulado (`python3 pruebas/prueba_entrenamientos.py [carpeta_capturas]`).
 - `supabase/functions/chat/` — la Edge Function del chat (el ciclo con la API de Claude).
 - `pruebas/prueba_chat.js` — pruebas del chat (`node pruebas/prueba_chat.js`).
 - `public/_headers`, `public/404.html` — configuración.
@@ -223,3 +229,48 @@ una herramienta o una ficha.
   `chat_conversaciones` / `chat_mensajes` (quién, qué consultó, tokens, tiempo).
   Secreto: `ANTHROPIC_API_KEY` en Supabase → Edge Functions → Secrets.
 - SQL en `sql/20261031_chat_01..04_*.sql` (base, herramientas, fichas, módulo).
+
+## Entrenamientos (`/entrenamientos/`)
+
+Tres pestañas en una sola página, para el asesor y para la oficina (la misma
+página; la oficina ve además el **modo edición**).
+
+- **Entrenamientos**: módulos (3–4 lecciones cada uno) → lecciones → materiales.
+  Cada lección muestra solo lo que tiene: **guía** (PDF), **video** (archivo o
+  YouTube), **libro** (PDF o enlace), **enlace**. El asesor marca cada lección
+  como completada; abrir un material la deja como vista. La oficina ve cuántos
+  la vieron y completaron, y abajo el progreso del equipo por asesor.
+- **Listas**: la base de documentos por categoría (listas de precios, repuestos
+  y servicios, concursos y programas). Cada documento tiene una `clave` estable
+  (p. ej. `lista-promo-cliente`) para que otros sistemas jalen el vigente, y
+  **acumula versiones**: subir de nuevo crea la siguiente; la última es la
+  vigente, con nota y vigencia (desde/hasta). Vista previa (primera página o
+  foto, generada al subir), **Ver** (visor de PDF y fotos en la misma página),
+  **Enviar** (hoja de compartir del celular: WhatsApp con el archivo) y
+  **Descargar**. Lo marcado «para el cliente» es lo que se le puede mandar.
+  Un PDF por concurso: la oficina crea un documento nuevo en Concursos.
+- **Horario**: la semana con fechas reales (lunes a domingo), ‹ › para moverse,
+  hoy resaltado y el jueves que inicia un período marcado («Inicia el PB24»,
+  donde va el lanzamiento del concurso). La oficina apaga un evento para esa
+  semana («Esta semana no hay»), lo edita, agrega uno suelto y mantiene el
+  **horario habitual** (plantillas por día y hora, con «solo el jueves que
+  inicia el período»). «Copiar para WhatsApp» arma el texto de la semana.
+  Lo que lleva asistencia se crea solo como clase en **Nivel Cero**
+  (`n0_clases`, enlazada por `evento_id`); al apagarlo, la clase se borra si
+  nadie fue marcado. El horario habitual de Nivel Cero (`n0_config.horarios`)
+  también sale de aquí.
+
+**Datos** (Supabase): `ent_modulos`, `ent_lecciones`, `ent_recursos`,
+`ent_progreso` (por celular), `ent_subidas` (tickets de subida); `doc_categorias`,
+`doc_documentos`, `doc_versiones`; `hor_plantillas`, `hor_eventos`. Todo por RPC
+con `p_token` (sesión de admin o de asesor): `ent_datos`, `hor_semana`,
+`doc_vigente`, `ent_progreso_marcar` y, para la oficina, `ent_subida_crear`,
+`*_guardar`, `ent_borrar`, `ent_ordenar`, `doc_categoria_ordenar`. Las semanas se
+materializan solas (`hor_materializar`: al consultar y con el cron diario
+`hor_materializar_diario`). Archivos en el bucket público `entrenamientos`: subir
+exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>`
+(política `ent_ruta_ok`); la vista previa va como `<ticket>/portada.jpg`.
+Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
+(Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
+chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
+SQL en `sql/20261104_entrenamientos_01_base.sql` y `_02_datos.sql`.

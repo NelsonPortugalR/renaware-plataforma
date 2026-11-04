@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E3A5B">
+<title>Entrenamientos · Equipo Arequipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  :root{
+    --fondo:#F3F5F7; --superficie:#FFFFFF; --tinta:#15232E; --suave:#51606C;
+    --acero:#0E3A5B; --acero-2:#2A6A99; --acero-claro:#D9E3EB; --sobre-acero:#FFFFFF;
+    --borde:#CBD5DD; --alto:#B3261E; --alto-claro:#FBE9E7; --medio:#9A6200; --medio-claro:#FFF4DC;
+    --info:#7A8792; --ok:#1F7A4D; --ok-claro:#E3F3EA; --foto:#FFFFFF; --sombra:rgba(0,0,0,.08);
+    --fuente:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --alto-claro:#3A2220; --medio:#E5B54F; --medio-claro:#33291A;
+    --info:#8E9EAA; --ok:#6CC49A; --ok-claro:#1A3227; --foto:#F4F6F8; --sombra:rgba(0,0,0,.4);
+    color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fondo:#0E1720; --superficie:#15212B; --tinta:#E7EEF3; --suave:#A3B3BF;
+    --acero:#8DBDE2; --acero-2:#C2DDF1; --acero-claro:#22384A; --sobre-acero:#0E1720;
+    --borde:#2B3C49; --alto:#F2948C; --alto-claro:#3A2220; --medio:#E5B54F; --medio-claro:#33291A;
+    --info:#8E9EAA; --ok:#6CC49A; --ok-claro:#1A3227; --foto:#F4F6F8; --sombra:rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+  :root{box-sizing:border-box;padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font-family:var(--fuente);font-size:17px;line-height:1.5;
+    padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+  body.con-modal{overflow:hidden}
+  .marco{max-width:640px;margin:0 auto;padding:14px 16px 80px}
+  h1{font-size:25px;line-height:1.2;margin:0;font-weight:700}
+  h2{font-size:19px;line-height:1.3;margin:28px 0 10px;font-weight:700}
+  h3{font-size:17.5px;line-height:1.35;margin:0;font-weight:700}
+  p{margin:0}
+  p + p{margin-top:8px}
+  a{color:var(--acero-2)}
+  :focus-visible{outline:3px solid var(--acero-2);outline-offset:2px}
+  .apoyo{color:var(--suave)}
+  .chico{font-size:15px}
+  .mini-t{font-size:13.5px;color:var(--suave)}
+  .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .oculto{display:none !important}
+  .centro{text-align:center}
+
+  .barra{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;min-height:44px}
+  .marca{font-weight:700;color:var(--acero);font-size:16px}
+  .lado{background:none;border:0;padding:12px 2px;font:inherit;font-size:15.5px;color:var(--suave);cursor:pointer;
+    text-decoration:underline;text-underline-offset:3px}
+  a.lado{display:inline-block}
+  .quien{color:var(--suave);font-size:15px;margin:0 0 12px}
+
+  .pestanas{display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;margin:4px 0 18px;position:sticky;top:0;z-index:3;
+    background:var(--fondo);padding:8px 0}
+  .pestanas button{font:inherit;font-size:15.5px;font-weight:700;padding:10px 8px;border-radius:999px;
+    border:2px solid var(--borde);background:var(--superficie);color:var(--suave);cursor:pointer}
+  .pestanas button[aria-selected="true"]{background:var(--acero);border-color:var(--acero);color:var(--sobre-acero)}
+
+  .tarjeta{background:var(--superficie);border:1px solid var(--borde);border-radius:14px;padding:16px 16px 18px;margin-top:12px}
+  .tarjeta.ok{border-left:6px solid var(--ok)}
+  .tarjeta.medio{border-left:6px solid var(--medio)}
+  .tarjeta.alto{border-left:6px solid var(--alto)}
+  .tarjeta h2{margin:0 0 6px}
+  .tarjeta.apagada{opacity:.6}
+  .fila{display:flex;align-items:center;gap:12px}
+  .fila.sep{justify-content:space-between}
+  .crece{flex:1 1 auto;min-width:0}
+  .elipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .lista{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .item{background:var(--superficie);border:1px solid var(--borde);border-radius:14px}
+  .item > button.abrir, .item > a.abrir{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;font:inherit;
+    color:inherit;padding:14px 14px;cursor:pointer;text-decoration:none;border-radius:14px}
+  .item .nombre{font-weight:700}
+  .item .linea{color:var(--suave);font-size:15px;margin-top:2px}
+  .item.apagado{opacity:.55}
+  .flecha{flex:none;color:var(--suave);font-size:22px;line-height:1}
+  .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--acero-claro);color:var(--acero);display:flex;
+    align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .num.hecho{background:var(--ok);color:#fff}
+  .num.visto{background:var(--medio-claro);color:var(--medio)}
+  .chip{display:inline-block;font-size:13.5px;font-weight:700;padding:2px 9px;border-radius:99px;margin:4px 6px 0 0;vertical-align:2px;
+    background:var(--acero-claro);color:var(--acero)}
+  .chip.ok{background:var(--ok-claro);color:var(--ok)}
+  .chip.medio{background:var(--medio-claro);color:var(--medio)}
+  .chip.alto{background:var(--alto-claro);color:var(--alto)}
+  .chip.gris{background:var(--fondo);color:var(--suave);border:1px solid var(--borde)}
+  .chips{margin-top:4px}
+
+  label{display:block;font-weight:700;margin:16px 0 6px}
+  input,select,textarea{display:block;width:100%;font:inherit;font-size:17px;padding:11px 12px;border:2px solid var(--borde);
+    border-radius:10px;background:var(--superficie);color:var(--tinta)}
+  textarea{min-height:76px;resize:vertical;font-size:16px}
+  input:focus,select:focus,textarea:focus{border-color:var(--acero-2);outline:none}
+  input[type=file]{padding:9px;font-size:15px}
+  .check{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-weight:400}
+  .check input{width:24px;height:24px;margin:0;padding:0;flex:none;accent-color:var(--acero)}
+  .dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .dos label{margin-top:12px}
+  .boton{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:11px;background:var(--acero);
+    color:var(--sobre-acero);font:inherit;font-size:17.5px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+  .boton:disabled{opacity:.55;cursor:default}
+  .boton.sec{background:transparent;color:var(--acero-2);border:2px solid var(--borde)}
+  .boton.peligro{background:transparent;color:var(--alto);border:2px solid var(--borde)}
+  .mini{font:inherit;font-size:15px;font-weight:700;padding:9px 13px;border-radius:9px;border:2px solid var(--acero);
+    background:var(--acero);color:var(--sobre-acero);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .mini.sec{background:transparent;color:var(--acero-2);border-color:var(--borde)}
+  .mini.peligro{background:transparent;color:var(--alto);border-color:var(--borde)}
+  .mini:disabled{opacity:.55;cursor:default}
+  .mini.ico{padding:8px 10px;min-width:40px;justify-content:center}
+  .acciones{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .acciones.derecha{justify-content:flex-end}
+  .enlace{background:none;border:0;padding:6px 0;font:inherit;font-size:15.5px;color:var(--acero-2);text-decoration:underline;
+    text-underline-offset:3px;cursor:pointer}
+  .enlace.peligro{color:var(--alto)}
+  .error{color:var(--alto);font-weight:700;margin-top:14px;min-height:24px}
+  .error:empty{min-height:0;margin:0}
+  .cargando{padding:40px 0;text-align:center}
+  .acceso{min-height:calc(100vh - 80px);min-height:calc(100dvh - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display:flex;flex-direction:column;justify-content:center;padding-bottom:40px}
+  .acceso h1{margin-top:10px}
+  .acceso .apoyo{margin-top:8px}
+  .cambiar{margin-top:22px;text-align:center}
+  .cambiar button{background:none;border:0;font:inherit;color:var(--acero-2);text-decoration:underline;cursor:pointer;padding:10px}
+  .volver{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:8px 0;font:inherit;font-size:15.5px;
+    color:var(--acero-2);cursor:pointer;text-decoration:underline;text-underline-offset:3px;margin-bottom:6px}
+  .grupo-t{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave);margin:24px 0 8px;font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .grupo-t span{flex:1 1 auto}
+  .aviso{background:var(--medio-claro);border-left:5px solid var(--medio);padding:10px 12px;border-radius:8px;font-size:15.5px;margin-top:12px}
+  .aviso.ok{background:var(--ok-claro);border-left-color:var(--ok)}
+  .aviso.alto{background:var(--alto-claro);border-left-color:var(--alto)}
+  .interruptor{flex:0 0 auto;width:54px;height:32px;border-radius:99px;border:2px solid var(--borde);background:var(--acero-claro);
+    position:relative;cursor:pointer;padding:0}
+  .interruptor::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--superficie);
+    box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+  .interruptor[aria-checked="true"]{background:var(--ok);border-color:var(--ok)}
+  .interruptor[aria-checked="true"]::after{left:25px}
+  .interruptor:disabled{opacity:.5}
+  .modo-ed{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--acero-claro);border-radius:12px;
+    padding:10px 14px;margin:0 0 6px;font-size:15.5px}
+  .modo-ed b{color:var(--acero)}
+
+  /* ---------- recursos ---------- */
+  .recurso{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--superficie);border:2px solid var(--borde);
+    border-radius:12px;padding:12px 14px;font:inherit;color:inherit;cursor:pointer;margin-top:10px;text-decoration:none}
+  .recurso .ico-r{flex:none;width:44px;height:44px;border-radius:10px;background:var(--acero-claro);color:var(--acero);display:flex;
+    align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:.04em;overflow:hidden}
+  .recurso .ico-r img{width:100%;height:100%;object-fit:cover}
+  .recurso .t{font-weight:700}
+  .recurso .s{color:var(--suave);font-size:14.5px}
+  .progreso-l{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--borde)}
+
+  /* ---------- documentos ---------- */
+  .doc{display:grid;grid-template-columns:92px 1fr;gap:12px;background:var(--superficie);border:1px solid var(--borde);border-radius:14px;
+    padding:12px;margin-top:10px}
+  .doc.sin{grid-template-columns:1fr}
+  .portada{width:92px;height:118px;border-radius:9px;background:var(--foto);border:1px solid var(--borde);overflow:hidden;display:flex;
+    align-items:center;justify-content:center;color:var(--info);font-size:12px;font-weight:700;cursor:pointer;padding:0}
+  .portada img{width:100%;height:100%;object-fit:cover;display:block}
+  .doc .cuerpo{min-width:0}
+  .doc .nombre{font-weight:700;line-height:1.3}
+  .doc .desc{color:var(--suave);font-size:14.5px;margin-top:3px}
+  .doc .acciones{margin-top:10px;gap:6px}
+  .doc .acciones .mini{font-size:14px;padding:8px 11px}
+  .versiones{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--borde)}
+  .versiones li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--borde);font-size:15px}
+  .versiones .v{font-weight:700}
+
+  /* ---------- horario ---------- */
+  .semana-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+  .semana-nav h2{margin:0;font-size:18px;text-align:center;flex:1 1 auto}
+  .dia{margin-top:16px}
+  .dia-t{display:flex;align-items:baseline;gap:8px;font-weight:700;margin-bottom:6px}
+  .dia-t .f{color:var(--suave);font-weight:400;font-size:15px}
+  .dia-t.hoy .n{color:var(--acero)}
+  .dia .vacio{color:var(--suave);font-size:15px;padding:4px 0 4px 2px}
+  .evento{display:grid;grid-template-columns:92px 1fr;gap:10px;background:var(--superficie);border:1px solid var(--borde);border-radius:12px;
+    padding:12px 12px;margin-top:8px}
+  .evento.hoy{border-color:var(--acero-2);box-shadow:0 0 0 2px var(--acero-claro)}
+  .evento.pasado{opacity:.6}
+  .evento.apagado{opacity:.55;border-style:dashed}
+  .evento .hora{font-weight:700;color:var(--acero);font-size:16px;line-height:1.3}
+  .evento .hora small{display:block;font-weight:400;color:var(--suave);font-size:13px}
+  .evento .tit{font-weight:700;line-height:1.3}
+  .evento .det{color:var(--suave);font-size:14.5px;margin-top:2px}
+  .evento .det a{word-break:break-all}
+  .evento .acciones{margin-top:8px;gap:6px}
+  .evento .acciones .mini{font-size:14px;padding:7px 10px}
+  .inicio-pb{display:inline-block;background:var(--medio-claro);color:var(--medio);font-size:13px;font-weight:700;padding:2px 8px;border-radius:99px}
+
+  /* ---------- modal / visor ---------- */
+  .capa{position:fixed;inset:0;background:rgba(10,18,26,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+  .hoja{background:var(--superficie);color:var(--tinta);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow:auto;
+    border-radius:18px 18px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom, 0px));box-shadow:0 -4px 30px var(--sombra)}
+  @media (min-width:700px){ .capa{align-items:center} .hoja{border-radius:18px;max-height:88vh} }
+  .hoja-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .hoja-cab h2{margin:0;font-size:19px}
+  .cerrar{background:none;border:0;font:inherit;font-size:28px;line-height:1;color:var(--suave);cursor:pointer;padding:4px 8px}
+  .visor{position:fixed;inset:0;background:#1b2630;z-index:30;display:flex;flex-direction:column;color:#fff}
+  .visor .cab{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#0f171e;
+    padding-top:calc(10px + env(safe-area-inset-top, 0px))}
+  .visor .cab .t{font-weight:700;font-size:15px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .visor .cab button, .visor .pie a, .visor .pie button{font:inherit;font-size:14.5px;font-weight:700;color:#fff;background:#2A6A99;border:0;border-radius:9px;
+    padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .visor .cab button.x{background:transparent;font-size:26px;padding:0 8px}
+  .visor .cuerpo{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 8px;text-align:center}
+  .visor canvas, .visor img{max-width:100%;height:auto;display:block;margin:0 auto 10px;background:#fff;border-radius:4px}
+  .visor img{background:transparent}
+  .visor video{max-width:100%;max-height:70vh;display:block;margin:0 auto}
+  .visor .pie{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px 12px calc(12px + env(safe-area-inset-bottom, 0px));background:#0f171e}
+  .visor .estado{color:#C9D6E0;font-size:14px;padding:16px}
+  .barra-av{height:8px;border-radius:99px;background:var(--acero-claro);overflow:hidden;margin-top:10px}
+  .barra-av span{display:block;height:100%;background:var(--acero-2);border-radius:99px;transition:width .3s}
+  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%) translateY(20px);
+    background:var(--tinta);color:var(--fondo);padding:12px 18px;border-radius:12px;font-weight:700;max-width:calc(100% - 32px);
+    opacity:0;visibility:hidden;transition:transform .25s, opacity .25s, visibility .25s;z-index:40;pointer-events:none}
+  .toast.on{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible}
+  .toast.mal{background:var(--alto);color:#fff}
+  .tabla{width:100%;border-collapse:collapse;font-size:15px;margin-top:8px}
+  .tabla th,.tabla td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--borde);vertical-align:top}
+  .tabla th{color:var(--suave);font-size:13.5px;text-transform:uppercase;letter-spacing:.03em}
+  .tabla td.n{text-align:right;font-weight:700}
+  @media (prefers-reduced-motion: reduce){ .toast,.barra-av span,.interruptor::after{transition:none} }
+</style>
+</head>
+<body>
+<div id="app" class="marco"></div>
+<div id="capa"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript>Activa JavaScript para ver los entrenamientos.</noscript>
+<script>
+'use strict';
+/* =====================================================================
+   Entrenamientos · Listas · Horario — Equipo Arequipa
+   Asesor: entra con su celular (o llega ya con sesión desde la plataforma).
+   Ve los módulos con sus lecciones (guía PDF, video, libro: solo lo que hay),
+   las listas por categoría (ver, descargar, enviar) y el horario de la semana.
+   Oficina: lo mismo, más la edición: módulos, lecciones y materiales; subir
+   listas y nuevas versiones; horario habitual y la semana (apagar, editar,
+   agregar). Lo que lleva asistencia aparece solo en Nivel Cero.
+   Todo lo calcula Supabase (funciones ent_*, doc_*, hor_*): la página muestra y envía.
+   ===================================================================== */
+const SB_URL = 'https://kiexpdaaoegbtesqmaff.supabase.co';
+const SB_KEY = 'sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth';
+const K_STAFF = 'sb-kiexpdaaoegbtesqmaff-auth-token';   // sesión de oficina de la plataforma (mismo dominio)
+const K_ASESOR = 'rw_asesor_token';                      // sesión de asesor de la plataforma (mismo dominio)
+const K_ADMIN = 'rw_ent_admin';                          // sesión de oficina para este módulo (admin_sesion)
+const K_EDICION = 'rw_ent_edicion';
+const NIVEL_CERO = 'https://renaware-nivel-cero.pages.dev';
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MESES_C = ['ene','feb','mar','abr','may','jun','jul','ago','set','oct','nov','dic'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const TIPO_R = {guia: 'Guía', video: 'Video', libro: 'Libro', enlace: 'Enlace'};
+const TIPO_E = {capacitacion: 'Capacitación', evento: 'Evento', reunion: 'Reunión', reclutamiento: 'Reclutamiento'};
+const MODO_E = {presencial: 'En la oficina', zoom: 'Por Zoom', otro: 'Otro lugar'};
+const app = document.getElementById('app');
+
+/* ---------- utilidades ---------- */
+function h(tag, attrs, ...hijos){
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of hijos.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+function pintar(...nodos){ app.replaceChildren(...nodos.filter(Boolean)); window.scrollTo(0, 0); }
+function repintar(...nodos){ const y = window.scrollY; app.replaceChildren(...nodos.filter(Boolean)); window.scrollTo(0, y); }
+function leer(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function guardar(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function borrar(k){ try { localStorage.removeItem(k); } catch (e) {} }
+const PEQUENAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e']);
+function titulo(n){
+  return String(n || '').toLowerCase().split(/\s+/).filter(Boolean)
+    .map((p, i) => i > 0 && PEQUENAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+function primerNombre(n){ return titulo(String(n || '').trim().split(/\s+/)[0] || ''); }
+function fecha(iso){ const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+function iso(d){ return d.toISOString().slice(0, 10); }
+function sumar(isoF, n){ const d = fecha(isoF); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
+function dow(isoF){ return fecha(isoF).getUTCDay(); }
+function largo(isoF){ const d = fecha(isoF); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} de ${MESES[d.getUTCMonth()]}`; }
+function corta(isoF){ if (!isoF) return ''; const d = fecha(isoF); return `${d.getUTCDate()} ${MESES_C[d.getUTCMonth()]}`; }
+function cortaAnio(isoF){ if (!isoF) return ''; const d = fecha(isoF); return `${d.getUTCDate()} ${MESES_C[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
+function rango(ini, fin){
+  const a = fecha(ini), b = fecha(fin);
+  return a.getUTCMonth() === b.getUTCMonth()
+    ? `del ${a.getUTCDate()} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`
+    : `del ${a.getUTCDate()} de ${MESES[a.getUTCMonth()]} al ${b.getUTCDate()} de ${MESES[b.getUTCMonth()]}`;
+}
+function hora12(hm){
+  if (!hm) return '';
+  const [hh, mm] = String(hm).split(':').map(Number);
+  return `${hh % 12 || 12}:${String(mm || 0).padStart(2, '0')}\u00a0${hh < 12 ? 'a.\u00a0m.' : 'p.\u00a0m.'}`;
+}
+function lunesDe(isoF){ return sumar(isoF, -((dow(isoF) + 6) % 7)); }
+function pbDe(isoF){                       // número de período (PB) de una fecha: períodos de 14 días desde el 25-12-2025
+  const dias = Math.round((fecha(isoF) - fecha('2025-12-25')) / 86400000);
+  const ind = Math.floor(dias / 14);
+  return {pb: ((ind % 26) + 26) % 26 + 1, anio: 2026 + Math.floor(ind / 26)};
+}
+function bytesTexto(b){
+  if (!b) return '';
+  if (b >= 1048576) return (b / 1048576).toFixed(b >= 10485760 ? 0 : 1) + ' MB';
+  if (b >= 1024) return Math.round(b / 1024) + ' KB';
+  return b + ' B';
+}
+function plural(n, uno, varios){ return `${n} ${Number(n) === 1 ? uno : varios}`; }
+function cargando(t){ return h('p', {class: 'apoyo cargando', role: 'status'}, t || 'Cargando…'); }
+function aviso(msg, mal){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast on' + (mal ? ' mal' : '');
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => { t.className = 'toast' + (mal ? ' mal' : ''); }, 2800);
+}
+function slug(nombre){
+  const base = String(nombre || 'archivo').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  return (base || 'archivo').slice(0, 120);
+}
+function esPdf(x){ return /pdf/i.test(x.content_type || '') || /\.pdf$/i.test(x.archivo || ''); }
+function esImagen(x){ return /^image\//i.test(x.content_type || '') || /\.(jpe?g|png|webp|gif)$/i.test(x.archivo || ''); }
+function esVideo(x){ return /^video\//i.test(x.content_type || '') || /\.(mp4|webm|mov)$/i.test(x.archivo || ''); }
+function urlDe(ruta){ return (S.d && S.d.archivos_base ? S.d.archivos_base : SB_URL + '/storage/v1/object/public/entrenamientos/') + ruta; }
+function urlDescarga(ruta, nombre){ return urlDe(ruta) + '?download=' + encodeURIComponent(nombre || ruta.split('/').pop()); }
+function youtubeId(u){
+  const m = String(u || '').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+/* ---------- conexión ---------- */
+async function api(ruta, {method = 'GET', body, token} = {}){
+  const r = await fetch(SB_URL + ruta, {
+    method,
+    headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + (token || SB_KEY), 'Content-Type': 'application/json'},
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const txt = await r.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+  if (!r.ok) {
+    const msg = (data && (data.message || data.msg || data.error_description || data.error)) || ('Error ' + r.status);
+    const err = new Error(msg); err.status = r.status; throw err;
+  }
+  return data;
+}
+const rpc = (fn, args, token) => api('/rest/v1/rpc/' + fn, {method: 'POST', body: args || {}, token});
+function mensaje(err){
+  const m = (err && err.message) || '';
+  if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
+  if (/Sesion invalida/i.test(m)) return 'Tu sesión venció. Entra de nuevo.';
+  if (/Clave incorrecta/i.test(m)) return 'Esa clave no es correcta.';
+  if (/no esta habilitado/i.test(m)) return 'Ese número no está habilitado. Pide a la oficina que lo active.';
+  if (/Demasiados intentos/i.test(m)) return 'Demasiados intentos. Espera 15 minutos.';
+  return m.replace(/\b(validos|valida|invalida|leccion|modulo|categoria|version|titulo|dia|subio|pagina)\b/g, x =>
+    ({validos: 'válidos', valida: 'válida', invalida: 'inválida', leccion: 'lección', modulo: 'módulo', categoria: 'categoría',
+      version: 'versión', titulo: 'título', dia: 'día', subio: 'subió', pagina: 'página'})[x]) || 'Algo falló. Intenta de nuevo.';
+}
+async function canjear(codigo){
+  const r = await fetch(SB_URL + '/functions/v1/traspaso', {
+    method: 'POST', headers: {'Content-Type': 'application/json', 'apikey': SB_KEY}, body: JSON.stringify({codigo})});
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!d || !d.ok) throw new Error((d && d.motivo) || 'Enlace inválido');
+  return d;
+}
+function contexto(){
+  const ua = navigator.userAgent || '';
+  return {
+    dispositivo: /Mobi|Android|iPhone/i.test(ua) ? 'móvil' : 'escritorio',
+    navegador: (ua.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/) || [''])[0],
+    so: (ua.match(/Android|iPhone OS|Windows|Mac OS X|Linux/) || [''])[0],
+    pantalla: (screen.width || 0) + 'x' + (screen.height || 0),
+    zona: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+    idioma: navigator.language || '', origen: 'entrenamientos'
+  };
+}
+
+/* ---------- sesiones ---------- */
+function tokenAsesor(){ return leer(K_ASESOR); }
+function tokenAdmin(){ return leer(K_ADMIN); }
+async function sesionEquipo(){
+  let s = leer(K_STAFF);
+  if (!s || !s.access_token) return null;
+  if (s.expires_at - 60 < Date.now() / 1000) {
+    try {
+      s = await api('/auth/v1/token?grant_type=refresh_token', {method: 'POST', body: {refresh_token: s.refresh_token}});
+      if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+      guardar(K_STAFF, s);
+    } catch (e) { return null; }
+  }
+  return s;
+}
+async function oficinaDesdePlataforma(){   // quien ya entró a la plataforma con su correo no necesita la clave
+  try {
+    const s = await sesionEquipo();
+    if (!s) return false;
+    const codigo = await api('/rest/v1/rpc/traspaso_crear', {method: 'POST', body: {p_modulo: 'entrenamientos'}, token: s.access_token});
+    const d = await canjear(codigo);
+    if (d.admin_token) { guardar(K_ADMIN, d.admin_token); return true; }
+  } catch (e) {}
+  return false;
+}
+
+/* ---------- estado ---------- */
+const S = {
+  modo: null, d: null, tab: 'entrenamientos', modulo: null, leccion: null,
+  semana: null, semanaD: null, edicion: leer(K_EDICION) !== false, vistas: {}, ocupado: false
+};
+function token(){ return S.modo === 'oficina' ? tokenAdmin() : tokenAsesor(); }
+function oficina(){ return S.modo === 'oficina'; }
+function edita(){ return oficina() && S.edicion; }
+
+function leerHash(){
+  const partes = (location.hash || '').slice(1).split('&').filter(Boolean);
+  const o = {};
+  partes.forEach(p => { const i = p.indexOf('='); if (i < 0) o[p] = true; else o[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1)); });
+  return o;
+}
+function escribirHash(){
+  const p = [S.tab];
+  if (S.tab === 'entrenamientos' && S.leccion) p.push('leccion=' + S.leccion);
+  else if (S.tab === 'entrenamientos' && S.modulo) p.push('modulo=' + S.modulo);
+  if (S.tab === 'horario' && S.semana && S.semana !== lunesDe(S.d.hoy)) p.push('semana=' + S.semana);
+  const nuevo = '#' + p.join('&');
+  if (location.hash !== nuevo) history.replaceState(null, '', location.pathname + location.search + nuevo);
+}
+function aplicarHash(){
+  const o = leerHash();
+  if (o.listas) S.tab = 'listas'; else if (o.horario) S.tab = 'horario'; else if (o.entrenamientos || o.leccion || o.modulo) S.tab = 'entrenamientos';
+  if (o.leccion) { S.leccion = o.leccion; const l = leccionDe(o.leccion); S.modulo = l ? l.modulo.id : null; }
+  else if (o.modulo) { S.modulo = o.modulo; S.leccion = null; }
+  if (o.semana && /^\d{4}-\d{2}-\d{2}$/.test(o.semana)) S.semana = lunesDe(o.semana);
+}
+
+async function arrancar(){
+  const o = leerHash();
+  let quiere = o.oficina ? 'oficina' : null;
+  if (o.traspaso) {
+    const resto = (location.hash || '').slice(1).split('&').filter(p => p && !/^traspaso=/i.test(p)).join('&');
+    history.replaceState(null, '', location.pathname + location.search + (resto ? '#' + resto : ''));
+    pintar(cargando('Entrando…'));
+    try {
+      const d = await canjear(o.traspaso);
+      if (d.tipo === 'asesor' && d.token) { guardar(K_ASESOR, d.token); quiere = 'asesor'; }
+      else if (d.admin_token) { guardar(K_ADMIN, d.admin_token); quiere = 'oficina'; }
+    } catch (e) { /* el enlace ya se usó o venció: sigue con la sesión que haya */ }
+  }
+  if (quiere !== 'asesor' && tokenAdmin()) return iniciar('oficina');
+  if (quiere !== 'oficina' && tokenAsesor()) return iniciar('asesor');
+  if (leer(K_STAFF)) { pintar(cargando('Entrando…')); if (await oficinaDesdePlataforma()) return iniciar('oficina'); }
+  return quiere === 'oficina' ? pantallaClave() : pantallaEntrar();
+}
+
+/* =====================================================================
+   Entrar
+   ===================================================================== */
+function pantallaEntrar(msg){
+  const err = h('p', {class: 'error', role: 'alert'}, msg || '');
+  const cel = h('input', {id: 'celular', type: 'tel', inputmode: 'numeric', autocomplete: 'tel', placeholder: '9 dígitos', required: true});
+  const form = h('form', {class: 'acceso', onsubmit: async ev => {
+    ev.preventDefault();
+    const v = cel.value.replace(/\D/g, '');
+    if (v.length < 9) { err.textContent = 'Escribe tu celular de 9 dígitos.'; return; }
+    err.textContent = ''; btn.disabled = true;
+    try {
+      const r = await rpc('asesor_login', {p_celular: v, p_ctx: contexto()});
+      guardar(K_ASESOR, r.token);
+      iniciar('asesor');
+    } catch (e) { err.textContent = mensaje(e); btn.disabled = false; }
+  }},
+    h('p', {class: 'marca'}, 'Equipo Arequipa'),
+    h('h1', {}, 'Entrenamientos'),
+    h('p', {class: 'apoyo'}, 'Guías, listas y el horario de la semana. Entra con tu celular: este teléfono te recordará.'),
+    h('label', {for: 'celular'}, 'Tu celular'), cel, err);
+  const btn = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
+  form.append(btn, h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaClave()}, 'Soy de la oficina')));
+  pintar(form);
+  setTimeout(() => cel.focus(), 50);
+}
+function pantallaClave(msg){
+  const err = h('p', {class: 'error', role: 'alert'}, msg || '');
+  const inp = h('input', {id: 'clave', type: 'password', autocomplete: 'current-password', required: true});
+  const form = h('form', {class: 'acceso', onsubmit: async ev => {
+    ev.preventDefault();
+    err.textContent = ''; btn.disabled = true;
+    try {
+      const tok = await rpc('admin_login', {p_clave: inp.value});
+      guardar(K_ADMIN, tok);
+      iniciar('oficina');
+    } catch (e) { err.textContent = mensaje(e); btn.disabled = false; }
+  }},
+    h('p', {class: 'marca'}, 'Equipo Arequipa'),
+    h('h1', {}, 'Entrenamientos · oficina'),
+    h('p', {class: 'apoyo'}, 'La misma clave del panel. Si entraste a la plataforma con tu correo, abre este módulo desde ahí y entras directo.'),
+    h('label', {for: 'clave'}, 'Clave de la oficina'), inp, err);
+  const btn = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
+  form.append(btn, h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi celular')));
+  pintar(form);
+  setTimeout(() => inp.focus(), 50);
+}
+function cerrarSesion(){
+  const eraOficina = oficina();
+  if (eraOficina) borrar(K_ADMIN); else borrar(K_ASESOR);
+  S.d = null; S.modo = null;
+  if (leer(K_STAFF)) { location.href = '/'; return; }   // la sesión de la plataforma se cierra desde el hub
+  if (eraOficina) pantallaClave(); else pantallaEntrar();
+}
+
+/* =====================================================================
+   Datos
+   ===================================================================== */
+async function iniciar(modo){
+  S.modo = modo;
+  pintar(cargando());
+  try {
+    S.d = await rpc('ent_datos', {p_token: token()});
+    S.semana = S.d.semana.lunes; S.semanaD = S.d.semana;
+    aplicarHash();
+    if (S.semana !== S.d.semana.lunes) await cargarSemana(S.semana);
+    render();
+  } catch (e) {
+    if (/Sesion invalida/i.test(e.message)) { if (modo === 'oficina') { borrar(K_ADMIN); return pantallaClave('Tu sesión de oficina venció. Entra de nuevo.'); }
+      borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu celular.'); }
+    pintar(h('div', {class: 'acceso centro'}, h('p', {class: 'error'}, mensaje(e)), h('button', {class: 'boton', onclick: () => iniciar(modo)}, 'Reintentar')));
+  }
+}
+async function recargar(silencioso){
+  try {
+    const d = await rpc('ent_datos', {p_token: token()});
+    S.d = d;
+    if (S.semana === d.semana.lunes) S.semanaD = d.semana; else await cargarSemana(S.semana);
+    if (!silencioso) render();
+  } catch (e) { if (/Sesion invalida/i.test(e.message)) cerrarSesion(); else aviso(mensaje(e), true); }
+}
+async function cargarSemana(lunes){
+  const w = await rpc('hor_semana', {p_token: token(), p_fecha: lunes});
+  S.semana = w.lunes; S.semanaD = w;
+}
+function modulos(){ return S.d.modulos || []; }
+function moduloDe(id){ return modulos().find(m => m.id === id) || null; }
+function leccionDe(id){
+  for (const m of modulos()) { const l = (m.lecciones || []).find(x => x.id === id); if (l) return Object.assign({}, l, {modulo: m}); }
+  return null;
+}
+function progresoLecciones(m){
+  const ls = (m.lecciones || []).filter(l => l.activo);
+  return {total: ls.length, hechas: ls.filter(l => l.progreso === 'completado').length, vistas: ls.filter(l => l.progreso).length};
+}
+async function accion(fn, exito){
+  if (S.ocupado) return null;
+  S.ocupado = true;
+  try { const r = await fn(); S.ocupado = false; if (exito) aviso(exito); return r; }
+  catch (e) { S.ocupado = false; if (/Sesion invalida/i.test(e.message)) cerrarSesion(); else aviso(mensaje(e), true); return null; }
+}
+
+/* =====================================================================
+   Pantalla
+   ===================================================================== */
+function render(){
+  escribirHash();
+  const vista = S.tab === 'listas' ? vistaListas() : S.tab === 'horario' ? vistaHorario() : vistaEntrenamientos();
+  repintar(barra(), pestanas(), ...[].concat(vista));
+}
+function barra(){
+  const quien = oficina() ? 'Oficina' : primerNombre(S.d.nombre) || 'Asesor';
+  return h('header', {class: 'barra'},
+    h('div', {}, h('span', {class: 'marca'}, 'Entrenamientos'), h('p', {class: 'quien', style: 'margin:0'}, quien)),
+    h('div', {},
+      leer(K_STAFF) || leer(K_ASESOR) ? h('a', {class: 'lado', href: '/'}, 'Inicio') : null,
+      h('button', {class: 'lado', type: 'button', onclick: cerrarSesion}, 'Salir')));
+}
+function pestanas(){
+  const tabs = [['entrenamientos', 'Entrenamientos'], ['listas', 'Listas'], ['horario', 'Horario']];
+  return h('nav', {class: 'pestanas', role: 'tablist'}, tabs.map(([id, t]) =>
+    h('button', {type: 'button', role: 'tab', 'aria-selected': String(S.tab === id), onclick: () => { S.tab = id; render(); window.scrollTo(0, 0); }}, t)));
+}
+function modoEdicion(){
+  if (!oficina()) return null;
+  return h('div', {class: 'modo-ed'},
+    h('span', {}, h('b', {}, 'Modo edición'), ' ', S.edicion ? 'activado: así editas lo que ven los asesores.' : 'apagado: ves lo mismo que un asesor.'),
+    h('button', {class: 'interruptor', type: 'button', role: 'switch', 'aria-checked': String(S.edicion), 'aria-label': 'Modo edición',
+      onclick: () => { S.edicion = !S.edicion; guardar(K_EDICION, S.edicion); render(); }}));
+}
+
+/* =====================================================================
+   Entrenamientos
+   ===================================================================== */
+function vistaEntrenamientos(){
+  if (S.leccion) { const l = leccionDe(S.leccion); if (l) return vistaLeccion(l); S.leccion = null; }
+  if (S.modulo) { const m = moduloDe(S.modulo); if (m) return vistaModulo(m); S.modulo = null; }
+  const ms = modulos();
+  const out = [modoEdicion()];
+  if (!oficina()) {
+    const tot = ms.reduce((a, m) => a + progresoLecciones(m).total, 0), hechas = ms.reduce((a, m) => a + progresoLecciones(m).hechas, 0);
+    out.push(h('p', {class: 'apoyo', style: 'margin-bottom:12px'}, tot ? `Llevas ${hechas} de ${plural(tot, 'lección completada', 'lecciones completadas')}.` : 'Pronto habrá lecciones aquí.'));
+  }
+  out.push(h('ul', {class: 'lista'}, ms.map((m, i) => {
+    const p = progresoLecciones(m);
+    const sub = oficina()
+      ? `${plural(p.total, 'lección', 'lecciones')}${m.activo ? '' : ' · oculto a los asesores'}`
+      : p.total ? (p.hechas === p.total ? 'Completado' : `${p.hechas} de ${p.total} completadas`) : 'Sin lecciones aún';
+    return h('li', {class: 'item' + (m.activo ? '' : ' apagado')},
+      h('button', {class: 'abrir', type: 'button', onclick: () => { S.modulo = m.id; S.leccion = null; render(); window.scrollTo(0, 0); }},
+        h('span', {class: 'num' + (p.total && p.hechas === p.total && !oficina() ? ' hecho' : '')}, i + 1),
+        h('span', {class: 'crece'}, h('span', {class: 'nombre'}, m.titulo), h('span', {class: 'linea', style: 'display:block'}, sub)),
+        h('span', {class: 'flecha', 'aria-hidden': 'true'}, '›')));
+  })));
+  if (edita()) {
+    out.push(h('div', {class: 'acciones'},
+      h('button', {class: 'mini', type: 'button', onclick: () => formModulo(null)}, '+ Nuevo módulo'),
+      ms.length > 1 ? h('button', {class: 'mini sec', type: 'button', onclick: () => ordenar('modulo', ms, m => m.titulo)}, 'Ordenar') : null));
+    out.push(seccionProgreso());
+  }
+  return out;
+}
+function seccionProgreso(){
+  const pr = S.d.progreso || [];
+  const box = h('section', {}, h('h2', {}, 'Progreso del equipo'));
+  if (!pr.length) { box.append(h('p', {class: 'apoyo'}, 'Todavía nadie abrió una lección. Aquí verás quién va viendo y completando.')); return box; }
+  const tot = modulos().reduce((a, m) => a + (m.lecciones || []).filter(l => l.activo).length, 0);
+  box.append(h('table', {class: 'tabla'},
+    h('thead', {}, h('tr', {}, h('th', {}, 'Asesor'), h('th', {class: 'n'}, 'Vistas'), h('th', {class: 'n'}, 'Completas'), h('th', {}, 'Último'))),
+    h('tbody', {}, pr.map(p => h('tr', {},
+      h('td', {}, titulo(p.nombre) || p.celular),
+      h('td', {class: 'n'}, p.vistas),
+      h('td', {class: 'n'}, `${p.completadas}/${tot}`),
+      h('td', {}, p.ultimo ? cortaAnio(p.ultimo) : ''))))));
+  return box;
+}
+function vistaModulo(m){
+  const out = [h('button', {class: 'volver', type: 'button', onclick: () => { S.modulo = null; render(); }}, '← Módulos'),
+    h('h1', {}, m.titulo), m.descripcion ? h('p', {class: 'apoyo', style: 'margin-top:6px'}, m.descripcion) : null];
+  if (!m.activo && oficina()) out.push(h('p', {class: 'aviso'}, 'Este módulo está oculto: los asesores no lo ven.'));
+  const ls = m.lecciones || [];
+  out.push(h('ul', {class: 'lista', style: 'margin-top:14px'}, ls.map((l, i) => {
+    const chips = recursosChips(l);
+    const est = l.progreso === 'completado' ? 'hecho' : l.progreso === 'visto' ? 'visto' : '';
+    const sub = oficina()
+      ? [chips.length ? h('span', {class: 'chips'}, chips) : h('span', {class: 'linea'}, 'Sin materiales todavía'),
+         h('span', {class: 'linea'}, `${l.n_vistos || 0} la vieron · ${l.n_completados || 0} la completaron${l.activo ? '' : ' · oculta'}`)]
+      : (chips.length ? h('span', {class: 'chips'}, chips) : h('span', {class: 'linea'}, 'Material en preparación'));
+    return h('li', {class: 'item' + (l.activo ? '' : ' apagado')},
+      h('button', {class: 'abrir', type: 'button', onclick: () => { S.leccion = l.id; render(); window.scrollTo(0, 0); }},
+        h('span', {class: 'num ' + est}, est === 'hecho' ? '✓' : i + 1),
+        h('span', {class: 'crece'}, h('span', {class: 'nombre'}, l.titulo), l.descripcion ? h('span', {class: 'linea', style: 'display:block'}, l.descripcion) : null, sub),
+        h('span', {class: 'flecha', 'aria-hidden': 'true'}, '›')));
+  })));
+  if (!ls.length) out.push(h('p', {class: 'apoyo', style: 'margin-top:12px'}, oficina() ? 'Agrega la primera lección.' : 'Pronto habrá lecciones en este módulo.'));
+  if (edita()) out.push(h('div', {class: 'acciones'},
+    h('button', {class: 'mini', type: 'button', onclick: () => formLeccion(null, m)}, '+ Nueva lección'),
+    h('button', {class: 'mini sec', type: 'button', onclick: () => formModulo(m)}, 'Editar módulo'),
+    ls.length > 1 ? h('button', {class: 'mini sec', type: 'button', onclick: () => ordenar('leccion', ls, l => l.titulo)}, 'Ordenar') : null));
+  return out;
+}
+function recursosChips(l){
+  const tipos = [...new Set((l.recursos || []).filter(r => r.activo || oficina()).map(r => r.tipo))];
+  return tipos.map(t => h('span', {class: 'chip' + (t === 'guia' ? '' : ' gris')}, TIPO_R[t] + (t === 'guia' ? ' PDF' : '')));
+}
+function vistaLeccion(l){
+  const m = l.modulo;
+  const out = [h('button', {class: 'volver', type: 'button', onclick: () => { S.leccion = null; S.modulo = m.id; render(); }}, '← ' + m.titulo),
+    h('h1', {}, l.titulo), l.descripcion ? h('p', {class: 'apoyo', style: 'margin-top:6px'}, l.descripcion) : null];
+  if (!l.activo && oficina()) out.push(h('p', {class: 'aviso'}, 'Esta lección está oculta: los asesores no la ven.'));
+  const rs = (l.recursos || []).filter(r => r.activo || oficina());
+  const grupos = ['guia', 'video', 'libro', 'enlace'].map(t => [t, rs.filter(r => r.tipo === t)]).filter(g => g[1].length);
+  if (!grupos.length) out.push(h('p', {class: 'aviso', style: 'margin-top:16px'}, oficina() ? 'Esta lección no tiene materiales. Sube la guía en PDF o agrega un video o un libro.' : 'El material de esta lección está en preparación.'));
+  grupos.forEach(([t, lista]) => {
+    out.push(h('h2', {}, t === 'guia' ? 'Guía' : t === 'video' ? (lista.length > 1 ? 'Videos' : 'Video') : t === 'libro' ? (lista.length > 1 ? 'Libros' : 'Libro') : 'Enlaces'));
+    lista.forEach(r => out.push(tarjetaRecurso(r, l)));
+  });
+  if (!oficina()) {
+    const hecho = l.progreso === 'completado';
+    out.push(h('div', {class: 'progreso-l'},
+      h('button', {class: 'mini' + (hecho ? ' sec' : ''), type: 'button', onclick: () => marcar(l, hecho ? 'nada' : 'completado')},
+        hecho ? '✓ Completada · desmarcar' : 'Marcar como completada'),
+      h('span', {class: 'mini-t'}, hecho ? 'Bien hecho.' : l.progreso === 'visto' ? 'Ya la viste.' : '')));
+  }
+  if (edita()) out.push(h('div', {class: 'acciones'},
+    h('button', {class: 'mini', type: 'button', onclick: () => formRecurso(null, l)}, '+ Agregar material'),
+    h('button', {class: 'mini sec', type: 'button', onclick: () => formLeccion(l, m)}, 'Editar lección')));
+  return out;
+}
+function tarjetaRecurso(r, l){
+  const nombre = r.titulo || (r.tipo === 'guia' ? 'Guía de la lección' : r.tipo === 'video' ? 'Video de la lección' : r.tipo === 'libro' ? 'Libro recomendado' : 'Enlace');
+  const detalle = r.ruta
+    ? [r.paginas ? plural(r.paginas, 'página', 'páginas') : null, bytesTexto(r.bytes), esPdf(r) ? 'PDF' : esVideo(r) ? 'Video' : esImagen(r) ? 'Imagen' : null].filter(Boolean).join(' · ')
+    : (youtubeId(r.url) ? 'YouTube' : (r.url || '').replace(/^https?:\/\//, '').split('/')[0]);
+  const ico = h('span', {class: 'ico-r'}, r.portada ? h('img', {src: urlDe(r.portada), alt: ''}) : (r.tipo === 'guia' ? 'PDF' : r.tipo === 'video' ? '▶' : r.tipo === 'libro' ? 'LIBRO' : '↗'));
+  const abrir = () => { if (!oficina()) marcar(l, 'visto', true); abrirRecurso(r, nombre); };
+  const card = h('div', {},
+    h('button', {class: 'recurso', type: 'button', onclick: abrir}, ico,
+      h('span', {class: 'crece'}, h('span', {class: 't', style: 'display:block'}, nombre), h('span', {class: 's'}, detalle + (r.activo ? '' : ' · oculto'))),
+      h('span', {class: 'flecha', 'aria-hidden': 'true'}, '›')));
+  if (edita()) card.append(h('div', {class: 'acciones derecha', style: 'margin-top:6px'},
+    h('button', {class: 'enlace', type: 'button', onclick: () => formRecurso(r, l)}, 'Editar'),
+    h('button', {class: 'enlace peligro', type: 'button', onclick: () => confirmar(`¿Quitar «${nombre}» de la lección?`, async () => {
+      if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'recurso', p_id: r.id}), 'Material quitado')) recargar();
+    })}, 'Quitar')));
+  return card;
+}
+async function marcar(l, estado, silencioso){
+  if (oficina()) return;
+  if (silencioso && S.vistas[l.id]) return;
+  if (silencioso && l.progreso) { S.vistas[l.id] = true; return; }
+  try {
+    const r = await rpc('ent_progreso_marcar', {p_token: token(), p_leccion: l.id, p_estado: estado});
+    S.vistas[l.id] = true;
+    const real = leccionDe(l.id); if (real) { const m = moduloDe(real.modulo.id); const x = m.lecciones.find(y => y.id === l.id); if (x) x.progreso = r.progreso; }
+    if (!silencioso) { render(); aviso(estado === 'completado' ? 'Lección completada' : 'Listo'); }
+  } catch (e) { if (!silencioso) aviso(mensaje(e), true); }
+}
+function abrirRecurso(r, nombre){
+  if (r.ruta) {
+    if (esPdf(r)) return abrirVisor({tipo: 'pdf', url: urlDe(r.ruta), descarga: urlDescarga(r.ruta, r.archivo), nombre, archivo: r.archivo, content_type: r.content_type || 'application/pdf'});
+    if (esImagen(r)) return abrirVisor({tipo: 'imagen', url: urlDe(r.ruta), descarga: urlDescarga(r.ruta, r.archivo), nombre, archivo: r.archivo, content_type: r.content_type});
+    if (esVideo(r)) return abrirVisor({tipo: 'video', url: urlDe(r.ruta), descarga: urlDescarga(r.ruta, r.archivo), nombre, archivo: r.archivo, content_type: r.content_type});
+    window.open(urlDescarga(r.ruta, r.archivo), '_blank', 'noopener');
+    return;
+  }
+  if (r.url) window.open(r.url, '_blank', 'noopener');
+}
+
+/* ---------- formularios de entrenamientos ---------- */
+function formModulo(m){
+  hoja(m ? 'Editar módulo' : 'Nuevo módulo', [
+    {k: 'titulo', t: 'Nombre del módulo', v: m ? m.titulo : '', req: true},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: m ? m.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'activo', t: 'Visible para los asesores', v: m ? m.activo : true, tipo: 'check'}
+  ], async v => {
+    const r = await accion(() => rpc('ent_modulo_guardar', {p_token: token(), p_id: m ? m.id : null, p_datos: v}), 'Módulo guardado');
+    if (r) { cerrarHoja(); await recargar(true); if (!m) S.modulo = r.id; render(); }
+  }, m ? () => confirmar(`¿Borrar el módulo «${m.titulo}» con sus lecciones?`, async () => {
+    if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'modulo', p_id: m.id}), 'Módulo borrado')) { cerrarHoja(); S.modulo = null; S.leccion = null; recargar(); }
+  }) : null);
+}
+function formLeccion(l, m){
+  hoja(l ? 'Editar lección' : 'Nueva lección', [
+    {k: 'titulo', t: 'Nombre de la lección', v: l ? l.titulo : '', req: true},
+    {k: 'descripcion', t: 'De qué trata (opcional)', v: l ? l.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'modulo_id', t: 'Módulo', v: m.id, tipo: 'select', opciones: modulos().map(x => [x.id, x.titulo])},
+    {k: 'activo', t: 'Visible para los asesores', v: l ? l.activo : true, tipo: 'check'}
+  ], async v => {
+    const r = await accion(() => rpc('ent_leccion_guardar', {p_token: token(), p_id: l ? l.id : null, p_datos: v}), 'Lección guardada');
+    if (r) { cerrarHoja(); await recargar(true); S.modulo = v.modulo_id; if (!l) S.leccion = r.id; render(); }
+  }, l ? () => confirmar(`¿Borrar la lección «${l.titulo}»?`, async () => {
+    if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'leccion', p_id: l.id}), 'Lección borrada')) { cerrarHoja(); S.leccion = null; recargar(); }
+  }) : null);
+}
+function formRecurso(r, l){
+  const campos = [
+    {k: 'tipo', t: 'Tipo de material', v: r ? r.tipo : 'guia', tipo: 'select', opciones: [['guia', 'Guía (PDF)'], ['video', 'Video'], ['libro', 'Libro'], ['enlace', 'Enlace']]},
+    {k: 'titulo', t: 'Nombre (opcional)', v: r ? r.titulo || '' : '', ayuda: 'Si lo dejas vacío, dice «Guía de la lección», «Video de la lección», etc.'},
+    {k: 'archivo', t: r && r.ruta ? 'Reemplazar el archivo (opcional)' : 'Archivo (PDF, imagen o video de hasta 50 MB)', tipo: 'file', acepta: '.pdf,image/*,video/mp4,video/webm,video/quicktime'},
+    {k: 'url', t: 'O un enlace (YouTube, Drive, página)', v: r ? r.url || '' : '', tipo: 'url', ayuda: 'Para un video de YouTube o un libro en línea.'},
+    {k: 'activo', t: 'Visible para los asesores', v: r ? r.activo : true, tipo: 'check'}
+  ];
+  hoja(r ? 'Editar material' : 'Agregar material', campos, async (v, archivo, progreso) => {
+    const datos = {tipo: v.tipo, titulo: v.titulo, url: v.url, activo: v.activo};
+    if (!r) datos.leccion_id = l.id;
+    if (archivo) {
+      const sub = await subirArchivo(archivo, progreso);
+      Object.assign(datos, sub);
+    } else if (!r && !v.url) throw new Error('Elige un archivo o pega un enlace.');
+    const ok = await accion(() => rpc('ent_recurso_guardar', {p_token: token(), p_id: r ? r.id : null, p_datos: datos}), 'Material guardado');
+    if (ok) { cerrarHoja(); recargar(); }
+  }, null, 'Guardar');
+}
+function ordenar(que, lista, nombreDe){
+  let ids = lista.map(x => x.id);
+  const cont = h('ul', {class: 'lista'});
+  function pintarLista(){
+    cont.replaceChildren(...ids.map((id, i) => {
+      const x = lista.find(y => y.id === id);
+      return h('li', {class: 'item'}, h('div', {class: 'fila', style: 'padding:10px 12px'},
+        h('span', {class: 'num'}, i + 1), h('span', {class: 'crece nombre elipsis'}, nombreDe(x)),
+        h('button', {class: 'mini sec ico', type: 'button', 'aria-label': 'Subir', disabled: i === 0, onclick: () => { [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; pintarLista(); }}, '↑'),
+        h('button', {class: 'mini sec ico', type: 'button', 'aria-label': 'Bajar', disabled: i === ids.length - 1, onclick: () => { [ids[i + 1], ids[i]] = [ids[i], ids[i + 1]]; pintarLista(); }}, '↓')));
+    }));
+  }
+  pintarLista();
+  hojaLibre('Ordenar', [cont, h('button', {class: 'boton', type: 'button', onclick: async () => {
+    const fn = que === 'categoria' ? () => rpc('doc_categoria_ordenar', {p_token: token(), p_ids: ids}) : () => rpc('ent_ordenar', {p_token: token(), p_que: que, p_ids: ids});
+    if (await accion(fn, 'Orden guardado')) { cerrarHoja(); recargar(); }
+  }}, 'Guardar orden')]);
+}
+
+/* =====================================================================
+   Listas (documentos)
+   ===================================================================== */
+function vistaListas(){
+  const cats = (S.d.categorias || []).filter(c => oficina() || (c.documentos || []).some(d => d.vigente));
+  const out = [modoEdicion()];
+  if (!oficina()) out.push(h('p', {class: 'apoyo', style: 'margin-bottom:4px'}, 'Toca «Ver» para abrirla, «Enviar» para mandarla al cliente por WhatsApp o «Descargar» para guardarla.'));
+  if (!cats.length) out.push(h('p', {class: 'aviso', style: 'margin-top:16px'}, 'Todavía no hay listas cargadas.'));
+  cats.forEach(c => {
+    const docs = (c.documentos || []).filter(d => oficina() || d.vigente);
+    out.push(h('div', {class: 'grupo-t'}, h('span', {}, c.nombre + (c.activo ? '' : ' · oculta')),
+      edita() ? h('button', {class: 'enlace', type: 'button', onclick: () => formCategoria(c)}, 'Editar') : null));
+    if (c.descripcion && oficina()) out.push(h('p', {class: 'mini-t', style: 'margin:-4px 0 6px'}, c.descripcion));
+    docs.forEach(d => out.push(tarjetaDocumento(d, c)));
+    if (!docs.length) out.push(h('p', {class: 'apoyo chico'}, 'Sin documentos en esta categoría.'));
+    if (edita()) out.push(h('div', {class: 'acciones'},
+      h('button', {class: 'mini', type: 'button', onclick: () => formDocumento(null, c)}, '+ Nuevo documento'),
+      docs.length > 1 ? h('button', {class: 'mini sec', type: 'button', onclick: () => ordenar('documento', docs, d => d.titulo)}, 'Ordenar') : null));
+  });
+  if (edita()) out.push(h('div', {class: 'acciones', style: 'margin-top:22px'},
+    h('button', {class: 'mini sec', type: 'button', onclick: () => formCategoria(null)}, '+ Nueva categoría'),
+    cats.length > 1 ? h('button', {class: 'mini sec', type: 'button', onclick: () => ordenar('categoria', cats, c => c.nombre)}, 'Ordenar categorías') : null));
+  return out;
+}
+function estadoVigencia(v){
+  if (!v) return null;
+  const hoy = S.d.hoy;
+  if (v.vigente_hasta && v.vigente_hasta < hoy) return h('span', {class: 'chip alto'}, 'Venció el ' + corta(v.vigente_hasta));
+  if (v.vigente_desde && v.vigente_desde > hoy) return h('span', {class: 'chip medio'}, 'Desde el ' + corta(v.vigente_desde));
+  if (v.vigente_hasta) return h('span', {class: 'chip ok'}, 'Vigente hasta el ' + corta(v.vigente_hasta));
+  return null;
+}
+function tarjetaDocumento(d, c){
+  const v = d.vigente;
+  const nombreArchivo = v ? v.archivo : '';
+  const portada = h('button', {class: 'portada', type: 'button', 'aria-label': 'Ver ' + d.titulo, onclick: () => v && abrirDocumento(d, v)},
+    v && v.portada ? h('img', {src: urlDe(v.portada), alt: ''}) : (v ? (esPdf(v) ? 'PDF' : esImagen(v) ? 'FOTO' : 'ARCHIVO') : 'SIN ARCHIVO'));
+  const chips = [estadoVigencia(v),
+    d.audiencia === 'cliente' ? h('span', {class: 'chip'}, 'Para el cliente') : d.audiencia === 'oficina' ? h('span', {class: 'chip gris'}, 'Oficina') : null,
+    oficina() && !d.activo ? h('span', {class: 'chip gris'}, 'Oculto') : null,
+    oficina() && !d.roles.includes('asesor') ? h('span', {class: 'chip gris'}, 'Solo oficina') : null].filter(Boolean);
+  const detalle = v ? [v.nota, v.paginas ? plural(v.paginas, 'página', 'páginas') : null, bytesTexto(v.bytes), oficina() ? 'v' + v.version + ' · ' + corta(v.creado_en) : 'actualizada el ' + corta(v.creado_en)].filter(Boolean).join(' · ') : (oficina() ? 'Todavía no se subió el archivo.' : '');
+  const acciones = h('div', {class: 'acciones'});
+  if (v) {
+    acciones.append(h('button', {class: 'mini', type: 'button', onclick: () => abrirDocumento(d, v)}, 'Ver'));
+    if (navigator.share) acciones.append(h('button', {class: 'mini sec', type: 'button', onclick: () => compartir({url: urlDe(v.ruta), archivo: v.archivo, content_type: v.content_type, nombre: d.titulo})}, d.audiencia === 'cliente' ? 'Enviar' : 'Compartir'));
+    acciones.append(h('a', {class: 'mini sec', href: urlDescarga(v.ruta, v.archivo), target: '_blank', rel: 'noopener'}, 'Descargar'));
+  }
+  if (edita()) {
+    acciones.append(h('button', {class: 'mini' + (v ? ' sec' : ''), type: 'button', onclick: () => formVersion(d)}, v ? 'Subir nueva versión' : 'Subir archivo'));
+    acciones.append(h('button', {class: 'enlace', type: 'button', onclick: () => formDocumento(d, c)}, 'Editar'));
+  }
+  const card = h('div', {class: 'doc' + (v || oficina() ? '' : ' sin') + (d.activo ? '' : ' apagada')}, v || oficina() ? portada : null,
+    h('div', {class: 'cuerpo'}, h('div', {class: 'nombre'}, d.titulo), d.descripcion ? h('div', {class: 'desc'}, d.descripcion) : null,
+      chips.length ? h('div', {class: 'chips'}, chips) : null, detalle ? h('div', {class: 'desc'}, detalle) : null, acciones));
+  if (edita() && d.versiones && d.versiones.length > 1) {
+    const ul = h('ul', {class: 'versiones oculto'}, d.versiones.map(x => h('li', {},
+      h('span', {}, h('span', {class: 'v'}, 'v' + x.version), ' · ', corta(x.creado_en), x.nota ? ' · ' + x.nota : '', x.vigente_hasta ? ' · hasta ' + corta(x.vigente_hasta) : ''),
+      h('span', {},
+        h('button', {class: 'enlace', type: 'button', onclick: () => abrirDocumento(d, x)}, 'Ver'), ' ',
+        h('button', {class: 'enlace', type: 'button', onclick: () => formVersion(d, x)}, 'Nota'), ' ',
+        h('button', {class: 'enlace peligro', type: 'button', onclick: () => confirmar(`¿Borrar la versión ${x.version}?`, async () => {
+          if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'version', p_id: x.id}), 'Versión borrada')) recargar();
+        })}, 'Borrar')))));
+    const btn = h('button', {class: 'enlace', type: 'button', onclick: () => { ul.classList.toggle('oculto'); btn.textContent = ul.classList.contains('oculto') ? `Ver las ${d.versiones.length} versiones` : 'Ocultar versiones'; }}, `Ver las ${d.versiones.length} versiones`);
+    card.querySelector('.cuerpo').append(btn, ul);
+  }
+  return card;
+}
+function abrirDocumento(d, v){
+  const base = {url: urlDe(v.ruta), descarga: urlDescarga(v.ruta, v.archivo), nombre: d.titulo, archivo: v.archivo, content_type: v.content_type, enviar: d.audiencia === 'cliente'};
+  if (esPdf(v)) return abrirVisor(Object.assign(base, {tipo: 'pdf'}));
+  if (esImagen(v)) return abrirVisor(Object.assign(base, {tipo: 'imagen'}));
+  if (esVideo(v)) return abrirVisor(Object.assign(base, {tipo: 'video'}));
+  window.open(base.descarga, '_blank', 'noopener');
+}
+async function compartir(x){
+  try {
+    if (navigator.canShare) {
+      const r = await fetch(x.url);
+      const blob = await r.blob();
+      const file = new File([blob], x.archivo || 'archivo', {type: x.content_type || blob.type});
+      if (navigator.canShare({files: [file]})) { await navigator.share({files: [file], title: x.nombre}); return; }
+    }
+    await navigator.share({title: x.nombre, url: x.url});
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    try { await navigator.clipboard.writeText(x.url); aviso('Enlace copiado'); } catch (e2) { window.open(x.url, '_blank', 'noopener'); }
+  }
+}
+
+/* ---------- formularios de documentos ---------- */
+function formCategoria(c){
+  hoja(c ? 'Editar categoría' : 'Nueva categoría', [
+    {k: 'nombre', t: 'Nombre', v: c ? c.nombre : '', req: true},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: c ? c.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'activo', t: 'Visible para los asesores', v: c ? c.activo : true, tipo: 'check'}
+  ], async v => {
+    if (await accion(() => rpc('doc_categoria_guardar', {p_token: token(), p_id: c ? c.id : null, p_datos: v}), 'Categoría guardada')) { cerrarHoja(); recargar(); }
+  });
+}
+function formDocumento(d, c){
+  hoja(d ? 'Editar documento' : 'Nuevo documento', [
+    {k: 'titulo', t: 'Título', v: d ? d.titulo : '', req: true},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: d ? d.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'categoria_id', t: 'Categoría', v: c.id, tipo: 'select', opciones: (S.d.categorias || []).map(x => [x.id, x.nombre])},
+    {k: 'audiencia', t: 'Para quién es', v: d ? d.audiencia : 'asesor', tipo: 'select', opciones: [['cliente', 'Para el cliente (se le puede enviar)'], ['asesor', 'Para el asesor (interno)'], ['oficina', 'Para la oficina']]},
+    {k: 'asesor_ve', t: 'Lo ven los asesores', v: d ? d.roles.includes('asesor') : true, tipo: 'check'},
+    {k: 'activo', t: 'Visible (desactívalo para ocultarlo sin borrarlo)', v: d ? d.activo : true, tipo: 'check'},
+    {k: 'clave', t: 'Clave para otros sistemas (opcional)', v: d ? d.clave || '' : '', ayuda: 'Un nombre fijo, p. ej. lista-promo-cliente. Déjalo vacío para documentos sueltos como un concurso.'}
+  ], async v => {
+    const datos = {titulo: v.titulo, descripcion: v.descripcion, categoria_id: v.categoria_id, audiencia: v.audiencia, activo: v.activo, clave: v.clave,
+      roles: v.asesor_ve ? ['admin', 'asistente', 'asesor'] : ['admin', 'asistente']};
+    if (await accion(() => rpc('doc_documento_guardar', {p_token: token(), p_id: d ? d.id : null, p_datos: datos}), 'Documento guardado')) { cerrarHoja(); recargar(); }
+  }, d ? () => confirmar(`¿Borrar «${d.titulo}» con todas sus versiones?`, async () => {
+    if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'documento', p_id: d.id}), 'Documento borrado')) { cerrarHoja(); recargar(); }
+  }) : null);
+}
+function formVersion(d, x){
+  const campos = [];
+  if (!x) campos.push({k: 'archivo', t: 'Archivo (PDF o foto de hasta 50 MB)', tipo: 'file', acepta: '.pdf,image/*', req: true});
+  campos.push(
+    {k: 'nota', t: 'Nota (opcional)', v: x ? x.nota || '' : '', ayuda: 'P. ej. «Noviembre 2026» o «Especiales 16 al 20».'},
+    {k: 'vigente_desde', t: 'Vigente desde (opcional)', v: x ? x.vigente_desde || '' : '', tipo: 'date'},
+    {k: 'vigente_hasta', t: 'Vigente hasta (opcional)', v: x ? x.vigente_hasta || '' : '', tipo: 'date', ayuda: 'Con fecha, la plataforma avisa cuando toca subir la nueva.'});
+  hoja(x ? `Versión ${x.version} · ${d.titulo}` : (d.vigente ? 'Nueva versión · ' + d.titulo : 'Subir · ' + d.titulo), campos, async (v, archivo, progreso) => {
+    const datos = {nota: v.nota, vigente_desde: v.vigente_desde, vigente_hasta: v.vigente_hasta};
+    if (x) datos.id = x.id;
+    else {
+      if (!archivo) throw new Error('Elige el archivo.');
+      Object.assign(datos, await subirArchivo(archivo, progreso));
+    }
+    if (await accion(() => rpc('doc_version_guardar', {p_token: token(), p_documento: d.id, p_datos: datos}), x ? 'Versión guardada' : 'Archivo subido')) { cerrarHoja(); recargar(); }
+  }, null, x ? 'Guardar' : 'Subir');
+}
+
+/* =====================================================================
+   Horario
+   ===================================================================== */
+function vistaHorario(){
+  const w = S.semanaD;
+  const out = [modoEdicion()];
+  const hoy = S.d.hoy;
+  out.push(h('div', {class: 'semana-nav'},
+    h('button', {class: 'mini sec ico', type: 'button', 'aria-label': 'Semana anterior', onclick: () => irSemana(sumar(S.semana, -7))}, '‹'),
+    h('h2', {}, 'Semana ' + rango(w.lunes, w.domingo)),
+    h('button', {class: 'mini sec ico', type: 'button', 'aria-label': 'Semana siguiente', onclick: () => irSemana(sumar(S.semana, 7))}, '›')));
+  if (S.semana !== lunesDe(hoy)) out.push(h('p', {class: 'centro', style: 'margin-top:6px'}, h('button', {class: 'enlace', type: 'button', onclick: () => irSemana(lunesDe(hoy))}, 'Ir a esta semana')));
+  const evs = (w.eventos || []).filter(e => oficina() || (e.activo && e.publico)).sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
+  for (let i = 0; i < 7; i++) {
+    const f = sumar(w.lunes, i);
+    const del = evs.filter(e => e.fecha === f);
+    const esHoy = f === hoy, inicio = (w.inicio_periodo || []).includes(f);
+    if (!del.length && !edita() && !esHoy && !inicio) continue;
+    const d = fecha(f);
+    out.push(h('section', {class: 'dia'},
+      h('div', {class: 'dia-t' + (esHoy ? ' hoy' : '')}, h('span', {class: 'n'}, titulo(DIAS[d.getUTCDay()]) + ' ' + d.getUTCDate()),
+        esHoy ? h('span', {class: 'f'}, 'hoy') : null,
+        inicio ? h('span', {class: 'inicio-pb'}, 'Inicia el PB' + String(pbDe(f).pb).padStart(2, '0')) : null),
+      del.length ? del.map(e => tarjetaEvento(e, f < hoy)) : h('p', {class: 'vacio'}, esHoy ? 'Hoy no hay eventos.' : 'Sin eventos.'),
+      edita() ? h('button', {class: 'enlace', type: 'button', onclick: () => formEvento(null, f)}, '+ Agregar algo este día') : null));
+  }
+  if (!evs.length) out.push(h('p', {class: 'apoyo', style: 'margin-top:14px'}, 'No hay eventos esta semana.'));
+  out.push(h('div', {class: 'acciones', style: 'margin-top:22px'},
+    h('button', {class: 'mini sec', type: 'button', onclick: copiarSemana}, 'Copiar para WhatsApp'),
+    edita() ? h('button', {class: 'mini sec', type: 'button', onclick: vistaPlantillas}, 'Horario habitual') : null,
+    oficina() ? h('button', {class: 'mini sec', type: 'button', onclick: abrirNivelCero}, 'Tomar asistencia (Nivel Cero)') : null));
+  if (oficina()) out.push(h('p', {class: 'mini-t', style: 'margin-top:10px'}, 'Lo que lleva asistencia aparece solo como clase en Nivel Cero. Apaga un evento si esa semana no habrá; se vuelve a prender con un toque.'));
+  return out;
+}
+async function irSemana(lunes){
+  const r = await accion(() => cargarSemana(lunes));
+  if (r !== null) render();
+}
+function tarjetaEvento(e, pasado){
+  const det = [MODO_E[e.modo] ? (e.modo === 'zoom' ? 'Zoom' : e.lugar || MODO_E[e.modo]) : e.lugar, e.facilitador ? 'con ' + e.facilitador : null].filter(Boolean).join(' · ');
+  const esHoy = e.fecha === S.d.hoy;
+  const card = h('div', {class: 'evento' + (esHoy && e.activo ? ' hoy' : '') + (pasado ? ' pasado' : '') + (e.activo ? '' : ' apagado')},
+    h('div', {class: 'hora'}, hora12(e.hora), h('small', {}, TIPO_E[e.tipo] || '')),
+    h('div', {class: 'crece'},
+      h('div', {class: 'tit'}, e.titulo, e.activo ? null : h('span', {class: 'chip gris'}, 'No hay esta semana'), oficina() && !e.publico ? h('span', {class: 'chip gris'}, 'Solo oficina') : null),
+      det ? h('div', {class: 'det'}, det) : null,
+      e.descripcion ? h('div', {class: 'det'}, e.descripcion) : null,
+      e.nota ? h('div', {class: 'det'}, 'Nota: ' + e.nota) : null,
+      e.enlace && e.activo ? h('div', {class: 'det'}, h('a', {href: e.enlace, target: '_blank', rel: 'noopener'}, e.modo === 'zoom' ? 'Entrar al Zoom' : 'Abrir enlace')) : null,
+      oficina() && e.asistencia ? h('div', {class: 'det'}, e.n0_clase_id ? `Asistencia en Nivel Cero · ${plural(e.asistentes || 0, 'asistente', 'asistentes')}` : 'Lleva asistencia') : null,
+      edita() ? h('div', {class: 'acciones'},
+        h('button', {class: 'mini sec', type: 'button', onclick: () => apagarEvento(e)}, e.activo ? 'Esta semana no hay' : 'Sí hay esta semana'),
+        h('button', {class: 'mini sec', type: 'button', onclick: () => formEvento(e)}, 'Editar')) : null));
+  return card;
+}
+async function apagarEvento(e){
+  const ok = await accion(() => rpc('hor_evento_guardar', {p_token: token(), p_id: e.id, p_datos: {activo: !e.activo}}), e.activo ? 'Apagado para esta semana' : 'Prendido');
+  if (ok) { await cargarSemana(S.semana); render(); }
+}
+function formEvento(e, f){
+  const campos = [
+    {k: 'titulo', t: 'Nombre', v: e ? e.titulo : '', req: true},
+    {k: 'fecha', t: 'Fecha', v: e ? e.fecha : f, tipo: 'date', req: true},
+    {k: 'hora', t: 'Hora', v: e ? e.hora : '', tipo: 'time', req: true},
+    {k: 'modo', t: 'Dónde', v: e ? e.modo : 'presencial', tipo: 'select', opciones: Object.entries(MODO_E)},
+    {k: 'lugar', t: 'Lugar (opcional)', v: e ? e.lugar || '' : 'Oficina · Av. Cayma 628, Of. 502'},
+    {k: 'enlace', t: 'Enlace de Zoom (opcional)', v: e ? e.enlace || '' : '', tipo: 'url'},
+    {k: 'facilitador', t: 'Quién lo da (opcional)', v: e ? e.facilitador || '' : ''},
+    {k: 'tipo', t: 'Tipo', v: e ? e.tipo : 'evento', tipo: 'select', opciones: Object.entries(TIPO_E)},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: e ? e.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'nota', t: 'Nota de esta semana (opcional)', v: e ? e.nota || '' : '', ayuda: 'P. ej. «Esta vez a las 5» o «Trae tu catálogo».'},
+    {k: 'asistencia', t: 'Lleva asistencia (crea la clase en Nivel Cero)', v: e ? e.asistencia : true, tipo: 'check'},
+    {k: 'publico', t: 'Lo ven los asesores', v: e ? e.publico : true, tipo: 'check'}
+  ];
+  hoja(e ? 'Editar evento' : 'Agregar evento · ' + largo(f), campos, async v => {
+    const ok = await accion(() => rpc('hor_evento_guardar', {p_token: token(), p_id: e ? e.id : null, p_datos: v}), 'Evento guardado');
+    if (ok) { cerrarHoja(); await cargarSemana(lunesDe(v.fecha)); render(); }
+  }, e && !e.plantilla_id ? () => confirmar(`¿Quitar «${e.titulo}»?`, async () => {
+    if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'evento', p_id: e.id}), 'Evento quitado')) { cerrarHoja(); await cargarSemana(S.semana); render(); }
+  }) : null);
+}
+function vistaPlantillas(){
+  const ts = S.d.plantillas || [];
+  const cont = h('div', {});
+  function pintarP(){
+    cont.replaceChildren(h('p', {class: 'apoyo chico'}, 'Esto es lo de todas las semanas. Cada semana se arma sola con esto y se puede apagar o cambiar día por día.'),
+      ...[1, 2, 3, 4, 5, 6, 0].map(dia => {
+        const del = ts.filter(t => t.dia === dia);
+        if (!del.length) return null;
+        return h('div', {class: 'dia'}, h('div', {class: 'dia-t'}, h('span', {class: 'n'}, titulo(DIAS[dia]))),
+          del.map(t => h('div', {class: 'evento' + (t.activo ? '' : ' apagado')},
+            h('div', {class: 'hora'}, hora12(t.hora), h('small', {}, TIPO_E[t.tipo] || '')),
+            h('div', {class: 'crece'},
+              h('div', {class: 'tit'}, t.titulo, t.activo ? null : h('span', {class: 'chip gris'}, 'Apagado'), t.solo_inicio_periodo ? h('span', {class: 'chip medio'}, 'Solo inicio de período') : null,
+                !t.publico ? h('span', {class: 'chip gris'}, 'Solo oficina') : null, t.asistencia ? h('span', {class: 'chip ok'}, 'Asistencia') : null),
+              h('div', {class: 'det'}, [t.modo === 'zoom' ? 'Zoom' : t.lugar || MODO_E[t.modo], t.facilitador ? 'con ' + t.facilitador : null].filter(Boolean).join(' · ')),
+              h('div', {class: 'acciones'}, h('button', {class: 'mini sec', type: 'button', onclick: () => formPlantilla(t)}, 'Editar'))))));
+      }).filter(Boolean),
+      h('button', {class: 'boton sec', type: 'button', onclick: () => formPlantilla(null)}, '+ Agregar al horario habitual'));
+  }
+  pintarP();
+  hojaLibre('Horario habitual', [cont]);
+}
+function formPlantilla(t){
+  const campos = [
+    {k: 'titulo', t: 'Nombre', v: t ? t.titulo : '', req: true},
+    {k: 'dia', t: 'Día de la semana', v: t ? String(t.dia) : '1', tipo: 'select', opciones: [1, 2, 3, 4, 5, 6, 0].map(d => [String(d), titulo(DIAS[d])])},
+    {k: 'hora', t: 'Hora', v: t ? t.hora : '', tipo: 'time', req: true},
+    {k: 'modo', t: 'Dónde', v: t ? t.modo : 'presencial', tipo: 'select', opciones: Object.entries(MODO_E)},
+    {k: 'lugar', t: 'Lugar (opcional)', v: t ? t.lugar || '' : 'Oficina · Av. Cayma 628, Of. 502'},
+    {k: 'enlace', t: 'Enlace de Zoom (opcional)', v: t ? t.enlace || '' : '', tipo: 'url'},
+    {k: 'facilitador', t: 'Quién lo da (opcional)', v: t ? t.facilitador || '' : ''},
+    {k: 'tipo', t: 'Tipo', v: t ? t.tipo : 'capacitacion', tipo: 'select', opciones: Object.entries(TIPO_E)},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: t ? t.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'asistencia', t: 'Lleva asistencia (crea la clase en Nivel Cero)', v: t ? t.asistencia : true, tipo: 'check'},
+    {k: 'solo_inicio_periodo', t: 'Solo el jueves que inicia el período', v: t ? t.solo_inicio_periodo : false, tipo: 'check'},
+    {k: 'publico', t: 'Lo ven los asesores', v: t ? t.publico : true, tipo: 'check'},
+    {k: 'activo', t: 'Activo', v: t ? t.activo : true, tipo: 'check'}
+  ];
+  hoja(t ? 'Editar horario habitual' : 'Nuevo en el horario habitual', campos, async v => {
+    v.dia = Number(v.dia);
+    const ok = await accion(() => rpc('hor_plantilla_guardar', {p_token: token(), p_id: t ? t.id : null, p_datos: v}), 'Horario guardado');
+    if (ok) { cerrarHoja(); await recargar(true); render(); }
+  }, t ? () => confirmar(`¿Quitar «${t.titulo}» del horario habitual? Las semanas que vienen ya no lo tendrán.`, async () => {
+    if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'plantilla', p_id: t.id}), 'Quitado del horario')) { cerrarHoja(); await recargar(true); render(); }
+  }) : null);
+}
+function textoSemana(){
+  const w = S.semanaD;
+  const evs = (w.eventos || []).filter(e => e.activo && e.publico).sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
+  const lineas = ['*Semana ' + rango(w.lunes, w.domingo) + '*'];
+  for (let i = 0; i < 7; i++) {
+    const f = sumar(w.lunes, i), del = evs.filter(e => e.fecha === f);
+    if (!del.length) continue;
+    const d = fecha(f), inicio = (w.inicio_periodo || []).includes(f);
+    lineas.push('', '*' + titulo(DIAS[d.getUTCDay()]) + ' ' + d.getUTCDate() + '*' + (inicio ? ' · inicia el PB' + String(pbDe(f).pb).padStart(2, '0') : ''));
+    del.forEach(e => {
+      const donde = e.modo === 'zoom' ? 'Zoom' + (e.enlace ? ' ' + e.enlace : '') : (e.lugar || '');
+      lineas.push('• ' + hora12(e.hora) + ' — ' + e.titulo + (e.facilitador ? ' (' + e.facilitador + ')' : '') + (donde ? ' · ' + donde : '') + (e.nota ? ' · ' + e.nota : ''));
+    });
+  }
+  return lineas.join('\n');
+}
+async function copiarSemana(){
+  const t = textoSemana();
+  try {
+    if (navigator.share && /Mobi|Android|iPhone/i.test(navigator.userAgent)) { await navigator.share({text: t}); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(t); aviso('Horario copiado: pégalo en el grupo'); }
+  catch (e) { hojaLibre('Horario de la semana', [h('textarea', {rows: 14, readonly: true}, t)]); }
+}
+async function abrirNivelCero(){
+  const btn = document.activeElement; if (btn) btn.disabled = true;
+  try {
+    const cod = await rpc('traspaso_crear_admin', {p_token: token(), p_modulo: 'nivel-cero'});
+    location.href = NIVEL_CERO + '/#traspaso=' + encodeURIComponent(cod);
+  } catch (e) { location.href = NIVEL_CERO; }
+}
+
+/* =====================================================================
+   Hoja (formulario genérico), confirmación y visor
+   ===================================================================== */
+const capa = document.getElementById('capa');
+function cerrarHoja(){ capa.replaceChildren(); document.body.classList.remove('con-modal'); }
+function hojaLibre(tit, nodos){
+  const hojaEl = h('div', {class: 'hoja', role: 'dialog', 'aria-modal': 'true', 'aria-label': tit},
+    h('div', {class: 'hoja-cab'}, h('h2', {}, tit), h('button', {class: 'cerrar', type: 'button', 'aria-label': 'Cerrar', onclick: cerrarHoja}, '×')),
+    ...nodos);
+  capa.replaceChildren(h('div', {class: 'capa', onclick: ev => { if (ev.target === ev.currentTarget) cerrarHoja(); }}, hojaEl));
+  document.body.classList.add('con-modal');
+  return hojaEl;
+}
+function hoja(tit, campos, onGuardar, onBorrar, textoBoton){
+  const entradas = {};
+  let archivo = null;
+  const err = h('p', {class: 'error', role: 'alert'});
+  const barraP = h('div', {class: 'barra-av oculto'}, h('span', {style: 'width:0%'}));
+  const estadoP = h('p', {class: 'mini-t oculto'});
+  const nodos = campos.map(c => {
+    let inp;
+    if (c.tipo === 'textarea') inp = h('textarea', {id: 'f_' + c.k}, c.v || '');
+    else if (c.tipo === 'select') { inp = h('select', {id: 'f_' + c.k}, c.opciones.map(([val, tx]) => h('option', {value: val, selected: String(val) === String(c.v)}, tx))); }
+    else if (c.tipo === 'check') {
+      inp = h('input', {type: 'checkbox', id: 'f_' + c.k, checked: !!c.v});
+      entradas[c.k] = inp;
+      return h('label', {class: 'check', for: 'f_' + c.k}, inp, h('span', {}, c.t));
+    }
+    else if (c.tipo === 'file') {
+      inp = h('input', {type: 'file', id: 'f_' + c.k, accept: c.acepta || '', onchange: ev => { archivo = ev.target.files[0] || null; }});
+    }
+    else inp = h('input', {type: c.tipo || 'text', id: 'f_' + c.k, value: c.v || '', required: !!c.req, autocomplete: 'off', placeholder: c.ph || ''});
+    entradas[c.k] = inp;
+    return h('div', {}, h('label', {for: 'f_' + c.k}, c.t), inp, c.ayuda ? h('p', {class: 'mini-t', style: 'margin-top:4px'}, c.ayuda) : null);
+  });
+  const btn = h('button', {class: 'boton', type: 'submit'}, textoBoton || 'Guardar');
+  const form = h('form', {novalidate: true, onsubmit: async ev => {
+    ev.preventDefault();
+    const v = {};
+    for (const c of campos) {
+      if (c.tipo === 'file') continue;
+      const el = entradas[c.k];
+      v[c.k] = c.tipo === 'check' ? el.checked : el.value.trim();
+      if (c.req && c.tipo !== 'check' && !v[c.k]) { err.textContent = 'Falta: ' + c.t.replace(/ \(.*\)$/, '') + '.'; el.focus(); return; }
+    }
+    err.textContent = ''; btn.disabled = true;
+    try {
+      await onGuardar(v, archivo, (p, txt) => {
+        barraP.classList.remove('oculto'); estadoP.classList.remove('oculto');
+        barraP.firstChild.style.width = Math.round(p * 100) + '%'; estadoP.textContent = txt || '';
+      });
+    } catch (e) { err.textContent = mensaje(e); }
+    btn.disabled = false; barraP.classList.add('oculto'); estadoP.classList.add('oculto');
+  }}, ...nodos, err, barraP, estadoP, btn,
+    onBorrar ? h('button', {class: 'boton peligro', type: 'button', onclick: onBorrar}, 'Borrar') : null,
+    h('button', {class: 'boton sec', type: 'button', onclick: cerrarHoja}, 'Cancelar'));
+  hojaLibre(tit, [form]);
+  const primero = form.querySelector('input:not([type=checkbox]):not([type=file]),textarea');
+  if (primero && !primero.value) setTimeout(() => primero.focus(), 60);
+}
+function confirmar(texto, si){
+  hojaLibre('Confirmar', [h('p', {}, texto),
+    h('button', {class: 'boton peligro', type: 'button', onclick: si}, 'Sí, adelante'),
+    h('button', {class: 'boton sec', type: 'button', onclick: cerrarHoja}, 'Cancelar')]);
+}
+
+/* ---------- visor (PDF, imagen, video) ---------- */
+let pdfjsCarga = null;
+function cargarPdfjs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsCarga) pdfjsCarga = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = PDFJS; s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER; res(window.pdfjsLib); };
+    s.onerror = () => { pdfjsCarga = null; rej(new Error('No se pudo cargar el visor de PDF.')); };
+    document.head.appendChild(s);
+  });
+  return pdfjsCarga;
+}
+let visorAbierto = null;
+function cerrarVisor(){
+  if (visorAbierto) { if (visorAbierto.pdf) visorAbierto.pdf.destroy().catch(() => {}); visorAbierto.el.remove(); visorAbierto = null; }
+  document.body.classList.remove('con-modal');
+  if (location.hash.endsWith('&ver')) history.back();
+}
+async function abrirVisor(x){
+  if (visorAbierto) cerrarVisor();
+  const cuerpo = h('div', {class: 'cuerpo'});
+  const estado = h('p', {class: 'estado'}, 'Cargando…');
+  const pie = h('div', {class: 'pie'},
+    x.enviar && navigator.share ? h('button', {type: 'button', onclick: () => compartir(x)}, 'Enviar al cliente') : (navigator.share ? h('button', {type: 'button', onclick: () => compartir(x)}, 'Compartir') : null),
+    h('a', {href: x.descarga, target: '_blank', rel: 'noopener'}, 'Descargar'));
+  const el = h('div', {class: 'visor', role: 'dialog', 'aria-modal': 'true', 'aria-label': x.nombre},
+    h('div', {class: 'cab'}, h('span', {class: 't'}, x.nombre), h('button', {class: 'x', type: 'button', 'aria-label': 'Cerrar', onclick: cerrarVisor}, '×')),
+    cuerpo, pie);
+  document.body.appendChild(el);
+  document.body.classList.add('con-modal');
+  visorAbierto = {el};
+  history.pushState(null, '', location.href.replace(/&ver$/, '') + '&ver');
+  if (x.tipo === 'imagen') { cuerpo.append(h('img', {src: x.url, alt: x.nombre})); return; }
+  if (x.tipo === 'video') { cuerpo.append(h('video', {src: x.url, controls: true, playsinline: true, preload: 'metadata'})); return; }
+  cuerpo.append(estado);
+  try {
+    const pdfjs = await cargarPdfjs();
+    const pdf = await pdfjs.getDocument({url: x.url}).promise;
+    if (visorAbierto && visorAbierto.el !== el) { pdf.destroy(); return; }
+    visorAbierto.pdf = pdf;
+    estado.textContent = plural(pdf.numPages, 'página', 'páginas');
+    const ancho = Math.min(cuerpo.clientWidth - 16, 900);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      if (!visorAbierto || visorAbierto.el !== el) return;
+      const page = await pdf.getPage(i);
+      const vp0 = page.getViewport({scale: 1});
+      const escala = ancho / vp0.width, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const vp = page.getViewport({scale: escala * dpr});
+      const canvas = h('canvas', {width: Math.floor(vp.width), height: Math.floor(vp.height), style: `width:${Math.floor(vp.width / dpr)}px;height:${Math.floor(vp.height / dpr)}px`});
+      cuerpo.insertBefore(canvas, estado);
+      await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
+      estado.textContent = i < pdf.numPages ? `${i} de ${pdf.numPages} páginas…` : plural(pdf.numPages, 'página', 'páginas');
+    }
+  } catch (e) {
+    estado.textContent = 'No se pudo mostrar aquí. Toca «Descargar» para abrirlo.';
+  }
+}
+window.addEventListener('popstate', () => { if (visorAbierto && !location.hash.endsWith('&ver')) { const v = visorAbierto; visorAbierto = null; if (v.pdf) v.pdf.destroy().catch(() => {}); v.el.remove(); document.body.classList.remove('con-modal'); } });
+
+/* ---------- subir archivos (oficina) ---------- */
+function subirBinario(ruta, blob, tipo, onProgreso){
+  return new Promise((res, rej) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SB_URL + '/storage/v1/object/entrenamientos/' + ruta.split('/').map(encodeURIComponent).join('/'));
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+    xhr.setRequestHeader('x-upsert', 'true');
+    xhr.setRequestHeader('Content-Type', tipo || 'application/octet-stream');
+    xhr.upload.onprogress = ev => { if (ev.lengthComputable && onProgreso) onProgreso(ev.loaded / ev.total); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return res();
+      let msg = 'No se pudo subir el archivo (' + xhr.status + ').';
+      try { const j = JSON.parse(xhr.responseText); if (j && (j.message || j.error)) msg = (j.message || j.error); } catch (e) {}
+      if (/row-level security|violates/i.test(msg)) msg = 'La subida no fue autorizada: vuelve a intentarlo (el permiso dura 30 minutos).';
+      if (/exceeded|too large|maximum size/i.test(msg)) msg = 'El archivo pasa el límite de 50 MB.';
+      rej(new Error(msg));
+    };
+    xhr.onerror = () => rej(new Error('No hay conexión. Revisa tu internet e intenta de nuevo.'));
+    xhr.send(blob);
+  });
+}
+async function subirArchivo(file, progreso){
+  if (file.size > 52428800) throw new Error('El archivo pasa el límite de 50 MB.');
+  progreso(0, 'Preparando…');
+  const ticket = await rpc('ent_subida_crear', {p_token: token()});
+  const nombre = slug(file.name);
+  const ruta = ticket + '/' + nombre;
+  const out = {ruta, archivo: file.name, bytes: file.size, content_type: file.type || tipoPorNombre(file.name)};
+  // Portada y páginas: PDF (primera página) o imagen (miniatura). Si falla, se sube igual sin portada.
+  let portada = null;
+  try {
+    if (esPdf(out)) {
+      progreso(0, 'Leyendo el PDF…');
+      const pdfjs = await cargarPdfjs();
+      const pdf = await pdfjs.getDocument({data: await file.arrayBuffer()}).promise;
+      out.paginas = pdf.numPages;
+      const page = await pdf.getPage(1);
+      const vp0 = page.getViewport({scale: 1});
+      const vp = page.getViewport({scale: 480 / vp0.width});
+      const canvas = h('canvas', {width: Math.floor(vp.width), height: Math.floor(vp.height)});
+      await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
+      portada = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.82));
+      pdf.destroy();
+    } else if (esImagen(out)) {
+      portada = await miniatura(file, 480);
+    }
+  } catch (e) { portada = null; }
+  progreso(0, 'Subiendo ' + file.name + '…');
+  await subirBinario(ruta, file, out.content_type, p => progreso(p * 0.9, 'Subiendo ' + file.name + ' · ' + Math.round(p * 100) + ' %'));
+  if (portada) {
+    try { await subirBinario(ticket + '/portada.jpg', portada, 'image/jpeg', () => progreso(0.95, 'Subiendo la vista previa…')); out.portada = ticket + '/portada.jpg'; }
+    catch (e) {}
+  }
+  progreso(1, 'Listo');
+  return out;
+}
+function tipoPorNombre(n){
+  const ext = (n.split('.').pop() || '').toLowerCase();
+  return {pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime'}[ext] || 'application/octet-stream';
+}
+function miniatura(file, maxAncho){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const esc = Math.min(1, maxAncho / img.naturalWidth);
+      const c = h('canvas', {width: Math.round(img.naturalWidth * esc), height: Math.round(img.naturalHeight * esc)});
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('miniatura')), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('miniatura')); };
+    img.src = url;
+  });
+}
+
+window.addEventListener('hashchange', () => { if (S.d && !visorAbierto) { const antes = S.tab + S.modulo + S.leccion + S.semana; aplicarHash(); if (antes !== S.tab + S.modulo + S.leccion + S.semana) { if (S.tab === 'horario' && S.semana !== S.semanaD.lunes) cargarSemana(S.semana).then(render); else render(); } } });
+arrancar();
+</script>
+</body>
+</html>
