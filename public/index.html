@@ -134,6 +134,10 @@
   /* Conciliar */
   .item.segura{border-left-color:var(--acero-2)}
   .item.hecho{border-left-color:var(--ok)}
+  /* Vigencia de los datos */
+  .item.ok{border-left-color:var(--ok)}
+  .item .cadencia{font-size:14.5px}
+  .resumen-vig{font-weight:700;margin-top:18px}
   .acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .mini{font:inherit;font-size:16px;font-weight:700;padding:10px 14px;border-radius:9px;border:2px solid var(--acero);
     background:var(--acero);color:var(--sobre-acero);cursor:pointer}
@@ -920,6 +924,62 @@ async function pantallaConciliar(aviso){
   pintar(barra(), h('main', {}, cabeza, cuerpo));
 }
 
+/* ---------- vigencia de los datos: lo que alguien tiene que volver a subir, y cuándo ---------- */
+// Todo sale de plataforma_fuentes_estado(): el catálogo (plataforma_fuentes) dice qué alimenta la
+// plataforma, con qué cadencia y cómo saber cuándo fue la última vez; la base calcula el estado.
+const VIG = {
+  vencido: {titulo: 'Vencido', nivel: 'alto', vacio: 'Nada vencido.'},
+  por_vencer: {titulo: 'Por vencer', nivel: 'medio', vacio: 'Nada por vencer en los próximos días.'},
+  error: {titulo: 'Sin calcular', nivel: 'info', vacio: ''},
+  al_dia: {titulo: 'Al día', nivel: 'ok', vacio: 'Nada al día todavía.'}
+};
+function tarjetaFuente(f, porId){
+  const m = porId[f.modulo];
+  const nivel = (VIG[f.estado] || VIG.error).nivel;
+  return h('li', {class: 'item ' + nivel},
+    h('div', {class: 'item-cab'},
+      h('h3', {}, h('span', {class: 'sr'}, (NIVEL_SR[nivel] || '') + ': '), f.nombre),
+      h('span', {class: 'item-modulo'}, m ? m.nombre : '')),
+    h('p', {}, f.detalle || ''),
+    h('p', {class: 'apoyo cadencia'}, [f.cadencia_texto, f.ultima_texto].filter(Boolean).join(' · ')),
+    f.accion ? h('p', {class: 'accion'}, f.accion) : null,
+    m && m.url ? enlaceModulo(m, {class: 'abrir'}, 'Abrir ' + minus(m.nombre)) : null);
+}
+async function pantallaVigencia(){
+  const cabeza = [
+    h('a', {class: 'volver', href: '#'}, 'Volver a Hoy'),
+    h('h1', {style: 'margin-top:12px'}, 'Vigencia de los datos'),
+    h('p', {class: 'apoyo', style: 'margin-top:8px'},
+      'Todo lo que alguien tiene que volver a subir para que la plataforma siga al día, y cuándo toca. '
+      + 'Lo vencido y lo por vencer también salen en Hoy.')];
+  pintar(barra(), h('main', {}, cabeza, cargando()));
+  const s = await sesionVigente();
+  if (!s) return pantallaAcceso('Tu sesión venció. Vuelve a entrar.');
+  let fuentes, mods;
+  try {
+    [fuentes, mods] = await Promise.all([
+      api('/rest/v1/rpc/plataforma_fuentes_estado', {method: 'POST', body: {}, token: s.access_token}),
+      api('/rest/v1/rpc/plataforma_menu', {method: 'POST', body: {}, token: s.access_token})
+    ]);
+  } catch (e) { return pantallaError(mensaje(e), () => pantallaVigencia()); }
+  fuentes = Array.isArray(fuentes) ? fuentes : [];
+  const porId = Object.fromEntries((Array.isArray(mods) ? mods : []).map(m => [m.id, m]));
+  const cuenta = k => fuentes.filter(f => f.estado === k).length;
+  const resumen = [[cuenta('vencido'), 'vencido', 'vencidos'], [cuenta('por_vencer'), 'por vencer', 'por vencer'], [cuenta('al_dia'), 'al día', 'al día']]
+    .filter(x => x[0] > 0).map(x => `${x[0]} ${x[0] === 1 ? x[1] : x[2]}`).join(' · ');
+  const cuerpo = [h('p', {class: 'resumen-vig', role: 'status'}, resumen || 'Sin fuentes registradas.')];
+  for (const k of ['vencido', 'por_vencer', 'error', 'al_dia']) {
+    const lista = fuentes.filter(f => f.estado === k);
+    if (!lista.length && (k === 'error' || k === 'al_dia')) continue;
+    cuerpo.push(h('h2', {}, `${VIG[k].titulo}${lista.length ? ` (${lista.length})` : ''}`));
+    cuerpo.push(lista.length ? h('ul', {class: 'lista'}, lista.map(f => tarjetaFuente(f, porId)))
+                             : h('div', {class: 'vacio'}, h('p', {}, h('strong', {}, VIG[k].vacio))));
+  }
+  cuerpo.push(h('p', {class: 'apoyo', style: 'margin-top:28px'},
+    'Las fuentes, su cadencia y sus avisos se editan en la tabla plataforma_fuentes de la base. Una fuente nueva es una fila.'));
+  pintar(barra(), h('main', {}, cabeza, cuerpo));
+}
+
 async function iniciar(){
   const s = await sesionVigente();
   if (s) return inicioEquipo(s);
@@ -928,7 +988,7 @@ async function iniciar(){
   pantallaAcceso();
 }
 async function ruta(){
-  const pantallas = {'#importar': pantallaImportar, '#conciliar': pantallaConciliar};
+  const pantallas = {'#importar': pantallaImportar, '#conciliar': pantallaConciliar, '#vigencia': pantallaVigencia};
   if (pantallas[location.hash] && await sesionVigente()) return pantallas[location.hash]();
   return iniciar();
 }

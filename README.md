@@ -9,7 +9,8 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
   con la pregunta), pantalla **Hoy** (lo que hay que atender, ordenado por
   urgencia; a la vista lo urgente y como mínimo 3, el resto con un toque),
   **Herramientas** por grupo con el globo de pendientes de cada una, carga del
-  reporte de pedidos (`#importar`) y conciliación con Rena Ware (`#conciliar`).
+  reporte de pedidos (`#importar`), conciliación con Rena Ware (`#conciliar`) y
+  **Vigencia de los datos** (`#vigencia`: qué toca volver a subir y cuándo vence).
 - `public/test/index.html` — el **Test del Nivel 0** (`/test/`): el asesor lo
   rinde y la oficina ve resultados, prueba el test, apaga preguntas y ajusta
   (`/test/#oficina`). Ver más abajo.
@@ -61,6 +62,35 @@ De arriba abajo, en el celular:
 Todo eso sale de `plataforma_modulos` + `plataforma_menu()` + `hoy()`; el hub no
 tiene escrito ningún nombre de módulo salvo `chat` (la caja) y los dos internos
 (`#importar`, `#conciliar`).
+
+## Vigencia de los datos (`#vigencia`)
+
+La plataforma se alimenta de cosas que alguien tiene que volver a subir: las
+listas de precios cuando vencen, el reporte de pedidos al cerrar el período, el
+reporte Aurora (montos y pendientes por facturar), las declaraciones del mes,
+los resultados de premios y de Empiece Ya, el catálogo de premios, la lista de
+zonas de crédito, el horario del local, las clases del Nivel Cero, las fichas
+del chat, los premios por recibir. Todo eso está en un catálogo:
+
+- `plataforma_fuentes` — una fila por fuente: `nombre`, `accion` (qué hacer y
+  dónde), `modulo` (a dónde lleva), `roles`, `cadencia` (`vigencia`, `periodo`,
+  `mensual`, `semanal`, `evento`), `dia` (días después del cierre / día del mes
+  / tolerancia / espera máxima), `aviso_dias`, y tres `SELECT` de solo lectura:
+  `ultima_sql` (última vez que se alimentó; en `periodo`, una fecha dentro del
+  último período cubierto), `vence_sql` (hasta cuándo sirve lo cargado) y
+  `pendientes_sql` (cuántos elementos esperan). Un disparador los valida con el
+  mismo validador del chat (`chat_sql_valida`). `en_hoy = false` cuando el
+  módulo ya avisa eso en Hoy por su cuenta (reporte de pedidos, FPD, Empiece
+  Ya, premios por recibir): así no salen dos tarjetas.
+- `plataforma_fuentes_estado(rol)` — evalúa cada fuente y devuelve `estado`
+  (`al_dia`, `por_vencer`, `vencido`, `error`), `vence`, `dias`, `detalle`,
+  `cadencia_texto`, `ultima_texto`. Un SQL roto sale como `error`, no se
+  esconde.
+- Hoy agrega una tarjeta **Vigencia** por cada fuente vencida o por vencer
+  («Vencido: …», «Vence en 7 días: …»), que abre el módulo donde se sube.
+- `#vigencia` muestra todas, por estado, con su cadencia y la última vez.
+
+Agregar una fuente nueva es una fila. SQL en `sql/20261103_vigencia_de_los_datos.sql`.
 
 ## Cómo funciona el traspaso
 
