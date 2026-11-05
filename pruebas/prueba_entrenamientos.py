@@ -51,7 +51,8 @@ def datos(rol):
                  'vigente': {'id': 'v3', 'version': 1, 'ruta': 't3/eya.png', 'archivo': 'eya.png', 'bytes': 300000, 'content_type': 'image/png', 'paginas': None, 'portada': 't3/portada.jpg', 'nota': None, 'vigente_desde': None, 'vigente_hasta': '2026-10-20', 'creado_en': '2026-09-02T10:00:00Z'}, 'versiones': []}]}],
         'semana': semana('2026-11-02', rol),
         'plantillas': [{'id': 'p1', 'dia': 3, 'hora': '16:00', 'titulo': 'Taller de cocina', 'descripcion': None, 'lugar': 'Oficina', 'modo': 'presencial', 'facilitador': None, 'enlace': None, 'tipo': 'capacitacion', 'asistencia': True, 'solo_inicio_periodo': False, 'publico': True, 'orden': 1, 'activo': True},
-                       {'id': 'p2', 'dia': 4, 'hora': '10:00', 'titulo': 'Lanzamiento del nuevo concurso', 'descripcion': None, 'lugar': 'Oficina', 'modo': 'presencial', 'facilitador': None, 'enlace': None, 'tipo': 'evento', 'asistencia': True, 'solo_inicio_periodo': True, 'publico': True, 'orden': 2, 'activo': True}] if rol == 'admin' else None,
+                       {'id': 'p2', 'dia': 4, 'hora': '10:00', 'titulo': 'Lanzamiento del nuevo concurso', 'descripcion': None, 'lugar': 'Oficina', 'modo': 'presencial', 'facilitador': None, 'enlace': None, 'tipo': 'evento', 'asistencia': True, 'solo_inicio_periodo': True, 'excepto_inicio_periodo': False, 'publico': True, 'orden': 2, 'activo': True},
+                       {'id': 'p6', 'dia': 4, 'hora': '09:00', 'titulo': 'Capacitación por Zoom', 'descripcion': None, 'lugar': None, 'modo': 'zoom', 'facilitador': 'Juan Carlos Ezaine', 'enlace': None, 'tipo': 'capacitacion', 'asistencia': False, 'solo_inicio_periodo': False, 'excepto_inicio_periodo': True, 'publico': True, 'orden': 1, 'activo': True}] if rol == 'admin' else None,
         'progreso': [{'celular': '987654321', 'nombre': 'fley rojas', 'vistas': 2, 'completadas': 1, 'ultimo': '2026-11-03T15:00:00Z'}] if rol == 'admin' else None,
     }
     if rol != 'admin':   # la función real no manda lo oculto al asesor
@@ -264,12 +265,23 @@ with sync_playwright() as pw:
     ev = [c for c in llamadas if c[0] == 'hor_evento_guardar' and c[1]['p_id'] is None]
     ok(ev and ev[-1][1]['p_datos']['titulo'] == 'Clase extra' and ev[-1][1]['p_datos']['fecha'] == '2026-11-02' and ev[-1][1]['p_datos']['hora'] == '18:30' and ev[-1][1]['p_datos']['asistencia'] is True, 'Guarda el evento suelto con fecha, hora y asistencia')
     p.click('text=Horario habitual'); p.wait_for_timeout(150)
-    ok('Lanzamiento del nuevo concurso' in p.locator('.hoja').inner_text() and 'Solo inicio de período' in p.locator('.hoja').inner_text(), 'Horario habitual con sus marcas')
+    ok('Lanzamiento del nuevo concurso' in p.locator('.hoja').inner_text() and 'Solo inicio de período' in p.locator('.hoja').inner_text() and 'Solo si no hay lanzamiento' in p.locator('.hoja').inner_text(), 'Horario habitual con sus marcas')
     cap(p, '15-oficina-habitual')
     p.click('.hoja >> text=Editar >> nth=0'); p.wait_for_timeout(150)
     p.fill('#f_hora', '16:30'); p.click('.hoja button.boton[type=submit]'); p.wait_for_timeout(400)
     pl = [c for c in llamadas if c[0] == 'hor_plantilla_guardar']
-    ok(pl and pl[-1][1]['p_id'] == 'p1' and pl[-1][1]['p_datos']['hora'] == '16:30' and pl[-1][1]['p_datos']['dia'] == 3, 'Edita la plantilla (día como número)')
+    ok(pl and pl[-1][1]['p_id'] == 'p1' and pl[-1][1]['p_datos']['hora'] == '16:30' and pl[-1][1]['p_datos']['dia'] == 3 and pl[-1][1]['p_datos']['excepto_inicio_periodo'] is False, 'Edita la plantilla (día como número, marca nueva)')
+    # Zoom: la casilla de asistencia se apaga sola
+    p.click('text=Horario habitual'); p.wait_for_timeout(150)
+    p.click('.hoja >> text=+ Agregar al horario habitual'); p.wait_for_timeout(150)
+    ok(p.locator('#f_asistencia').is_checked() and not p.locator('#f_asistencia').is_disabled(), 'Presencial: asistencia marcada y editable')
+    p.select_option('#f_modo', 'zoom'); p.wait_for_timeout(100)
+    ok(not p.locator('#f_asistencia').is_checked() and p.locator('#f_asistencia').is_disabled() and 'Por Zoom no se toma asistencia' in p.locator('.hoja').inner_text(), 'Zoom: asistencia apagada, bloqueada y explicada')
+    p.fill('#f_titulo', 'Zoom extra'); p.fill('#f_hora', '08:00'); p.check('#f_solo_inicio_periodo'); p.check('#f_excepto_inicio_periodo'); p.click('.hoja button.boton[type=submit]'); p.wait_for_timeout(200)
+    ok('Elige una sola' in p.locator('.hoja').inner_text(), 'No deja marcar «solo inicio» y «solo no inicio» a la vez')
+    p.uncheck('#f_solo_inicio_periodo'); p.click('.hoja button.boton[type=submit]'); p.wait_for_timeout(400)
+    pl = [c for c in llamadas if c[0] == 'hor_plantilla_guardar' and c[1]['p_id'] is None]
+    ok(pl and pl[-1][1]['p_datos']['modo'] == 'zoom' and pl[-1][1]['p_datos']['asistencia'] is False and pl[-1][1]['p_datos']['excepto_inicio_periodo'] is True, 'Guarda la plantilla de Zoom sin asistencia y solo cuando no inicia período')
     # Modo edición apagado = vista de asesor
     p.click('.modo-ed button.interruptor'); p.wait_for_timeout(150)
     ok('Esta semana no hay' not in texto(p) and 'Desayuno de líderes' in texto(p), 'Con edición apagada no hay botones de editar')

@@ -253,12 +253,14 @@ página; la oficina ve además el **modo edición**).
   hoy resaltado y el jueves que inicia un período marcado («Inicia el PB24»,
   donde va el lanzamiento del concurso). La oficina apaga un evento para esa
   semana («Esta semana no hay»), lo edita, agrega uno suelto y mantiene el
-  **horario habitual** (plantillas por día y hora, con «solo el jueves que
-  inicia el período»). «Copiar para WhatsApp» arma el texto de la semana.
-  Lo que lleva asistencia se crea solo como clase en **Nivel Cero**
-  (`n0_clases`, enlazada por `evento_id`); al apagarlo, la clase se borra si
-  nadie fue marcado. El horario habitual de Nivel Cero (`n0_config.horarios`)
-  también sale de aquí.
+  **horario habitual** (plantillas por día y hora, con «solo el día que
+  inicia el período» para el lanzamiento y «solo cuando no inicia» para el
+  Zoom del jueves con Juan Carlos Ezaine). «Copiar para WhatsApp» arma el
+  texto de la semana. Lo presencial con asistencia se crea solo como clase en
+  **Nivel Cero** (`n0_clases`, enlazada por `evento_id`); al apagarlo, la clase
+  se borra si nadie fue marcado. **Por Zoom no se toma asistencia** (regla
+  fija en `hor_plantilla_guardar` / `hor_evento_guardar`). El horario habitual
+  de Nivel Cero (`n0_config.horarios`) también sale de aquí.
 
 **Datos** (Supabase): `ent_modulos`, `ent_lecciones`, `ent_recursos`,
 `ent_progreso` (por celular), `ent_subidas` (tickets de subida); `doc_categorias`,
@@ -273,4 +275,4 @@ exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>
 Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
 (Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
 chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
-SQL en `sql/20261104_entrenamientos_01_base.sql` y `_02_datos.sql`.
+SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql` y `_03_zoom_sin_asistencia.sql`.

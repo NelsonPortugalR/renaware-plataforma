@@ -971,7 +971,7 @@ function vistaHorario(){
     h('button', {class: 'mini sec', type: 'button', onclick: copiarSemana}, 'Copiar para WhatsApp'),
     edita() ? h('button', {class: 'mini sec', type: 'button', onclick: vistaPlantillas}, 'Horario habitual') : null,
     oficina() ? h('button', {class: 'mini sec', type: 'button', onclick: abrirNivelCero}, 'Tomar asistencia (Nivel Cero)') : null));
-  if (oficina()) out.push(h('p', {class: 'mini-t', style: 'margin-top:10px'}, 'Lo que lleva asistencia aparece solo como clase en Nivel Cero. Apaga un evento si esa semana no habrá; se vuelve a prender con un toque.'));
+  if (oficina()) out.push(h('p', {class: 'mini-t', style: 'margin-top:10px'}, 'Lo presencial con asistencia aparece solo como clase en Nivel Cero; por Zoom no se toma asistencia. Apaga un evento si esa semana no habrá; se vuelve a prender con un toque.'));
   return out;
 }
 async function irSemana(lunes){
@@ -990,6 +990,7 @@ function tarjetaEvento(e, pasado){
       e.nota ? h('div', {class: 'det'}, 'Nota: ' + e.nota) : null,
       e.enlace && e.activo ? h('div', {class: 'det'}, h('a', {href: e.enlace, target: '_blank', rel: 'noopener'}, e.modo === 'zoom' ? 'Entrar al Zoom' : 'Abrir enlace')) : null,
       oficina() && e.asistencia ? h('div', {class: 'det'}, e.n0_clase_id ? `Asistencia en Nivel Cero · ${plural(e.asistentes || 0, 'asistente', 'asistentes')}` : 'Lleva asistencia') : null,
+      oficina() && !e.asistencia && e.tipo === 'capacitacion' ? h('div', {class: 'det'}, e.modo === 'zoom' ? 'Por Zoom: sin asistencia del Nivel Cero' : 'Sin asistencia del Nivel Cero') : null,
       edita() ? h('div', {class: 'acciones'},
         h('button', {class: 'mini sec', type: 'button', onclick: () => apagarEvento(e)}, e.activo ? 'Esta semana no hay' : 'Sí hay esta semana'),
         h('button', {class: 'mini sec', type: 'button', onclick: () => formEvento(e)}, 'Editar')) : null));
@@ -1011,7 +1012,7 @@ function formEvento(e, f){
     {k: 'tipo', t: 'Tipo', v: e ? e.tipo : 'evento', tipo: 'select', opciones: Object.entries(TIPO_E)},
     {k: 'descripcion', t: 'Descripción (opcional)', v: e ? e.descripcion || '' : '', tipo: 'textarea'},
     {k: 'nota', t: 'Nota de esta semana (opcional)', v: e ? e.nota || '' : '', ayuda: 'P. ej. «Esta vez a las 5» o «Trae tu catálogo».'},
-    {k: 'asistencia', t: 'Lleva asistencia (crea la clase en Nivel Cero)', v: e ? e.asistencia : true, tipo: 'check'},
+    {k: 'asistencia', t: 'Lleva asistencia del Nivel Cero (crea la clase)', v: e ? e.asistencia : true, tipo: 'check'},
     {k: 'publico', t: 'Lo ven los asesores', v: e ? e.publico : true, tipo: 'check'}
   ];
   hoja(e ? 'Editar evento' : 'Agregar evento · ' + largo(f), campos, async v => {
@@ -1020,12 +1021,27 @@ function formEvento(e, f){
   }, e && !e.plantilla_id ? () => confirmar(`¿Quitar «${e.titulo}»?`, async () => {
     if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'evento', p_id: e.id}), 'Evento quitado')) { cerrarHoja(); await cargarSemana(S.semana); render(); }
   }) : null);
+  asistenciaSegunModo();
+}
+/* Regla: la asistencia del Nivel Cero se toma solo en lo presencial. Por Zoom la casilla se apaga sola. */
+function asistenciaSegunModo(){
+  const sel = document.getElementById('f_modo'), chk = document.getElementById('f_asistencia');
+  if (!sel || !chk) return;
+  const lab = chk.closest('label');
+  const nota = h('p', {class: 'mini-t', style: 'margin-top:4px'}, 'Por Zoom no se toma asistencia: solo cuenta lo presencial en la oficina.');
+  lab.after(nota);
+  function ajustar(){
+    const zoom = sel.value === 'zoom';
+    if (zoom) chk.checked = false;
+    chk.disabled = zoom; lab.style.opacity = zoom ? '.5' : ''; nota.hidden = !zoom;
+  }
+  sel.addEventListener('change', ajustar); ajustar();
 }
 function vistaPlantillas(){
   const ts = S.d.plantillas || [];
   const cont = h('div', {});
   function pintarP(){
-    cont.replaceChildren(h('p', {class: 'apoyo chico'}, 'Esto es lo de todas las semanas. Cada semana se arma sola con esto y se puede apagar o cambiar día por día.'),
+    cont.replaceChildren(h('p', {class: 'apoyo chico'}, 'Esto es lo de todas las semanas. Cada semana se arma sola con esto y se puede apagar o cambiar día por día. La asistencia del Nivel Cero solo se toma en lo presencial de la oficina.'),
       ...[1, 2, 3, 4, 5, 6, 0].map(dia => {
         const del = ts.filter(t => t.dia === dia);
         if (!del.length) return null;
@@ -1034,6 +1050,7 @@ function vistaPlantillas(){
             h('div', {class: 'hora'}, hora12(t.hora), h('small', {}, TIPO_E[t.tipo] || '')),
             h('div', {class: 'crece'},
               h('div', {class: 'tit'}, t.titulo, t.activo ? null : h('span', {class: 'chip gris'}, 'Apagado'), t.solo_inicio_periodo ? h('span', {class: 'chip medio'}, 'Solo inicio de período') : null,
+                t.excepto_inicio_periodo ? h('span', {class: 'chip medio'}, 'Solo si no hay lanzamiento') : null,
                 !t.publico ? h('span', {class: 'chip gris'}, 'Solo oficina') : null, t.asistencia ? h('span', {class: 'chip ok'}, 'Asistencia') : null),
               h('div', {class: 'det'}, [t.modo === 'zoom' ? 'Zoom' : t.lugar || MODO_E[t.modo], t.facilitador ? 'con ' + t.facilitador : null].filter(Boolean).join(' · ')),
               h('div', {class: 'acciones'}, h('button', {class: 'mini sec', type: 'button', onclick: () => formPlantilla(t)}, 'Editar'))))));
@@ -1054,18 +1071,21 @@ function formPlantilla(t){
     {k: 'facilitador', t: 'Quién lo da (opcional)', v: t ? t.facilitador || '' : ''},
     {k: 'tipo', t: 'Tipo', v: t ? t.tipo : 'capacitacion', tipo: 'select', opciones: Object.entries(TIPO_E)},
     {k: 'descripcion', t: 'Descripción (opcional)', v: t ? t.descripcion || '' : '', tipo: 'textarea'},
-    {k: 'asistencia', t: 'Lleva asistencia (crea la clase en Nivel Cero)', v: t ? t.asistencia : true, tipo: 'check'},
-    {k: 'solo_inicio_periodo', t: 'Solo el jueves que inicia el período', v: t ? t.solo_inicio_periodo : false, tipo: 'check'},
+    {k: 'asistencia', t: 'Lleva asistencia del Nivel Cero (crea la clase)', v: t ? t.asistencia : true, tipo: 'check'},
+    {k: 'solo_inicio_periodo', t: 'Solo el día que inicia el período (hay lanzamiento)', v: t ? t.solo_inicio_periodo : false, tipo: 'check'},
+    {k: 'excepto_inicio_periodo', t: 'Solo cuando NO inicia el período (no hay lanzamiento)', v: t ? t.excepto_inicio_periodo : false, tipo: 'check'},
     {k: 'publico', t: 'Lo ven los asesores', v: t ? t.publico : true, tipo: 'check'},
     {k: 'activo', t: 'Activo', v: t ? t.activo : true, tipo: 'check'}
   ];
   hoja(t ? 'Editar horario habitual' : 'Nuevo en el horario habitual', campos, async v => {
     v.dia = Number(v.dia);
+    if (v.solo_inicio_periodo && v.excepto_inicio_periodo) throw new Error('Elige una sola: «solo cuando inicia» o «solo cuando no inicia» el período.');
     const ok = await accion(() => rpc('hor_plantilla_guardar', {p_token: token(), p_id: t ? t.id : null, p_datos: v}), 'Horario guardado');
     if (ok) { cerrarHoja(); await recargar(true); render(); }
   }, t ? () => confirmar(`¿Quitar «${t.titulo}» del horario habitual? Las semanas que vienen ya no lo tendrán.`, async () => {
     if (await accion(() => rpc('ent_borrar', {p_token: token(), p_que: 'plantilla', p_id: t.id}), 'Quitado del horario')) { cerrarHoja(); await recargar(true); render(); }
   }) : null);
+  asistenciaSegunModo();
 }
 function textoSemana(){
   const w = S.semanaD;
