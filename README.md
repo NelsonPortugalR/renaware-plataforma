@@ -275,4 +275,4 @@ exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>
 Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
 (Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
 chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
-SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql` y `_03_zoom_sin_asistencia.sql`.
+SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql` y `sql/20261106_entrenamientos_04_*.sql`.
