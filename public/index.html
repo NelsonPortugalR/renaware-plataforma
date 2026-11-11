@@ -980,6 +980,212 @@ async function pantallaVigencia(){
   pintar(barra(), h('main', {}, cabeza, cuerpo));
 }
 
+/* ---------- respaldo: la copia diaria y su descarga (solo administrador) ---------- */
+// La base hace sola una copia cada madrugada (esquema «respaldo», tarea respaldo_diario).
+// Aquí se ve si corrió y se descarga a este dispositivo: es la única copia que queda fuera de Supabase.
+const CARPETAS = {documentos: 'Documentos de clientes', premios: 'Fotos de premios', entrenamientos: 'Guías y listas',
+  plantillas: 'Plantillas de contrato', imagenes: 'Imágenes de las listas', videos: 'Videos de las listas',
+  'wa-media': 'Archivos de WhatsApp', reparaciones: 'Fotos de reparaciones'};
+const peso = b => { b = Number(b || 0); return b >= 1048576 ? (b / 1048576).toFixed(b >= 10485760 ? 0 : 1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; };
+const diaLima = d => new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit'}).format(d);
+function cuando(iso, hoy){   // «hoy a las 2:40 a. m.», «ayer a las…», «el martes 10 de noviembre a las…»
+  const d = new Date(iso), dia = diaLima(d), dif = diasEntre(dia, hoy);
+  const hora = new Intl.DateTimeFormat('es-PE', {timeZone: 'America/Lima', hour: 'numeric', minute: '2-digit', hour12: true}).format(d);
+  return (dif === 0 ? 'hoy' : dif === 1 ? 'ayer' : 'el ' + largo(dia)) + ' a las ' + hora;
+}
+function bajar(blob, nombre){
+  const u = URL.createObjectURL(blob), a = h('a', {href: u, download: nombre, class: 'oculto'});
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 60000);
+}
+async function enTandas(lista, n, fn){   // de a n a la vez; el resultado conserva el orden de la lista
+  const res = new Array(lista.length); let i = 0;
+  await Promise.all(Array.from({length: Math.min(n, lista.length)}, async () => {
+    while (i < lista.length) { const k = i++; res[k] = await fn(lista[k], k); }
+  }));
+  return res;
+}
+async function tokenStaff(){
+  const s = await sesionVigente();
+  if (!s) throw new Error('Tu sesión venció. Vuelve a entrar.');
+  return s.access_token;
+}
+async function descargarDatos(avance){
+  const lista = await api('/rest/v1/rpc/respaldo_piezas', {method: 'POST', body: {}, token: await tokenStaff()});
+  const piezas = lista.piezas || [];
+  let hechas = 0;
+  const textos = await enTandas(piezas, 4, async p => {
+    const x = await api('/rest/v1/rpc/respaldo_pieza', {method: 'POST', body: {p_slot: lista.slot, p_tabla: p.tabla}, token: await tokenStaff()});
+    if (!x || !Array.isArray(x.datos)) throw new Error('La copia de ' + p.tabla + ' llegó incompleta. Intenta de nuevo.');
+    avance(++hechas, piezas.length);
+    return JSON.stringify(p.tabla) + ':' + JSON.stringify({columnas: x.columnas, filas: x.filas, datos: x.datos});
+  });
+  const partes = ['{"formato":"respaldo-plataforma/1","proyecto":"kiexpdaaoegbtesqmaff","casillero":' + JSON.stringify(lista.slot)
+    + ',"tomado_en":' + JSON.stringify(lista.tomado_en) + ',"descargado_en":' + JSON.stringify(new Date().toISOString())
+    + ',"como_leer":"piezas[tabla].datos es un arreglo de filas; cada fila va en el orden de piezas[tabla].columnas. La pieza (estructura) trae el SQL para rehacer la base.","piezas":{',
+    textos.join(','), '}}'];
+  let blob = new Blob(partes, {type: 'application/json'});
+  let nombre = 'respaldo-plataforma-' + diaLima(new Date(lista.tomado_en)) + '.json';
+  if (typeof CompressionStream === 'function' && typeof blob.stream === 'function') {
+    blob = new Blob([await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).blob()], {type: 'application/gzip'});
+    nombre += '.gz';
+  }
+  bajar(blob, nombre);
+  await api('/rest/v1/rpc/respaldo_descargada', {method: 'POST', body: {p_que: 'datos', p_slot: lista.slot, p_piezas: piezas.length, p_bytes: blob.size}, token: await tokenStaff()});
+  return {nombre, bytes: blob.size, piezas: piezas.length};
+}
+/* Un .zip sin comprimir (fotos, PDF y videos ya vienen comprimidos): cabecera local + datos, y el índice al final. */
+const TABLA_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(u8){
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = TABLA_CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function zipSinComprimir(archivos){   // [{nombre, datos: Uint8Array, fecha: Date}]
+  const enc = new TextEncoder(), cuerpo = [], indice = [];
+  let pos = 0, tamIndice = 0;
+  for (const a of archivos) {
+    const nom = enc.encode(a.nombre), n = a.datos.length, crc = crc32(a.datos), d = a.fecha || new Date();
+    const hora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const dia = (Math.max(0, d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    const loc = new DataView(new ArrayBuffer(30));
+    loc.setUint32(0, 0x04034b50, true); loc.setUint16(4, 20, true); loc.setUint16(6, 0x0800, true);
+    loc.setUint16(10, hora, true); loc.setUint16(12, dia, true); loc.setUint32(14, crc, true);
+    loc.setUint32(18, n, true); loc.setUint32(22, n, true); loc.setUint16(26, nom.length, true);
+    cuerpo.push(loc.buffer, nom, a.datos);
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true); cen.setUint16(8, 0x0800, true);
+    cen.setUint16(12, hora, true); cen.setUint16(14, dia, true); cen.setUint32(16, crc, true);
+    cen.setUint32(20, n, true); cen.setUint32(24, n, true); cen.setUint16(28, nom.length, true); cen.setUint32(42, pos, true);
+    indice.push(cen.buffer, nom);
+    tamIndice += 46 + nom.length;
+    pos += 30 + nom.length + n;
+  }
+  const fin = new DataView(new ArrayBuffer(22));
+  fin.setUint32(0, 0x06054b50, true); fin.setUint16(8, archivos.length, true); fin.setUint16(10, archivos.length, true);
+  fin.setUint32(12, tamIndice, true); fin.setUint32(16, pos, true);
+  return new Blob([...cuerpo, ...indice, fin.buffer], {type: 'application/zip'});
+}
+async function descargarCarpeta(c, avance){
+  const lista = await api('/rest/v1/rpc/respaldo_archivos', {method: 'POST', body: {p_carpeta: c.carpeta}, token: await tokenStaff()});
+  const TOPE = 60 * 1048576, enPartes = Number(c.bytes || 0) > TOPE, dia = diaLima(new Date()), fallas = [];
+  let tanda = [], pesoTanda = 0, parte = 0, total = 0;
+  const cerrar = () => {
+    if (!tanda.length) return;
+    parte++;
+    bajar(zipSinComprimir(tanda), 'archivos-' + c.carpeta + '-' + dia + (enPartes ? '-parte' + parte : '') + '.zip');
+    tanda = []; pesoTanda = 0;
+  };
+  for (let i = 0; i < lista.length; i++) {
+    const a = lista[i];
+    avance(i + 1, lista.length);
+    try {
+      const r = await fetch(SB_URL + '/storage/v1/object/' + (c.publica ? 'public/' : 'authenticated/') + c.carpeta + '/'
+        + a.nombre.split('/').map(encodeURIComponent).join('/'), {headers: {apikey: SB_KEY, Authorization: 'Bearer ' + await tokenStaff()}});
+      if (!r.ok) throw new Error('Error ' + r.status);
+      const datos = new Uint8Array(await r.arrayBuffer());
+      if (tanda.length && pesoTanda + datos.length > TOPE) cerrar();
+      tanda.push({nombre: a.nombre, datos, fecha: a.fecha ? new Date(a.fecha) : new Date()});
+      pesoTanda += datos.length; total += datos.length;
+    } catch (e) {
+      if (/venció/.test(e.message)) throw e;
+      fallas.push(a.nombre);
+    }
+  }
+  cerrar();
+  await api('/rest/v1/rpc/respaldo_descargada', {method: 'POST', body: {p_que: 'archivos', p_slot: c.carpeta, p_piezas: lista.length - fallas.length, p_bytes: total}, token: await tokenStaff()});
+  return {archivos: lista.length - fallas.length, bytes: total, partes: parte, fallas};
+}
+async function pantallaRespaldo(aviso){
+  const cabeza = [
+    h('a', {class: 'volver', href: '#'}, 'Volver a Hoy'),
+    h('h1', {style: 'margin-top:12px'}, 'Respaldo'),
+    h('p', {class: 'apoyo', style: 'margin-top:8px'},
+      'La plataforma guarda sola una copia de todos los datos cada madrugada. Aquí ves si corrió y la descargas para tenerla también fuera de Supabase.')];
+  pintar(barra(), h('main', {}, cabeza, cargando()));
+  let e;
+  try { e = await api('/rest/v1/rpc/respaldo_estado', {method: 'POST', body: {}, token: await tokenStaff()}); }
+  catch (err) { return /venció/.test(err.message) ? pantallaAcceso(err.message) : pantallaError(mensaje(err), () => pantallaRespaldo()); }
+  const u = e.ultima, hoy = e.hoy;
+  const atraso = u ? diasEntre(diaLima(new Date(u.fin)), hoy) : 99;
+  const nivel = !u || e.falla || atraso > 1 ? 'alto' : 'ok';
+  const estado = h('p', {class: 'apoyo', role: 'status', 'aria-live': 'polite', style: 'margin-top:10px;min-height:26px'}, aviso || '');
+  const ocupado = (boton, texto) => { boton.disabled = true; boton.dataset.texto = boton.textContent; boton.textContent = texto; };
+  const libre = boton => { boton.disabled = false; boton.textContent = boton.dataset.texto; };
+
+  const bDatos = h('button', {class: 'boton', type: 'button', onclick: async () => {
+    ocupado(bDatos, 'Descargando…');
+    try {
+      const r = await descargarDatos((i, n) => { estado.textContent = `Descargando la copia: ${i} de ${n} piezas.`; });
+      libre(bDatos);
+      pantallaRespaldo(`Listo: se descargó ${r.nombre} (${peso(r.bytes)}). Súbelo a tu Drive.`);
+    } catch (err) { libre(bDatos); estado.textContent = mensaje(err); }
+  }}, 'Descargar copia a este dispositivo');
+  const bAhora = h('button', {class: 'mini secundario', type: 'button', onclick: async () => {
+    ocupado(bAhora, 'Copiando…');
+    try {
+      const r = await api('/rest/v1/rpc/respaldo_ahora', {method: 'POST', body: {}, token: await tokenStaff()});
+      if (!r || !r.ok) throw new Error('La copia no se pudo hacer. Intenta de nuevo en unos minutos.');
+      pantallaRespaldo(`Copia hecha: ${num(r.tablas)} tablas, ${num(r.filas)} filas.`);
+    } catch (err) { libre(bAhora); estado.textContent = mensaje(err); }
+  }}, 'Hacer una copia ahora');
+
+  const d = e.descarga, diasDescarga = d ? diasEntre(diaLima(new Date(d.creado_en)), hoy) : null;
+  const cuerpo = [
+    h('ul', {class: 'lista', style: 'margin-top:22px'}, h('li', {class: 'item ' + nivel},
+      h('h3', {}, h('span', {class: 'sr'}, (nivel === 'ok' ? 'Al día' : 'Urgente') + ': '), u ? 'Última copia buena: ' + cuando(u.fin, hoy) : 'Todavía no hay ninguna copia'),
+      u ? h('p', {}, `${num(u.tablas)} tablas y ${num(u.filas)} filas, con la estructura para rehacer la base.`) : null,
+      e.falla ? h('p', {class: 'error'}, 'El último intento falló: ' + e.falla.error) : null,
+      !e.falla && u && atraso > 1 ? h('p', {class: 'error'}, `Hace ${atraso} días que no corre la copia automática.`) : null,
+      h('p', {}, 'Se guardan siete copias diarias, una por día de la semana, y una mensual de los últimos tres meses.'))),
+    bDatos, estado,
+    h('p', {style: 'margin-top:6px'}, d
+      ? `Última descarga: ${diasDescarga === 0 ? 'hoy' : diasDescarga === 1 ? 'ayer' : 'hace ' + diasDescarga + ' días'} (${peso(d.bytes)}).`
+      : h('strong', {}, 'Todavía no has descargado ninguna copia.')),
+    h('p', {class: 'apoyo', style: 'margin-top:6px'},
+      'Hazlo una vez al mes y guarda el archivo en tu Drive. Trae datos de clientes y asesores: no lo compartas.'),
+    h('div', {class: 'acciones'}, bAhora)];
+
+  const carpetas = (e.archivos || []).filter(c => Number(c.archivos) > 0);
+  if (carpetas.length) {
+    cuerpo.push(h('h2', {}, 'Archivos: fotos, PDF y videos'),
+      h('p', {class: 'apoyo'}, 'No viajan dentro de la copia de datos. Se descargan aparte, carpeta por carpeta, en un .zip.'),
+      h('ul', {class: 'lista', style: 'margin-top:12px'}, carpetas.map(c => {
+        const nota = h('p', {role: 'status', 'aria-live': 'polite'}, `${num(c.archivos)} ${Number(c.archivos) === 1 ? 'archivo' : 'archivos'} · ${peso(c.bytes)}`
+          + (Number(c.bytes) > 150 * 1048576 ? '. Pesa mucho: mejor desde una computadora.' : ''));
+        const b = h('button', {class: 'mini secundario', type: 'button', onclick: async () => {
+          ocupado(b, 'Descargando…');
+          try {
+            const r = await descargarCarpeta(c, (i, n) => { nota.textContent = `Bajando ${i} de ${n}…`; });
+            nota.textContent = `Listo: ${num(r.archivos)} archivos (${peso(r.bytes)})` + (r.partes > 1 ? ` en ${r.partes} partes` : '')
+              + (r.fallas.length ? `. No se pudieron bajar ${r.fallas.length}.` : '.');
+          } catch (err) { nota.textContent = mensaje(err); }
+          libre(b);
+        }}, 'Descargar');
+        return h('li', {class: 'item'}, h('h3', {}, CARPETAS[c.carpeta] || c.carpeta), nota, h('div', {class: 'acciones'}, b));
+      })));
+  }
+  const TIPO = {dia: 'diaria', mes: 'mensual', manual: 'hecha a mano'};
+  cuerpo.push(h('h2', {}, 'Copias guardadas'),
+    h('ul', {class: 'resumen'}, (e.copias || []).map(c =>
+      h('li', {}, `${cuando(c.tomado_en, hoy).replace(/^./, x => x.toUpperCase())} — ${TIPO[String(c.slot).split('-')[0]] || c.slot}, ${num(c.filas)} filas`))));
+  if ((e.cambios || []).length) {
+    const QUE = {nuevo: 'nuevo', cambio: 'cambió', quitado: 'se quitó'};
+    cuerpo.push(h('h2', {}, 'Cambios en la estructura'),
+      h('p', {class: 'apoyo'}, 'Cada vez que cambia una función, una tabla o una política, queda anotado con su versión anterior.'),
+      h('ul', {class: 'resumen'}, e.cambios.map(c =>
+        h('li', {}, `${largo(diaLima(new Date(c.visto_en)))}: ${c.tipo} ${c.nombre} (${QUE[c.que] || c.que})`))));
+  }
+  cuerpo.push(h('p', {class: 'apoyo', style: 'margin-top:28px'},
+    `La base ocupa ${peso(e.base.bytes)} de los ${peso(e.base.limite)} del plan gratuito; de eso, ${peso(e.base.respaldo_bytes)} son las copias. `
+    + 'Para recuperar un dato, pídeselo a Claude: «recupera tal registro de la copia del martes».'));
+  pintar(barra(), h('main', {}, cabeza, cuerpo));
+}
+
 async function iniciar(){
   const s = await sesionVigente();
   if (s) return inicioEquipo(s);
@@ -988,7 +1194,7 @@ async function iniciar(){
   pantallaAcceso();
 }
 async function ruta(){
-  const pantallas = {'#importar': pantallaImportar, '#conciliar': pantallaConciliar, '#vigencia': pantallaVigencia};
+  const pantallas = {'#importar': pantallaImportar, '#conciliar': pantallaConciliar, '#vigencia': pantallaVigencia, '#respaldo': pantallaRespaldo};
   if (pantallas[location.hash] && await sesionVigente()) return pantallas[location.hash]();
   return iniciar();
 }

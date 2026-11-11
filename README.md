@@ -98,6 +98,30 @@ del chat, los premios por recibir. Todo eso está en un catálogo:
 
 Agregar una fuente nueva es una fila. SQL en `sql/20261103_vigencia_de_los_datos.sql`.
 
+## Respaldo (`#respaldo`, solo administrador)
+
+El plan gratuito de Supabase no hace backups, así que la base se copia a sí misma:
+
+- **Cada madrugada** (2:40 a. m., tarea `respaldo_diario`) `respaldo.correr()` guarda todas las tablas
+  y el SQL para rehacer la estructura en el esquema `respaldo`, que no se expone por la API.
+  Hay siete casilleros diarios (`dia-1`..`dia-7`, se pisan cada semana), tres mensuales
+  (`mes-0`..`mes-2`) y uno `manual`. Una copia pesa unos 4 MB.
+- **`respaldo.cambios`** guarda la historia de cada función, tabla, vista, política, disparador,
+  índice y tarea: una fila cada vez que cambia su definición. Sirve para ver qué cambió y cuándo,
+  y para recuperar la versión anterior de una función.
+- **La pantalla** (`pantallaRespaldo`) dice si la copia corrió, la descarga a este dispositivo
+  (`respaldo-plataforma-AAAA-MM-DD.json.gz`: datos y estructura en un solo archivo) y baja los
+  archivos de Storage por carpeta en `.zip`. Esa descarga es la única copia **fuera** de Supabase;
+  Vigencia la pide una vez al mes (`respaldo-copia-fuera`) y avisa si la copia diaria deja de
+  correr (`respaldo-diario`).
+- **Recuperar un dato**: `select o from respaldo.objetos('dia-2', 'public.registros') o where …`
+  devuelve las filas tal como estaban ese día. `respaldo.verificar('dia-3')` reconstruye cada tabla
+  desde la copia y la compara con la viva (la prueba de restauración).
+
+Todo el SQL está en `sql/20261111_respaldo.sql`. Pruebas: `node pruebas/prueba.js` (pantalla, archivo,
+`.zip` validado con Python) y `python3 pruebas/prueba_respaldo.py` (la descarga comprimida en un
+Chromium real).
+
 ## Cómo funciona el traspaso
 
 1. El hub entra una sola vez (Supabase Auth para el equipo; `asesor_login` para asesores).

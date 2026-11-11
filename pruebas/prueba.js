@@ -49,6 +49,29 @@ const HOY = {rol:'admin', nombre:'Nelson Portugal Román',
 const ASESOR = {nombre:'Elena Segunda Landázuri Mosquera', codigo:'1723832',
   periodo:{numero:22,inicio:'2026-10-15',fin:'2026-10-28',hoy:'2026-10-21'}, puntos:[{periodo:'2026-PB19 (03-16 sep)',pb:19,puntos:1213,pedidos:2}]};
 
+// Lo que devuelven las funciones public.respaldo_* (solo administrador)
+const RESPALDO = {
+  admin: true, descargas: [], ahora: 0,
+  estado: {
+    ultima: {id: 7, ok: true, slot: 'dia-3', motivo: 'diario', inicio: '2026-11-11T07:40:00+00:00', fin: '2026-11-11T07:40:02+00:00', tablas: 141, filas: 29143, bytes: 12119950, cambios: 2, copia_mes: null},
+    falla: null,
+    copias: [{slot: 'dia-3', tomado_en: '2026-11-11T07:40:00+00:00', tablas: 141, filas: 29143, bytes: 12786645},
+             {slot: 'mes-2', tomado_en: '2026-11-01T07:40:00+00:00', tablas: 140, filas: 28800, bytes: 12000000}],
+    descarga: null, descarga_archivos: null,
+    base: {bytes: 48344211, limite: 524288000, respaldo_bytes: 8962048},
+    archivos: [{carpeta: 'videos', publica: true, archivos: 42, bytes: 415948116},
+               {carpeta: 'documentos', publica: false, archivos: 2, bytes: 11}],
+    cambios: [{tipo: 'funcion', nombre: 'es_admin(p_token uuid)', que: 'cambio', visto_en: '2026-11-11T07:40:02+00:00'}],
+    hoy: '2026-11-11'},
+  piezas: {slot: 'dia-3', tomado_en: '2026-11-11T07:40:00+00:00',
+    piezas: [{tabla: '(estructura)', filas: 1, bytes: 30}, {tabla: 'public.clientes', filas: 2, bytes: 60}, {tabla: 'public.vacia', filas: 0, bytes: 2}]},
+  pieza: {
+    '(estructura)': {columnas: ['script'], filas: 1, datos: [['create table public.clientes (id uuid);']]},
+    'public.clientes': {columnas: ['id', 'nombre', 'nota'], filas: 2, datos: [['a1', 'María «Ñ»', null], ['b2', 'José', {x: 1}]]},
+    'public.vacia': {columnas: ['id'], filas: 0, datos: []}},
+  archivos: {documentos: [{nombre: 'R-0001/dni frente ñ.jpg', bytes: 5, fecha: '2026-10-01T15:00:00+00:00'}, {nombre: 'R-0002/voucher.pdf', bytes: 6, fecha: '2026-10-02T15:00:00+00:00'}]},
+  contenido: {'R-0001/dni frente ñ.jpg': 'hola!', 'R-0002/voucher.pdf': '%PDF-1'}};
+
 let fallas = 0;
 const ok = (c, t) => { console.log((c ? '✔ ' : '✗ ') + t); if (!c) fallas++; };
 const espera = ms => new Promise(r => setTimeout(r, ms));
@@ -80,6 +103,22 @@ function crear(prep){
         if (u.startsWith('/rest/v1/rpc/asesor_inicio')) return b.p_token === 'tok-1' ? r(ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')) return b.p_token === 'tok-1' ? r(CODIGO) : r({message:'Tu sesión venció.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear')) return auth.includes('jwt-') ? r(CODIGO) : r({message:'JWT expired'}, 401);
+        if (u.startsWith('/rest/v1/rpc/respaldo_')) {
+          if (!auth.includes('jwt-')) return r({message:'JWT expired'}, 401);
+          if (!RESPALDO.admin) return r({message:'Solo el administrador puede ver el respaldo.'}, 400);
+          if (u.endsWith('respaldo_estado')) return r(RESPALDO.estado);
+          if (u.endsWith('respaldo_piezas')) return r(RESPALDO.piezas);
+          if (u.endsWith('respaldo_pieza')) return r(Object.assign({tabla: b.p_tabla}, RESPALDO.pieza[b.p_tabla]));
+          if (u.endsWith('respaldo_descargada')) { RESPALDO.descargas.push(b); return r({ok: true}); }
+          if (u.endsWith('respaldo_ahora')) { RESPALDO.ahora++; return r({ok: true, slot: 'manual', tablas: 141, filas: 29150}); }
+          if (u.endsWith('respaldo_archivos')) return r(RESPALDO.archivos[b.p_carpeta] || []);
+        }
+        if (u.startsWith('/storage/v1/object/')) {
+          const nombre = decodeURIComponent(u.replace(/^\/storage\/v1\/object\/(public|authenticated)\/[^/]+\//, ''));
+          const txt = RESPALDO.contenido[nombre];
+          if (txt === undefined || !auth.includes('jwt-')) return {ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0)};
+          return {ok: true, status: 200, arrayBuffer: async () => Uint8Array.from(Buffer.from(txt, 'utf8')).buffer};
+        }
         return r({message:'sin mock ' + u}, 404);
       };
     }});
@@ -244,6 +283,87 @@ const tarjeta0 = (d, n) => [...d.querySelectorAll('.mod')].find(a => a.querySele
   ({w, d, llamadas, idas} = crear(w => w.localStorage.setItem('rw_asesor_token', JSON.stringify('tok-viejo'))));
   await espera(150);
   ok(d.querySelector('form.acceso') && d.getElementById('error').textContent.includes('venció'), 'Token vencido: la base lo dice y el hub pide entrar de nuevo');
+
+  // ---- Respaldo: estado, descarga de la copia, zip de archivos, y que solo entra el administrador ----
+  {
+    const blobs = [], nombres = [];
+    const conStaff = w => {
+      w.localStorage.setItem(K_STAFF, JSON.stringify({access_token: 'jwt-1', refresh_token: 'r1', expires_at: Math.floor(Date.now() / 1000) + 3600}));
+      w.TextEncoder = TextEncoder;
+      w.URL.createObjectURL = b => { blobs.push(b); return 'blob:prueba'; };
+      w.URL.revokeObjectURL = () => {};
+    };
+    const bytesDe = (w, blob) => new Promise((res, rej) => { const f = new w.FileReader(); f.onload = () => res(Buffer.from(f.result)); f.onerror = rej; f.readAsArrayBuffer(blob); });
+    ({w, d, llamadas, idas} = crear(conStaff));
+    await espera(150);
+    const tarjeta = tarjeta0(d, 'Respaldo');
+    ok(!tarjeta, 'El menú de prueba no trae Respaldo: la pantalla se abre por su dirección');
+    const baja = w.HTMLAnchorElement.prototype.click;
+    w.HTMLAnchorElement.prototype.click = function(){ if (this.hasAttribute('download')) nombres.push(this.getAttribute('download')); else baja.call(this); };
+    w.location.hash = '#respaldo';
+    await espera(200);
+    ok(d.querySelector('h1').textContent === 'Respaldo', 'Con #respaldo abre la pantalla de Respaldo');
+    const cab = d.querySelector('.lista .item h3').textContent;
+    ok(/Última copia buena: hoy a las 2:40/.test(cab) && d.querySelector('.lista .item').classList.contains('ok'), 'Dice cuándo fue la última copia buena, en hora de Lima (' + cab + ')');
+    ok(d.body.textContent.includes('Todavía no has descargado ninguna copia'), 'Avisa que todavía no hay ninguna copia fuera');
+    ok(textos(d, 'h2').join('|') === 'Archivos: fotos, PDF y videos|Copias guardadas|Cambios en la estructura', 'Secciones: archivos, copias guardadas y cambios');
+    ok(d.body.textContent.includes('Videos de las listas') && d.body.textContent.includes('Pesa mucho: mejor desde una computadora'), 'Los videos avisan que pesan mucho');
+    ok(textos(d, '.resumen li').some(t => /^Hoy a las 2:40.*diaria, 29[.,\s]?143 filas/.test(t)), 'Lista las copias guardadas con su tipo');
+    ok(textos(d, '.resumen li').some(t => t.includes('funcion es_admin(p_token uuid) (cambió)')), 'Lista los cambios de estructura');
+
+    // descarga de la copia de datos
+    d.querySelector('button.boton').click();
+    await espera(400);
+    ok(nombres[0] === 'respaldo-plataforma-2026-11-11.json' && blobs.length === 1, 'Descarga un solo archivo con la fecha de la copia (' + nombres[0] + ')');
+    const copia = JSON.parse((await bytesDe(w, blobs[0])).toString('utf8'));
+    ok(copia.formato === 'respaldo-plataforma/1' && copia.casillero === 'dia-3' && Object.keys(copia.piezas).join('|') === '(estructura)|public.clientes|public.vacia', 'El archivo trae todas las piezas, en orden');
+    ok(JSON.stringify(copia.piezas['public.clientes']) === JSON.stringify(RESPALDO.pieza['public.clientes']), 'Los datos viajan tal cual: tildes, nulos y JSON anidado');
+    ok(copia.piezas['(estructura)'].datos[0][0].startsWith('create table'), 'La estructura viaja dentro del mismo archivo');
+    const reg = RESPALDO.descargas[0];
+    ok(RESPALDO.descargas.length === 1 && reg.p_que === 'datos' && reg.p_slot === 'dia-3' && reg.p_piezas === 3 && reg.p_bytes > 100, 'La descarga queda registrada en la base (para el aviso mensual)');
+    ok(d.querySelector('[role=status]').textContent.includes('Listo: se descargó respaldo-plataforma-2026-11-11.json'), 'Al terminar dice qué se descargó');
+
+    // el zip: se arma en el navegador y lo abre un programa de verdad
+    const zip = w.zipSinComprimir([
+      {nombre: 'R-0001/dni frente ñ.jpg', datos: Uint8Array.from(Buffer.from('hola!')), fecha: new Date(2026, 9, 1, 10, 30, 0)},
+      {nombre: 'vacio.txt', datos: new Uint8Array(0), fecha: new Date(2026, 9, 2)},
+      {nombre: 'grande.bin', datos: Uint8Array.from({length: 70000}, (_, i) => i % 251), fecha: new Date(2026, 9, 3)}]);
+    const ruta = path.join(require('os').tmpdir(), 'prueba-respaldo-' + process.pid + '.zip');
+    fs.writeFileSync(ruta, await bytesDe(w, zip));
+    const py = require('child_process').spawnSync('python3', ['-c',
+      'import sys, zipfile, json\nz = zipfile.ZipFile(sys.argv[1])\nprint(json.dumps({"malo": z.testzip(), "nombres": z.namelist(), "hola": z.read(z.namelist()[0]).decode(), "n": len(z.read("grande.bin")), "fecha": list(z.infolist()[0].date_time)}))', ruta], {encoding: 'utf8'});
+    fs.unlinkSync(ruta);
+    let z = {}; try { z = JSON.parse(py.stdout); } catch (e) { console.log(py.stderr); }
+    ok(z.malo === null && (z.nombres || []).join('|') === 'R-0001/dni frente ñ.jpg|vacio.txt|grande.bin', 'El .zip abre sin errores y conserva carpetas y eñes (' + (z.nombres || []).join(', ') + ')');
+    ok(z.hola === 'hola!' && z.n === 70000 && (z.fecha || []).slice(0, 5).join('-') === '2026-10-1-10-30', 'El contenido y la fecha de cada archivo salen iguales');
+
+    // descarga de una carpeta de archivos
+    blobs.length = 0; nombres.length = 0;
+    const carpeta = [...d.querySelectorAll('.lista .item')].find(li => li.textContent.includes('Documentos de clientes'));
+    carpeta.querySelector('button').click();
+    await espera(300);
+    ok(nombres[0] === 'archivos-documentos-' + new Intl.DateTimeFormat('en-CA', {timeZone: 'America/Lima'}).format(new Date()) + '.zip' && blobs.length === 1, 'La carpeta baja en un .zip con su nombre y la fecha (' + nombres[0] + ')');
+    ok(llamadas.some(c => c.u === '/storage/v1/object/authenticated/documentos/R-0001/dni%20frente%20%C3%B1.jpg'), 'Una carpeta privada se baja con la sesión de la oficina');
+    ok(carpeta.textContent.includes('Listo: 2 archivos'), 'Dice cuántos archivos bajó (' + carpeta.querySelector('p').textContent + ')');
+    ok(RESPALDO.descargas.length === 2 && RESPALDO.descargas[1].p_que === 'archivos' && RESPALDO.descargas[1].p_bytes === 11, 'También queda registrada');
+
+    // copia a mano
+    [...d.querySelectorAll('button.mini')].find(b => b.textContent === 'Hacer una copia ahora').click();
+    await espera(250);
+    ok(RESPALDO.ahora === 1 && d.querySelector('[role=status]').textContent.includes('Copia hecha: 141 tablas'), 'Se puede pedir una copia en el momento');
+
+    // una copia atrasada o fallida se ve en rojo
+    RESPALDO.estado.falla = {inicio: '2026-11-11T07:40:00+00:00', error: 'se llenó el disco'};
+    w.location.hash = '#'; await espera(120); w.location.hash = '#respaldo'; await espera(200);
+    ok(d.querySelector('.lista .item').classList.contains('alto') && d.querySelector('.lista .item .error').textContent.includes('se llenó el disco'), 'Si la copia falla, la tarjeta se pone urgente y dice por qué');
+    RESPALDO.estado.falla = null;
+
+    // quien no es administrador no entra
+    RESPALDO.admin = false;
+    w.location.hash = '#'; await espera(120); w.location.hash = '#respaldo'; await espera(200);
+    ok(d.body.textContent.includes('Solo el administrador puede ver el respaldo'), 'Sin rol de administrador, la base no entrega nada y la pantalla lo dice');
+    RESPALDO.admin = true;
+  }
 
   console.log(fallas ? `\n${fallas} PRUEBA(S) FALLARON` : '\nTODAS LAS PRUEBAS PASARON');
   process.exit(fallas ? 1 : 0);
