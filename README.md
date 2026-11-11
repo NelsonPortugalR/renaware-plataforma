@@ -5,7 +5,7 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 
 ## Archivos
 
-- `public/index.html` — el hub: acceso único, caja **Pregúntale** (abre `/chat/`
+- `public/index.html` — el hub de la oficina: acceso único (a la asesora la manda a `/asesores/`), caja **Pregúntale** (abre `/chat/`
   con la pregunta), pantalla **Hoy** (lo que hay que atender, ordenado por
   urgencia; a la vista lo urgente y como mínimo 3, el resto con un toque),
   **Herramientas** por grupo con el globo de pendientes de cada una, carga del
@@ -16,12 +16,15 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
   (`/test/#oficina`). Ver más abajo.
 - `public/chat/index.html` — **Pregúntale** (`/chat/`): el chat en lenguaje
   natural sobre toda la base. Usa la misma sesión del hub. Ver más abajo.
-- `public/entrenamientos/index.html` — **Entrenamientos** (`/entrenamientos/`):
-  módulos y lecciones con sus materiales, las **Listas** (documentos para ver,
-  enviar y descargar; `#listas`) y el **Horario** de la semana (`#horario`).
-  Asesor con su celular, oficina con la sesión de la plataforma o la clave. Ver más abajo.
-- `pruebas/prueba_entrenamientos.py` — pruebas de Entrenamientos en un Chromium real
-  con un Supabase simulado (`python3 pruebas/prueba_entrenamientos.py [carpeta_capturas]`).
+- `public/asesores/index.html` — la **plataforma de asesores** (`/asesores/`): el inicio de la
+  asesora con lo suyo, el buscador, precios, zonas de crédito, ¿ya ganó Empiece Ya?, premios,
+  Nivel Cero y puntos; y dentro, **Entrenamientos**, **Listas** (`#listas`) y **Horario**
+  (`#horario`), que la oficina edita ahí mismo. Asesor con su celular; oficina con la sesión
+  de la plataforma o la clave. Ver más abajo.
+- `public/entrenamientos/index.html` — solo redirige a `/asesores/` (enlaces viejos).
+- `pruebas/prueba_asesores.py` — pruebas de la plataforma de asesores y del modo oficina en un
+  Chromium real con un Supabase simulado (`python3 pruebas/prueba_asesores.py [carpeta_capturas]`).
+- `pruebas/prueba_respaldo.py` — la descarga del respaldo en un Chromium real.
 - `supabase/functions/chat/` — la Edge Function del chat (el ciclo con la API de Claude).
 - `pruebas/prueba_chat.js` — pruebas del chat (`node pruebas/prueba_chat.js`).
 - `public/_headers`, `public/404.html` — configuración.
@@ -254,10 +257,45 @@ una herramienta o una ficha.
   Secreto: `ANTHROPIC_API_KEY` en Supabase → Edge Functions → Secrets.
 - SQL en `sql/20261031_chat_01..04_*.sql` (base, herramientas, fichas, módulo).
 
-## Entrenamientos (`/entrenamientos/`)
+## Plataforma de asesores (`/asesores/`)
 
-Tres pestañas en una sola página, para el asesor y para la oficina (la misma
-página; la oficina ve además el **modo edición**).
+La página de la asesora: entra con su celular y tiene **todo en un solo sitio**. Está pensada para
+quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla, un botón
+«Volver» arriba y el «atrás» del teléfono que siempre regresa un paso.
+
+- **Inicio**: saluda por su nombre, dice el día y cuándo cierra el período, y muestra solo lo
+  que le toca a ella: *premios por recoger*, *su Nivel Cero* (clases, plazo y próxima clase;
+  con las 5 clases, el botón de su test) y *lo que sigue en el horario*. Debajo, los botones
+  en tres grupos: **Para vender y afiliar** (Precios y promociones, Zonas de crédito, Listas y
+  fotos, ¿Ya ganó Empiece Ya?), **Para aprender** (Entrenamientos, Horario) y **Lo tuyo**
+  (Mi Nivel Cero, Mis premios, Mis puntos, y lo que `plataforma_menu` le sume, como el Local).
+- **Buscador** (arriba del inicio): una sola caja busca secciones, listas, guías y distritos.
+  Escribir «cayma» responde ahí mismo si hay crédito.
+- **Precios y promociones**: sale al portal `renaware-peru` con su sesión (traspaso); con
+  «atrás» vuelve.
+- **Zonas de crédito**: la lista oficial (`zc_lista`, la misma del buscador de zonas). Abre con
+  los distritos de Arequipa; al escribir busca distritos y zonas restringidas de todo el país.
+  Cada distrito dice con palabras «Sí hay crédito», «Sí, con excepciones» o «No hay crédito»,
+  cómo se entrega y sus zonas sin crédito por motivo. La lista se guarda 12 horas en el
+  teléfono (`rw_zonas_v1`) y sirve sin señal.
+- **¿Ya ganó Empiece Ya?**: un nombre (o un código) y dice si esa persona ya ganó, cuándo, en
+  qué división y con qué premios, y hasta qué cierre llega la lista (`eya_buscar`).
+- **Mis premios** (`pr_premios` por su código): para recoger en la oficina, ganados que todavía
+  no llegan (sin prometer de más: dice si es oficial, preliminar o anotado por la oficina) y
+  entregados. **Mi Nivel Cero**: clases a las que fue, las próximas que cuentan y su test.
+  **Mis puntos**: sus tres últimos períodos según Rena Ware.
+- **Entrenamientos, Listas y Horario**: lo de abajo, sin pestañas (cada uno es una pantalla).
+
+Lo personal llega en una sola llamada, `asesor_panel(p_token)`; si falla, el inicio lo dice y lo
+demás sigue funcionando. El hub (`/`) ya no le arma un inicio a la asesora: la manda aquí, con la
+misma sesión (`rw_asesor_token`, mismo dominio). La dirección vieja `/entrenamientos/` redirige
+conservando la pantalla y el traspaso. SQL en `sql/20261111_asesores.sql`. Pruebas:
+`python3 pruebas/prueba_asesores.py [carpeta_capturas]` (Chromium real, 149 comprobaciones).
+
+### Entrenamientos, Listas y Horario (dentro de `/asesores/`; la oficina los edita ahí mismo)
+
+Para la oficina es la misma página con tres pestañas y el **modo edición** (entra por el hub
+con traspaso, o con `#oficina` y la clave).
 
 - **Entrenamientos**: módulos (3–4 lecciones cada uno) → lecciones → materiales.
   Cada lección muestra solo lo que tiene: **guía** (PDF), **video** (archivo o

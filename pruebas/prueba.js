@@ -234,55 +234,20 @@ const tarjeta0 = (d, n) => [...d.querySelectorAll('.mod')].find(a => a.querySele
   const alDia = [...d.querySelectorAll('.lista .item')].find(li => li.textContent.includes('Listas de precios'));
   ok(alDia && alDia.classList.contains('ok') && alDia.textContent.includes('Al día hasta el 11 de noviembre'), 'Lo al día dice hasta cuándo');
 
-  // ---- Asesora: ve lo que la base le asignó (precios y zonas), sin caja de pregunta ----
+  // ---- Asesora: el hub no le arma un inicio; la manda a su plataforma (/asesores/), con la misma sesión ----
   ({w, d, llamadas, idas} = crear());
   await espera(60);
-  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  ok(d.querySelector('h1').textContent === 'Hola, Elena', 'Asesora entra con celular');
-  const menuAs = llamadas.find(c => c.u.startsWith('/rest/v1/rpc/plataforma_menu'));
-  ok(menuAs && JSON.parse(menuAs.opts.body).p_token === 'tok-1', 'Pide su menú con su token');
-  ok(d.querySelectorAll('.mod').length === 2 && !d.querySelector('h3.grupo'), 'La asesora ve precios y zonas, sin encabezados (un solo grupo)');
-  ok(!d.querySelector('form.preguntar'), 'Sin Pregúntale en su menú no hay caja de pregunta');
-  ok(!d.querySelector('.pend'), 'Sin pendientes de Hoy, sin globos');
-  d.querySelector('a.mod').click(); await espera(120);
-  const crear2 = llamadas.filter(c => c.u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')).pop();
-  ok(crear2 && JSON.parse(crear2.opts.body).p_token === 'tok-1', 'Crea el código con el token de la asesora');
-  ok(idas[0] === 'https://renaware-peru.nelson1614.workers.dev#traspaso=' + CODIGO, 'Abre precios con traspaso de asesora');
-  ok(!d.querySelector('.aviso-test'), 'Asesora fuera del Nivel Cero: sin aviso ni módulo del test');
-
-  // ---- Asesora nueva con el test habilitado y socia del local: la base le suma test y local ----
-  TEST = {nombre: 'ELENA', estado: 'habilitado', intento: null,
-    ventana: {estado: 'habilitado', hasta: '2026-11-11', dias: 2, botella: null}};
-  MENU_ASESOR = MODS.filter(m => ['cotizador', 'zonas', 'test', 'local'].includes(m.id));
+  escribir(w, d.getElementById('dato'), '987 654 321'); enviar(w, d); await espera(150);
+  ok(JSON.parse(w.localStorage.getItem('rw_asesor_token')) === 'tok-1', 'Asesora entra con celular y su sesión queda guardada');
+  ok(idas.length === 1 && idas[0] === '/asesores/', 'El hub la lleva a su plataforma: ' + idas.join(', '));
+  ok(!llamadas.some(c => /asesor_inicio|plataforma_menu|ts_estado/.test(c.u)), 'Sin pedir nada más aquí: lo suyo lo carga la plataforma de asesores');
+  ({w, d, llamadas, idas} = crear(w => w.localStorage.setItem('rw_asesor_token', JSON.stringify('tok-1'))));
+  await espera(120);
+  ok(idas[0] === '/asesores/' && !d.querySelector('form.acceso'), 'Con la sesión ya guardada, va directo (sin pasar por el acceso)');
   ({w, d, llamadas, idas} = crear());
   await espera(60);
-  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  const av = d.querySelector('.aviso-test');
-  ok(av && av.textContent.includes('Tu test del Nivel 0 está habilitado') && av.textContent.includes('te quedan 2 días'), 'Aviso del test habilitado con sus días');
-  ok(av.textContent.includes('Termínalo y ganas tu botella'), 'Sin nota mínima: «Termínalo y ganas tu botella»');
-  ok(textos(d, 'h3.grupo').join('|') === 'Vender|Equipo' && d.querySelectorAll('.mod').length === 4, 'Ve Vender (precios, zonas) y Equipo (test, local)');
-  av.querySelector('a.abrir').click(); await espera(120);
-  ok(idas[0] === 'https://renaware-plataforma.nelson1614.workers.dev/test/#traspaso=' + CODIGO, 'El aviso abre el test con traspaso');
-  MENU_ASESOR = MODS.filter(m => ['cotizador', 'zonas'].includes(m.id));
-
-  // ---- Aprobó: su botella lo espera ----
-  TEST = {nombre: 'ELENA', estado: 'aprobado', ventana: {estado: 'aprobado', nota: 94, botella: 'por_entregar'}};
-  ({w, d, llamadas, idas} = crear());
-  await espera(60);
-  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Terminaste tu test del Nivel 0 con 94'), 'Terminó: aviso de la botella por recoger');
-  // con nota mínima (si la oficina la vuelve a pedir) dice «Aprobaste»
-  TEST = {nombre: 'ELENA', estado: 'aprobado', ventana: {estado: 'aprobado', nota: 94, botella: 'por_entregar'}, config: {exigir_nota: true, nota_minima: 90}};
-  ({w, d, llamadas, idas} = crear());
-  await espera(60);
-  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
-  ok(d.querySelector('.aviso-test') && d.querySelector('.aviso-test').textContent.includes('Aprobaste tu test del Nivel 0 con 94'), 'Con nota mínima: «Aprobaste»');
-  TEST = null;
-
-  // ---- Sesión de asesora vencida según la base: vuelve al acceso ----
-  ({w, d, llamadas, idas} = crear(w => w.localStorage.setItem('rw_asesor_token', JSON.stringify('tok-viejo'))));
-  await espera(150);
-  ok(d.querySelector('form.acceso') && d.getElementById('error').textContent.includes('venció'), 'Token vencido: la base lo dice y el hub pide entrar de nuevo');
+  escribir(w, d.getElementById('dato'), '911111111'); enviar(w, d); await espera(150);
+  ok(d.getElementById('error').textContent.includes('no está habilitado') && !idas.length, 'Un celular que no es del equipo no entra ni sale del acceso');
 
   // ---- Respaldo: estado, descarga de la copia, zip de archivos, y que solo entra el administrador ----
   {

@@ -398,17 +398,6 @@ function listaModulos(mods, items){
   if (grupos.length === 1) return h('div', {class: 'modulos'}, grupos[0].mods.map(m => tarjetaModulo(m, pend)));
   return h('div', {}, grupos.map(g => [h('h3', {class: 'grupo'}, g.nombre), h('div', {class: 'modulos'}, g.mods.map(m => tarjetaModulo(m, pend)))]));
 }
-function puntosAsesor(lista){
-  if (!lista.length) return h('p', {class: 'apoyo'},
-    'Aún no aparecen puntos tuyos en los reportes de Rena Ware. Saldrán después de tu primer pedido.');
-  return h('ul', {class: 'puntos'}, lista.map(x => {
-    const fechas = (String(x.periodo || '').match(/\(([^)]+)\)/) || [])[1];
-    return h('li', {},
-      h('span', {class: 'pb'}, `Período ${x.pb}` + (fechas ? ` (${fechas})` : '')),
-      h('strong', {}, `${num(x.puntos)} puntos`),
-      h('span', {class: 'ped'}, `${num(x.pedidos)} ${Number(x.pedidos) === 1 ? 'pedido' : 'pedidos'}`));
-  }));
-}
 function pantallaError(msg, reintentar){
   pintar(barra(), h('main', {},
     h('h1', {}, 'No se pudo cargar'),
@@ -485,56 +474,6 @@ async function inicioEquipo(s){
     listaItems(datos.items || [], porId),
     h('h2', {}, 'Herramientas'),
     listaModulos(herramientas, datos.items || [])));
-}
-
-async function inicioAsesor(tok){
-  pintar(cargando());
-  let d, mods, test;
-  try {
-    [d, mods, test] = await Promise.all([
-      api('/rest/v1/rpc/asesor_inicio', {method: 'POST', body: {p_token: tok}}),
-      // la base decide qué ve esta asesora: el test solo si está en el Nivel Cero, el local solo si es socia
-      api('/rest/v1/rpc/plataforma_menu', {method: 'POST', body: {p_token: tok}}),
-      api('/rest/v1/rpc/ts_estado', {method: 'POST', body: {p_token: tok}}).catch(() => null)   // el test no frena el inicio
-    ]);
-  } catch (e) {
-    if (/venció|vencio/i.test(e.message)) { borrar(K_ASESOR); return pantallaAcceso(mensaje(e)); }
-    return pantallaError(mensaje(e), () => iniciar());
-  }
-  const propios = Array.isArray(mods) ? mods : [];
-  const chat = propios.find(m => m.id === 'chat');
-  const herramientas = propios.filter(m => m.id !== 'chat');
-  const nombre = primerNombre(d.nombre);
-  pintar(barra(), h('main', {},
-    h('h1', {}, nombre ? `Hola, ${nombre}` : 'Hola'),
-    avisoTest(test, propios.find(m => m.id === 'test')),
-    bloquePeriodo(d.periodo),
-    cajaPregunta(chat),
-    h('h2', {}, 'Tus puntos según Rena Ware'),
-    puntosAsesor(d.puntos || []),
-    h('h2', {}, 'Herramientas'),
-    listaModulos(herramientas)));
-}
-
-/* Aviso del Test del Nivel 0: con el test abierto (o la botella ganada) va arriba de todo */
-function avisoTest(t, m){
-  const w = t && t.ventana;
-  if (!w) return null;
-  const conNota = !!(t.config && t.config.exigir_nota);   // por ahora aprueba todo el que lo termina
-  if (t.estado === 'habilitado') {
-    const resta = w.dias <= 0 ? 'hoy es el último día' : w.dias === 1 ? 'te queda 1 día' : `te quedan ${w.dias} días`;
-    const texto = t.intento ? 'Continuar mi test' : 'Rendir mi test';
-    return h('section', {class: 'item medio aviso-test'},
-      h('h3', {}, t.intento ? 'Termina tu test del Nivel 0' : 'Tu test del Nivel 0 está habilitado'),
-      h('p', {}, `${conNota ? 'Apruébalo' : 'Termínalo'} y ganas tu botella de acero. Tienes hasta el ${largo(w.hasta)}: ${resta}.`),
-      m ? enlaceModulo(m, {class: 'abrir'}, texto) : h('a', {class: 'abrir', href: '/test/'}, texto));
-  }
-  if (t.estado === 'aprobado' && w.botella === 'por_entregar') {
-    return h('section', {class: 'item aviso-test'},
-      h('h3', {}, 'Tu botella de acero te espera'),
-      h('p', {}, `${conNota ? 'Aprobaste' : 'Terminaste'} tu test del Nivel 0 con ${w.nota}. Pasa a recogerla a la oficina.`));
-  }
-  return null;
 }
 
 /* ---------- importador del reporte de pedidos de Rena Ware ---------- */
@@ -1189,8 +1128,8 @@ async function pantallaRespaldo(aviso){
 async function iniciar(){
   const s = await sesionVigente();
   if (s) return inicioEquipo(s);
-  const tok = leer(K_ASESOR);
-  if (tok) return inicioAsesor(tok);
+  // La asesora tiene su propia plataforma (mismo dominio, misma sesión): inicio, precios, zonas, listas, guías, horario y lo suyo
+  if (leer(K_ASESOR)) { pintar(cargando()); return navegar('/asesores/'); }
   pantallaAcceso();
 }
 async function ruta(){
