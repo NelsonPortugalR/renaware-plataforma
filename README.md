@@ -134,6 +134,25 @@ Todo el SQL está en `sql/20261111_respaldo.sql`. Pruebas: `node pruebas/prueba.
 `.zip` validado con Python) y `python3 pruebas/prueba_respaldo.py` (la descarga comprimida en un
 Chromium real).
 
+## Seguridad de la base
+
+- **`plataforma_salud()`** revisa la base, y lo que encuentra sale en Hoy para el administrador: tablas sin
+  reglas, lo que se puede leer o escribir sin sesión, funciones públicas que escriben o leen personas sin pedir
+  sesión, vistas que leen con el permiso de su dueño, archivos que cualquiera puede subir, módulos sin grupo o
+  sin bloque en Hoy.
+- **Las vistas quedan seguras solas.** La guardia `plataforma_vistas_seguras` (un disparador de eventos) le pone
+  `security_invoker` a toda vista que se crea o se vuelve a crear en `public`. Nació el 13/11/2026: `fact_listos`
+  (RUC, cuentas, CCI) se había cerrado el 10/11, se volvió a crear desde otra conversación y quedó abierta de
+  nuevo; lo avisó la historia de cambios del respaldo. Regla: lo que haya que mostrar sin sesión se hace con una
+  función, no con una vista.
+- **Cerrar sin borrar.** Una política que sobra no se quita (eso pide una confirmación que desde un chat nadie
+  alcanza a responder): se deja sin efecto con `alter policy … using (false) with check (false)`, se crea la de
+  lectura si hace falta y se quitan los permisos de escritura. `plataforma_salud()` no cuenta las políticas sin
+  efecto. Así se cerró el 13/11 la escritura directa del Local del equipo.
+- SQL en `sql/20261110_seguridad_01_cierres.sql`, `sql/20261113_seguridad_02_vistas_seguras.sql` y
+  `sql/20261113_seguridad_03_salud_politicas_sin_efecto.sql`. Lo que sigue abierto (el formulario de registro y
+  las carpetas de archivos sin boleto) está en el documento del proyecto `claude/revision-plataforma-2026-11.md`.
+
 ## Cómo funciona el traspaso
 
 1. El hub entra una sola vez (Supabase Auth para el equipo; `asesor_login` para asesores).
