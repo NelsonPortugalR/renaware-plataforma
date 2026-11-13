@@ -135,8 +135,8 @@ def manejar(route, request):
         llamadas.append((fn, b))
         tok = b.get('p_token')
         if fn == 'asesor_login':
-            if b['p_celular'] == '987654321': return route.fulfill(status=200, headers=m, body=json.dumps({'token': 'tok-ase', 'nombre': 'fley rojas', 'celular': '987654321'}))
-            return route.fulfill(status=400, headers=m, body=json.dumps({'message': 'Ese numero no esta habilitado'}))
+            if b['p_celular'] == '40123456': return route.fulfill(status=200, headers=m, body=json.dumps({'token': 'tok-ase', 'nombre': 'fley rojas', 'celular': '987654321'}))
+            return route.fulfill(status=400, headers=m, body=json.dumps({'message': 'Ese DNI no esta habilitado'}))
         if fn == 'admin_login':
             if b['p_clave'] == 'clave': return route.fulfill(status=200, headers=m, body=json.dumps('tok-adm'))
             return route.fulfill(status=400, headers=m, body=json.dumps({'message': 'Clave incorrecta'}))
@@ -192,11 +192,13 @@ with sync_playwright() as pw:
 
     # ---------- 1. La asesora: entra y llega a su inicio ----------
     ctx, p = nuevo()
-    ok('Tu celular' in texto(p) and 'Soy de la oficina' in texto(p), 'Sin sesión pide el celular')
+    ok('Tu DNI' in texto(p) and 'Soy de la oficina' in texto(p), 'Sin sesión pide el DNI')
     cap(p, '01-entrar')
-    p.fill('#celular', '911111111'); p.click('button.boton'); p.wait_for_timeout(200)
-    ok('no está habilitado' in texto(p), 'Celular no habilitado: lo dice')
-    p.fill('#celular', '987 654 321'); p.click('button.boton'); p.wait_for_timeout(500)
+    p.fill('#dni', '123'); p.click('button.boton'); p.wait_for_timeout(200)
+    ok('8 dígitos' in texto(p), 'DNI incompleto: lo dice sin consultar la base')
+    p.fill('#dni', '11111111'); p.click('button.boton'); p.wait_for_timeout(200)
+    ok('no está registrado' in texto(p), 'DNI que no está en el equipo: lo dice')
+    p.fill('#dni', '40 123 456'); p.click('button.boton'); p.wait_for_timeout(500)
     ok(p.evaluate("JSON.parse(localStorage.getItem('rw_asesor_token'))") == 'tok-ase', 'Guarda la sesión de asesor en rw_asesor_token (la de la plataforma)')
     t = texto(p)
     ok(p.locator('.hola h1').inner_text() == 'Hola, Fley' and 'Miércoles 4 de noviembre. El período 23 cierra el miércoles 11.' in t, 'Inicio: saluda por su nombre y dice el día y el cierre del período')
@@ -379,7 +381,7 @@ with sync_playwright() as pw:
     p.click('.pie-a >> text=Salir'); p.wait_for_timeout(150)
     ok('¿Salir de la plataforma en este teléfono?' in p.locator('.hoja').inner_text(), 'Salir pregunta antes (un toque sin querer no la saca)')
     p.click('.hoja >> text=Sí, adelante'); p.wait_for_timeout(200)
-    ok('Tu celular' in texto(p) and p.evaluate("localStorage.getItem('rw_asesor_token')") is None, 'Al salir vuelve a pedir el celular y borra la sesión')
+    ok('Tu DNI' in texto(p) and p.evaluate("localStorage.getItem('rw_asesor_token')") is None, 'Al salir vuelve a pedir el DNI y borra la sesión')
     ctx.close()
 
     # --- entrar por enlace directo con sesión; «Volver» sin historial ---
@@ -425,7 +427,7 @@ with sync_playwright() as pw:
     # --- sesión vencida ---
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-viejo'))"); p.reload(); p.wait_for_timeout(500)
-    ok('Tu sesión venció' in texto(p) and 'Tu celular' in texto(p), 'Sesión vencida: vuelve a pedir el celular y lo explica')
+    ok('Tu sesión venció' in texto(p) and 'Tu DNI' in texto(p), 'Sesión vencida: vuelve a pedir el DNI y lo explica')
     ctx.close()
 
     # ---------- 2. Traspaso desde la plataforma (asesor) ----------

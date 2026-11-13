@@ -1,7 +1,13 @@
 # Plataforma · Equipo Arequipa
 
 Un solo acceso para todo. El equipo de oficina entra con correo y contraseña;
-los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
+los asesores, con su DNI. Desde aquí se abre cada módulo ya con sesión.
+
+**Los asesores entran con su DNI desde el 12/11/2026** (antes, con su celular; lo decidió Nelson: el
+celular de un asesor lo tiene cualquier cliente). `asesor_login` recibe el DNI en su parámetro de
+siempre y deja entrar a la persona activa de `eq_personas` que tiene ahí su DNI y su celular, o al
+invitado de `asesores` con DNI. El celular sigue siendo con el que la plataforma reconoce a la
+persona (sesiones, panel, premios). SQL: `renaware-peru/sql/20261112_06_ingreso_con_dni.sql`.
 
 ## Archivos
 
@@ -19,7 +25,7 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 - `public/asesores/index.html` — la **plataforma de asesores** (`/asesores/`): el inicio de la
   asesora con lo suyo, el buscador, precios, zonas de crédito, ¿ya ganó Empiece Ya?, premios,
   Nivel Cero y puntos; y dentro, **Entrenamientos**, **Listas** (`#listas`) y **Horario**
-  (`#horario`), que la oficina edita ahí mismo. Asesor con su celular; oficina con la sesión
+  (`#horario`), que la oficina edita ahí mismo. Asesor con su DNI; oficina con la sesión
   de la plataforma o la clave. Ver más abajo.
 - `public/entrenamientos/index.html` — solo redirige a `/asesores/` (enlaces viejos).
 - `pruebas/prueba_asesores.py` — pruebas de la plataforma de asesores y del modo oficina en un
@@ -31,7 +37,7 @@ los asesores, con su celular. Desde aquí se abre cada módulo ya con sesión.
 - `wrangler.toml` — dice que el sitio son los archivos de `public/`.
 - `sql/` — copia de las migraciones de la base aplicadas desde este chat (las demás están en el historial de Supabase).
 - `supabase/functions/traspaso/` — la Edge Function que canjea los códigos de traspaso.
-- `pruebas/prueba.js` — pruebas del hub con un Supabase simulado (`node pruebas/prueba.js`, necesita `npm install jsdom`).
+- `pruebas/prueba.js` — pruebas del hub con un Supabase simulado (`node pruebas/prueba.js`, necesita `npm install jsdom@24`: las versiones nuevas cambiaron la consola virtual).
 - `pruebas/prueba_test.js` — pruebas del test (`node pruebas/prueba_test.js`), con
   `pruebas/simulador_test.js` (el Supabase simulado del test). `pruebas/capturas_test.js
   <carpeta>` saca capturas en un celular con Chromium (necesita playwright).
@@ -259,7 +265,7 @@ una herramienta o una ficha.
 
 ## Plataforma de asesores (`/asesores/`)
 
-La página de la asesora: entra con su celular y tiene **todo en un solo sitio**. Está pensada para
+La página de la asesora: entra con su DNI y tiene **todo en un solo sitio**. Está pensada para
 quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla, un botón
 «Volver» arriba y el «atrás» del teléfono que siempre regresa un paso.
 

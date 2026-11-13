@@ -219,11 +219,12 @@ function mensaje(err){
   if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
   if (/Invalid login credentials/i.test(m)) return 'Correo o contraseña incorrectos.';
   if (/Email not confirmed/i.test(m)) return 'Tu correo aún no está confirmado. Revisa tu bandeja de entrada.';
+  if (/DNI no esta habilitado/i.test(m)) return 'Ese DNI no está registrado en el equipo. Pide que te registren.';
   if (/no esta habilitado/i.test(m)) return 'Ese número no está habilitado. Pide que te registren en el equipo.';
   return m || 'Algo falló. Intenta de nuevo.';
 }
 
-/* ---------- sesiones: equipo (correo) y asesor (celular) ---------- */
+/* ---------- sesiones: equipo (correo) y asesor (DNI) ---------- */
 function guardarSesion(s){
   if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
   guardar(K_STAFF, s);
@@ -258,8 +259,9 @@ function contexto(){
     idioma: navigator.language || ''
   };
 }
-async function entrarCelular(cel){
-  const r = await api('/rest/v1/rpc/asesor_login', {method: 'POST', body: {p_celular: cel, p_ctx: contexto()}});
+async function entrarAsesor(dni){
+  // en la base el parámetro conserva su nombre, pero lo que se envía es el DNI
+  const r = await api('/rest/v1/rpc/asesor_login', {method: 'POST', body: {p_celular: dni, p_ctx: contexto()}});
   borrar(K_STAFF);
   guardar(K_ASESOR, r.token);
   return r;
@@ -274,7 +276,7 @@ function cerrarSesion(){
 /* ---------- traspaso: el módulo arranca con la sesión del hub ---------- */
 // Al abrir un módulo externo se crea un código de un solo uso (vence en 2 minutos)
 // y viaja en el enlace: #traspaso=<código>. El módulo lo canjea por su propia sesión.
-// acceso: 'supabase' (correo), 'admin_sesion' (clave de admin), 'asesor' (celular), 'libre' o 'hub' (sin traspaso)
+// acceso: 'supabase' (correo), 'admin_sesion' (clave de admin), 'asesor' (DNI), 'libre' o 'hub' (sin traspaso)
 function conTraspaso(m){
   if (!m || !m.url || m.url.charAt(0) === '#') return false;
   if (leer(K_STAFF)) return ['supabase', 'admin_sesion', 'asesor'].includes(m.acceso);
@@ -415,9 +417,9 @@ function pantallaAcceso(msg){
   const boton = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
   const form = h('form', {class: 'acceso', novalidate: true},
     h('p', {class: 'marca'}, 'Equipo Arequipa'),
-    h('h1', {}, 'Entra con tu celular o tu correo'),
-    h('p', {class: 'apoyo', id: 'ayuda'}, 'Asesores: escriban su celular. Equipo de oficina: su correo.'),
-    h('label', {for: 'dato'}, 'Celular o correo'), dato, filaClave, boton, error);
+    h('h1', {}, 'Entra con tu DNI o tu correo'),
+    h('p', {class: 'apoyo', id: 'ayuda'}, 'Asesores: escriban su DNI. Equipo de oficina: su correo.'),
+    h('label', {for: 'dato'}, 'DNI o correo'), dato, filaClave, boton, error);
   dato.addEventListener('input', () => {
     const esCorreo = dato.value.includes('@');
     filaClave.classList.toggle('oculto', !esCorreo);
@@ -433,9 +435,9 @@ function pantallaAcceso(msg){
         if (!clave.value) throw new Error('Escribe tu contraseña.');
         await entrarCorreo(v, clave.value);
       } else {
-        const cel = v.replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
-        if (!/^9\d{8}$/.test(cel)) throw new Error('Escribe tu celular de 9 dígitos o tu correo.');
-        await entrarCelular(cel);
+        const dni = v.replace(/\D/g, '');
+        if (!/^\d{7,8}$/.test(dni)) throw new Error('Escribe los 8 dígitos de tu DNI o tu correo.');
+        await entrarAsesor(dni);
       }
       await iniciar();
     } catch (e) {

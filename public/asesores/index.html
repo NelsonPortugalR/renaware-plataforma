@@ -332,7 +332,7 @@
 'use strict';
 /* =====================================================================
    Entrenamientos · Listas · Horario — Equipo Arequipa
-   Asesor: entra con su celular (o llega ya con sesión desde la plataforma).
+   Asesor: entra con su DNI (o llega ya con sesión desde la plataforma).
    Ve los módulos con sus lecciones (guía PDF, video, libro: solo lo que hay),
    las listas por categoría (ver, descargar, enviar) y el horario de la semana.
    Oficina: lo mismo, más la edición: módulos, lecciones y materiales; subir
@@ -459,6 +459,7 @@ function mensaje(err){
   if (err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(m)) return 'No hay conexión. Revisa tu internet e intenta de nuevo.';
   if (/Sesion invalida/i.test(m)) return 'Tu sesión venció. Entra de nuevo.';
   if (/Clave incorrecta/i.test(m)) return 'Esa clave no es correcta.';
+  if (/DNI no esta habilitado/i.test(m)) return 'Ese DNI no está registrado en el equipo. Pide a la oficina que lo registre.';
   if (/no esta habilitado/i.test(m)) return 'Ese número no está habilitado. Pide a la oficina que lo active.';
   if (/Demasiados intentos/i.test(m)) return 'Demasiados intentos. Espera 15 minutos.';
   return m.replace(/\b(validos|valida|invalida|leccion|modulo|categoria|version|titulo|dia|subio|pagina)\b/g, x =>
@@ -579,13 +580,14 @@ async function arrancar(){
 function pantallaEntrar(msg){
   document.body.classList.add('asesor');
   const err = h('p', {class: 'error', role: 'alert'}, msg || '');
-  const cel = h('input', {id: 'celular', type: 'tel', inputmode: 'numeric', autocomplete: 'tel', placeholder: '9 dígitos', required: true});
+  const cel = h('input', {id: 'dni', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '8 dígitos', required: true});
   const form = h('form', {class: 'acceso', onsubmit: async ev => {
     ev.preventDefault();
     const v = cel.value.replace(/\D/g, '');
-    if (v.length < 9) { err.textContent = 'Escribe tu celular de 9 dígitos.'; return; }
+    if (v.length < 7 || v.length > 8) { err.textContent = 'Escribe los 8 dígitos de tu DNI.'; return; }
     err.textContent = ''; btn.disabled = true;
     try {
+      // en la base el parámetro conserva su nombre, pero lo que se envía es el DNI
       const r = await rpc('asesor_login', {p_celular: v, p_ctx: contexto()});
       guardar(K_ASESOR, r.token);
       iniciar('asesor');
@@ -593,8 +595,8 @@ function pantallaEntrar(msg){
   }},
     h('p', {class: 'marca'}, 'Equipo Arequipa'),
     h('h1', {}, 'Hola'),
-    h('p', {class: 'apoyo'}, 'Aquí tienes todo: precios, zonas de crédito, listas, guías, el horario y tus premios. Escribe tu celular para entrar; este teléfono te recordará.'),
-    h('label', {for: 'celular'}, 'Tu celular'), cel, err);
+    h('p', {class: 'apoyo'}, 'Aquí tienes todo: precios, zonas de crédito, listas, guías, el horario y tus premios. Escribe tu DNI para entrar; este teléfono te recordará.'),
+    h('label', {for: 'dni'}, 'Tu DNI'), cel, err);
   const btn = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
   form.append(btn, h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaClave()}, 'Soy de la oficina')));
   pintar(form);
@@ -618,7 +620,7 @@ function pantallaClave(msg){
     h('p', {class: 'apoyo'}, 'La misma clave del panel. Si entraste a la plataforma con tu correo, abre este módulo desde ahí y entras directo.'),
     h('label', {for: 'clave'}, 'Clave de la oficina'), inp, err);
   const btn = h('button', {class: 'boton', type: 'submit'}, 'Entrar');
-  form.append(btn, h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi celular')));
+  form.append(btn, h('p', {class: 'cambiar'}, h('button', {type: 'button', onclick: () => pantallaEntrar()}, 'Soy asesor: entrar con mi DNI')));
   pintar(form);
   setTimeout(() => inp.focus(), 50);
 }
@@ -651,7 +653,7 @@ async function iniciar(modo){
     render();
   } catch (e) {
     if (/Sesion invalida/i.test(e.message)) { if (modo === 'oficina') { borrar(K_ADMIN); return pantallaClave('Tu sesión de oficina venció. Entra de nuevo.'); }
-      borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu celular.'); }
+      borrar(K_ASESOR); return pantallaEntrar('Tu sesión venció. Vuelve a entrar con tu DNI.'); }
     pintar(h('div', {class: 'acceso centro'}, h('p', {class: 'error'}, mensaje(e)), h('button', {class: 'boton', onclick: () => iniciar(modo)}, 'Reintentar')));
   }
 }
@@ -1370,7 +1372,7 @@ function pieAsesor(){
   return h('footer', {class: 'pie-a'},
     h('p', {class: 'mini-t'}, 'Nelson Portugal, Representante Independiente de Rena Ware'),
     S.tab === 'inicio' ? h('button', {class: 'lado', type: 'button',
-      onclick: () => confirmar('¿Salir de la plataforma en este teléfono? Para volver a entrar solo escribes tu celular.', () => { cerrarHoja(); cerrarSesion(); })}, 'Salir') : null);
+      onclick: () => confirmar('¿Salir de la plataforma en este teléfono? Para volver a entrar solo escribes tu DNI.', () => { cerrarHoja(); cerrarSesion(); })}, 'Salir') : null);
 }
 async function refrescarPanel(repinta){
   try { S.p = await rpc('asesor_panel', {p_token: tokenAsesor()}); S.pEn = Date.now(); }

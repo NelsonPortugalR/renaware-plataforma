@@ -1,5 +1,5 @@
 // Pruebas del hub con un Supabase simulado. Correr: node pruebas/prueba.js
-// (necesita jsdom: npm install jsdom)
+// (necesita jsdom 24: npm install jsdom@24; las versiones nuevas cambiaron la consola virtual)
 const {JSDOM, VirtualConsole} = require('jsdom');
 // jsdom no sabe navegar a otra página: ese aviso no es una falla (el enlace libre sí navega en el navegador)
 const consola = new VirtualConsole(); consola.sendTo(console, {omitJSDOMErrors: true});
@@ -93,14 +93,14 @@ function crear(prep){
         if (u.startsWith('/auth/v1/logout')) return {ok:true, status:204, text: async () => ''};
         if (u.startsWith('/rest/v1/rpc/hoy')) return auth.includes('jwt-') ? r(HOY) : r({message:'JWT expired'}, 401);
         if (u.startsWith('/rest/v1/rpc/plataforma_menu')) {
-          if (b.p_token) return b.p_token === 'tok-1' ? r(MENU_ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
+          if (b.p_token) return b.p_token === 'tok-1' ? r(MENU_ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu DNI.'}, 400);
           return auth.includes('jwt-') ? r(MENU_STAFF) : r({message:'JWT expired'}, 401);
         }
         if (u.startsWith('/rest/v1/plataforma_modulos')) return r({message:'el hub ya no lee la tabla: usa plataforma_menu'}, 401);
         if (u.startsWith('/rest/v1/rpc/plataforma_fuentes_estado')) return auth.includes('jwt-') ? r(FUENTES) : r({message:'JWT expired'}, 401);
-        if (u.startsWith('/rest/v1/rpc/asesor_login')) return b.p_celular === '987654321' ? r({token:'tok-1', nombre:ASESOR.nombre, celular:'987654321'}) : r({message:'Ese numero no esta habilitado'}, 400);
+        if (u.startsWith('/rest/v1/rpc/asesor_login')) return b.p_celular === '40123456' ? r({token:'tok-1', nombre:ASESOR.nombre, celular:'987654321'}) : r({message:'Ese DNI no esta habilitado'}, 400);
         if (u.startsWith('/rest/v1/rpc/ts_estado')) return TEST ? r(TEST) : r({message:'sin mock'}, 404);
-        if (u.startsWith('/rest/v1/rpc/asesor_inicio')) return b.p_token === 'tok-1' ? r(ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu celular.'}, 400);
+        if (u.startsWith('/rest/v1/rpc/asesor_inicio')) return b.p_token === 'tok-1' ? r(ASESOR) : r({message:'Tu sesión venció. Vuelve a entrar con tu DNI.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear_asesor')) return b.p_token === 'tok-1' ? r(CODIGO) : r({message:'Tu sesión venció.'}, 400);
         if (u.startsWith('/rest/v1/rpc/traspaso_crear')) return auth.includes('jwt-') ? r(CODIGO) : r({message:'JWT expired'}, 401);
         if (u.startsWith('/rest/v1/rpc/respaldo_')) {
@@ -237,8 +237,8 @@ const tarjeta0 = (d, n) => [...d.querySelectorAll('.mod')].find(a => a.querySele
   // ---- Asesora: el hub no le arma un inicio; la manda a su plataforma (/asesores/), con la misma sesión ----
   ({w, d, llamadas, idas} = crear());
   await espera(60);
-  escribir(w, d.getElementById('dato'), '987 654 321'); enviar(w, d); await espera(150);
-  ok(JSON.parse(w.localStorage.getItem('rw_asesor_token')) === 'tok-1', 'Asesora entra con celular y su sesión queda guardada');
+  escribir(w, d.getElementById('dato'), '40 123 456'); enviar(w, d); await espera(150);
+  ok(JSON.parse(w.localStorage.getItem('rw_asesor_token')) === 'tok-1', 'Asesora entra con su DNI y su sesión queda guardada');
   ok(idas.length === 1 && idas[0] === '/asesores/', 'El hub la lleva a su plataforma: ' + idas.join(', '));
   ok(!llamadas.some(c => /asesor_inicio|plataforma_menu|ts_estado/.test(c.u)), 'Sin pedir nada más aquí: lo suyo lo carga la plataforma de asesores');
   ({w, d, llamadas, idas} = crear(w => w.localStorage.setItem('rw_asesor_token', JSON.stringify('tok-1'))));
@@ -246,8 +246,12 @@ const tarjeta0 = (d, n) => [...d.querySelectorAll('.mod')].find(a => a.querySele
   ok(idas[0] === '/asesores/' && !d.querySelector('form.acceso'), 'Con la sesión ya guardada, va directo (sin pasar por el acceso)');
   ({w, d, llamadas, idas} = crear());
   await espera(60);
-  escribir(w, d.getElementById('dato'), '911111111'); enviar(w, d); await espera(150);
-  ok(d.getElementById('error').textContent.includes('no está habilitado') && !idas.length, 'Un celular que no es del equipo no entra ni sale del acceso');
+  escribir(w, d.getElementById('dato'), '11111111'); enviar(w, d); await espera(150);
+  ok(d.getElementById('error').textContent.includes('no está registrado') && !idas.length, 'Un DNI que no es del equipo no entra ni sale del acceso');
+  ({w, d, llamadas, idas} = crear());
+  await espera(60);
+  escribir(w, d.getElementById('dato'), '987654321'); enviar(w, d); await espera(150);
+  ok(d.getElementById('error').textContent.includes('8 dígitos') && !llamadas.some(c => /asesor_login/.test(c.u)), 'Un celular ya no sirve para entrar: pide el DNI sin consultar la base');
 
   // ---- Respaldo: estado, descarga de la copia, zip de archivos, y que solo entra el administrador ----
   {
