@@ -132,6 +132,15 @@ language sql stable security definer set search_path to 'public', 'pg_catalog' a
     from pg_trigger t join pg_class c on c.oid = t.tgrelid
    where not t.tgisinternal and c.relnamespace = 'public'::regnamespace
   union all
+  -- disparadores de eventos propios (la guardia de las vistas, 13/11); los de Supabase viven en extensions y no se copian
+  select 82, 0, 'disparador', 'evento.' || e.evtname,
+         format('create event trigger %I on %s%s execute function public.%I();', e.evtname, e.evtevent,
+                case when e.evttags is not null then ' when tag in (' || (select string_agg(quote_literal(t), ', ') from unnest(e.evttags) t) || ')' else '' end,
+                p.proname)
+         || case when e.evtenabled = 'D' then chr(10) || format('alter event trigger %I disable;', e.evtname) else '' end
+    from pg_event_trigger e join pg_proc p on p.oid = e.evtfoid
+   where p.pronamespace = 'public'::regnamespace
+  union all
   select 90, 0, 'politica', p.schemaname || '.' || p.tablename || '.' || p.policyname,
          format('create policy %I on %I.%I as %s for %s to %s%s%s;', p.policyname, p.schemaname, p.tablename, p.permissive, p.cmd,
                 array_to_string(p.roles, ', '),

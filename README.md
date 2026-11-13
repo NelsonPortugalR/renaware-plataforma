@@ -117,9 +117,10 @@ El plan gratuito de Supabase no hace backups, así que la base se copia a sí mi
   y el SQL para rehacer la estructura en el esquema `respaldo`, que no se expone por la API.
   Hay siete casilleros diarios (`dia-1`..`dia-7`, se pisan cada semana), tres mensuales
   (`mes-0`..`mes-2`) y uno `manual`. Una copia pesa unos 4 MB.
-- **`respaldo.cambios`** guarda la historia de cada función, tabla, vista, política, disparador,
-  índice y tarea: una fila cada vez que cambia su definición. Sirve para ver qué cambió y cuándo,
-  y para recuperar la versión anterior de una función.
+- **`respaldo.cambios`** guarda la historia de cada función, tabla, vista, política, disparador
+  (también los de eventos propios, como la guardia de las vistas), índice y tarea: una fila cada
+  vez que cambia su definición. Sirve para ver qué cambió y cuándo, y para recuperar la versión
+  anterior de una función. Así se supo, el 13/11, que una vista cerrada se había vuelto a abrir.
 - **La pantalla** (`pantallaRespaldo`) dice si la copia corrió, la descarga a este dispositivo
   (`respaldo-plataforma-AAAA-MM-DD.json.gz`: datos y estructura en un solo archivo) y baja los
   archivos de Storage por carpeta en `.zip`. Esa descarga es la única copia **fuera** de Supabase;
