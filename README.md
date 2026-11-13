@@ -5,9 +5,11 @@ los asesores, con su DNI. Desde aquí se abre cada módulo ya con sesión.
 
 **Los asesores entran con su DNI desde el 12/11/2026** (antes, con su celular; lo decidió Nelson: el
 celular de un asesor lo tiene cualquier cliente). `asesor_login` recibe el DNI en su parámetro de
-siempre y deja entrar a la persona activa de `eq_personas` que tiene ahí su DNI y su celular, o al
-invitado de `asesores` con DNI. El celular sigue siendo con el que la plataforma reconoce a la
-persona (sesiones, panel, premios). SQL: `renaware-peru/sql/20261112_06_ingreso_con_dni.sql`.
+siempre y deja entrar a la persona activa de `eq_personas` que tiene ahí su DNI (el celular no hace
+falta), o al invitado de `asesores` con DNI. La sesión guarda en `asesor_sesion.celular` la llave de
+la persona: su celular o, si no tiene uno en la base, su DNI de 8 dígitos; `asesor_panel_de` la
+reconoce por cualquiera de los dos. SQL: `renaware-peru/sql/20261112_06_ingreso_con_dni.sql` y
+`20261112_07_basta_el_dni.sql`.
 
 ## Archivos
 
