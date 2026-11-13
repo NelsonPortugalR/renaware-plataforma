@@ -99,9 +99,11 @@ def panel():
         'proximos': [{'fecha': '2026-11-04', 'hora': '16:00', 'titulo': 'Taller de cocina', 'modo': 'presencial', 'lugar': 'Oficina', 'facilitador': None, 'enlace': None, 'asistencia': True},
                      {'fecha': '2026-11-05', 'hora': '21:00', 'titulo': 'Capacitación por Zoom', 'modo': 'zoom', 'lugar': None, 'facilitador': 'Nelson Portugal', 'enlace': None, 'asistencia': False}],
         'menu': MENU}
-PANEL = {'modo': 'normal'}      # normal | logro | vacio | falla
+PANEL = {'modo': 'normal', 'eya': False}      # modo: normal | logro | vacio | falla · eya: la base le prendió «¿Ya ganó Empiece Ya?»
+EYA_MOD = {'id': 'eya-buscar', 'nombre': '¿Ya ganó Empiece Ya?', 'descripcion': 'Busca a una persona por su nombre.', 'url': '#empiece', 'roles': ['asesor'], 'orden': 27, 'acceso': 'hub', 'grupo': 'Equipo'}
 def panel_segun():
     d = panel()
+    if PANEL['eya']: d['menu'] = MENU + [EYA_MOD]
     if PANEL['modo'] == 'logro':
         d['nivel'].update({'estado': 'logro', 'validas': 5, 'logro_fecha': '2026-11-03', 'proximas': []})
         d['nivel']['test'].update({'estado': 'habilitado', 'desde': '2026-11-03', 'hasta': '2026-11-18', 'dias': 14})
@@ -148,7 +150,9 @@ def manejar(route, request):
             if rol != 'asesor': return route.fulfill(status=400, headers=m, body=json.dumps({'message': 'Sesion invalida'}))
             if PANEL['modo'] == 'falla': return route.fulfill(status=500, headers=m, body=json.dumps({'message': 'se cayó algo'}))
             return route.fulfill(status=200, headers=m, body=json.dumps(panel_segun()))
-        if fn == 'eya_buscar': return route.fulfill(status=200, headers=m, body=json.dumps(eya(b.get('p_q') or '')))
+        if fn == 'eya_buscar':
+            if rol == 'asesor' and not PANEL['eya']: return route.fulfill(status=400, headers=m, body=json.dumps({'message': 'Esta búsqueda no está disponible.'}))
+            return route.fulfill(status=200, headers=m, body=json.dumps(eya(b.get('p_q') or '')))
         if fn == 'traspaso_crear_asesor': return route.fulfill(status=200, headers=m, body=json.dumps('cccccccc-bbbb-4ccc-8ddd-eeeeeeeeeeee'))
         if fn == 'hor_semana':
             import datetime
@@ -209,9 +213,9 @@ with sync_playwright() as pw:
     ok('Llevas 2 de 5 clases' in av[1] and 'Te quedan 15 días' in av[1] and 'hasta el jueves 19 de noviembre' in av[1] and av[1].rstrip(' \n›').endswith('Próxima clase: hoy, 4:00 p. m.'), 'Aviso 2: su Nivel Cero con clases, plazo y la próxima clase')
     ok(p.locator('.avisos .paso.hecho').count() == 2 and p.locator('.avisos .paso').count() == 5, 'Dibuja 5 círculos y 2 hechos')
     ok('Hoy, 4:00 p. m.' in av[2] and 'Taller de cocina · En la oficina' in av[2], 'Aviso 3: lo que sigue en el horario')
-    ok(p.locator('h2').all_inner_texts() == ['Para vender y afiliar', 'Para aprender', 'Lo tuyo'], 'Los botones van en tres grupos: ' + ' / '.join(p.locator('h2').all_inner_texts()))
+    ok(p.locator('h2').all_inner_texts() == ['Para vender', 'Para aprender', 'Lo tuyo'], 'Los botones van en tres grupos: ' + ' / '.join(p.locator('h2').all_inner_texts()))
     losas = p.locator('.losa b').all_inner_texts()
-    ok(losas == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', '¿Ya ganó Empiece Ya?', 'Entrenamientos', 'Horario', 'Mi Nivel Cero', 'Mis premios', 'Mis puntos', 'Local del equipo'], 'Diez botones, cada uno con su nombre: ' + ', '.join(losas))
+    ok(losas == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', 'Entrenamientos', 'Horario', 'Mi Nivel Cero', 'Mis premios', 'Mis puntos', 'Local del equipo'], 'Nueve botones, cada uno con su nombre (sin Empiece Ya: está apagado para las asesoras): ' + ', '.join(losas))
     ok(p.locator('.losa .globo').inner_text() == '1', 'Mis premios lleva la cuenta de lo que hay por recoger')
     med = p.evaluate("(() => { const l = [...document.querySelectorAll('.losa')].map(e => e.getBoundingClientRect()); const f = parseFloat(getComputedStyle(document.body).fontSize); const b = parseFloat(getComputedStyle(document.querySelector('.losa b')).fontSize); return {alto: Math.min(...l.map(r => r.height)), ancho: Math.min(...l.map(r => r.width)), letra: f, losa: b, desborda: document.documentElement.scrollWidth > innerWidth}; })()")
     ok(med['alto'] >= 120 and med['ancho'] >= 150 and med['letra'] >= 18 and med['losa'] >= 17.5 and not med['desborda'], 'Botones grandes y letra grande, sin desbordar el ancho del teléfono: ' + json.dumps(med))
@@ -278,23 +282,14 @@ with sync_playwright() as pw:
     p.click('.tope .casa'); p.wait_for_timeout(200)
     ok(p.locator('.hola h1').count() == 1, '«Inicio» lleva al inicio desde cualquier parte')
 
-    # --- ¿ya ganó Empiece Ya? ---
-    p.click('.losa:has-text("Empiece Ya")'); p.wait_for_timeout(200)
-    ok(p.locator('h1').inner_text() == '¿Ya ganó Empiece Ya?' and p.locator('#eya-q').count() == 1, 'Empiece Ya: solo pide un nombre')
-    p.fill('#eya-q', 'ab'); p.click('button.boton'); p.wait_for_timeout(150)
-    ok('Escribe al menos 3 letras' in texto(p) and not any(c[0] == 'eya_buscar' for c in llamadas), 'Con menos de 3 letras no busca y lo explica')
-    p.fill('#eya-q', 'María Quispe'); p.press('#eya-q', 'Enter'); p.wait_for_timeout(300)
-    t = texto(p)
-    ok(('eya_buscar', {'p_token': 'tok-ase', 'p_q': 'María Quispe'}) in llamadas, 'Busca en la base con su sesión (también con Enter)')
-    ok('Hay 2 personas con ese nombre que ya ganaron' in t and 'Maria Quispe de la Cruz' in t and 'Ganó Empiece Ya el 14 de octubre de 2026 (PB21 de 2026).' in t and 'División WV08 · nuestro equipo · código 1700001' in t, 'Sí ganó: quién, cuándo, su división y su código')
-    ok('Premios: Utensilio 1.5L + Botella Filtrante RW (PB21)' in t and 'División LK03 · código 1600002' in t, 'Con sus premios, y distingue a la de otra división')
-    ok('desde enero de 2024 hasta el cierre del 14 de octubre de 2026 (PB21)' in t, 'Dice hasta qué fecha llega la lista')
-    cap(p, '06-empiece-si')
-    p.fill('#eya-q', 'Zoila Zzzz'); p.click('button.boton'); p.wait_for_timeout(300)
-    t = texto(p)
-    ok('No aparece' in t and '«Zoila Zzzz» no figura entre los ganadores de Empiece Ya.' in t and 'Si ganó después de esa fecha, todavía no sale aquí.' in t, 'No ganó: lo dice, y avisa del límite de la lista')
-    cap(p, '07-empiece-no')
-    p.click('.tope .atras'); p.wait_for_timeout(250)
+    # --- Empiece Ya está apagado para las asesoras: ni botón, ni búsqueda, ni pantalla ---
+    p.fill('#buscar', 'empiece'); p.wait_for_timeout(150)
+    r = p.locator('.resultados .fila').all_inner_texts()
+    ok(len(r) == 2 and all('SECCIÓN' not in x.upper() for x in r) and 'Programa Empiece Ya' in r[0], 'Buscar «empiece» trae la lista y la guía del programa, no la búsqueda de ganadores')
+    p.fill('#buscar', ''); p.wait_for_timeout(100)
+    p.evaluate("location.hash = '#empiece'"); p.wait_for_timeout(250)
+    ok(p.locator('.hola h1').count() == 1 and p.url.endswith('#inicio') and p.locator('#eya-q').count() == 0, 'Aunque escriba la dirección de la pantalla, se queda en su inicio')
+    ok(not any(c[0] == 'eya_buscar' for c in llamadas), 'Y la página nunca llama a esa búsqueda')
 
     # --- mis premios, mi Nivel Cero, mis puntos ---
     p.click('.avisos .tarj.ok'); p.wait_for_timeout(200)
@@ -405,11 +400,39 @@ with sync_playwright() as pw:
     cap(p, '14-nivel-test')
     ctx.close()
 
+    # --- ¿ya ganó Empiece Ya?, cuando la base lo prende (plataforma_modulos «eya-buscar» activo) ---
+    PANEL['eya'] = True
+    ctx, p = nuevo()
+    p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
+    ok(p.locator('h2').all_inner_texts()[0] == 'Para vender y afiliar' and p.locator('.losa b').all_inner_texts()[3] == '¿Ya ganó Empiece Ya?', 'Prendido desde la base, el botón aparece solo en «Para vender y afiliar»')
+    p.fill('#buscar', 'ganador'); p.wait_for_timeout(150)
+    ok('¿Ya ganó Empiece Ya?' in p.locator('.resultados').inner_text(), 'Y también en el buscador')
+    p.fill('#buscar', ''); p.wait_for_timeout(100)
+    p.click('.losa:has-text("Empiece Ya")'); p.wait_for_timeout(200)
+    ok(p.locator('h1').inner_text() == '¿Ya ganó Empiece Ya?' and p.locator('#eya-q').count() == 1, 'Empiece Ya: solo pide un nombre')
+    p.fill('#eya-q', 'ab'); p.click('button.boton'); p.wait_for_timeout(150)
+    ok('Escribe al menos 3 letras' in texto(p) and not any(c[0] == 'eya_buscar' for c in llamadas), 'Con menos de 3 letras no busca y lo explica')
+    p.fill('#eya-q', 'María Quispe'); p.press('#eya-q', 'Enter'); p.wait_for_timeout(300)
+    t = texto(p)
+    ok(('eya_buscar', {'p_token': 'tok-ase', 'p_q': 'María Quispe'}) in llamadas, 'Busca en la base con su sesión (también con Enter)')
+    ok('Hay 2 personas con ese nombre que ya ganaron' in t and 'Maria Quispe de la Cruz' in t and 'Ganó Empiece Ya el 14 de octubre de 2026 (PB21 de 2026).' in t and 'División WV08 · nuestro equipo · código 1700001' in t, 'Sí ganó: quién, cuándo, su división y su código')
+    ok('Premios: Utensilio 1.5L + Botella Filtrante RW (PB21)' in t and 'División LK03 · código 1600002' in t, 'Con sus premios, y distingue a la de otra división')
+    ok('desde enero de 2024 hasta el cierre del 14 de octubre de 2026 (PB21)' in t, 'Dice hasta qué fecha llega la lista')
+    cap(p, '06-empiece-si')
+    p.fill('#eya-q', 'Zoila Zzzz'); p.click('button.boton'); p.wait_for_timeout(300)
+    t = texto(p)
+    ok('No aparece' in t and '«Zoila Zzzz» no figura entre los ganadores de Empiece Ya.' in t and 'Si ganó después de esa fecha, todavía no sale aquí.' in t, 'No ganó: lo dice, y avisa del límite de la lista')
+    cap(p, '07-empiece-no')
+    p.click('.tope .atras'); p.wait_for_timeout(250)
+    ok(p.locator('.hola h1').count() == 1, 'Vuelve al inicio')
+    ctx.close()
+    PANEL['eya'] = False
+
     # --- una asesora sin nada personal, y cuando lo personal falla ---
     PANEL['modo'] = 'vacio'
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
-    ok(p.locator('.hola h1').inner_text() == 'Hola, Ana' and p.locator('.avisos').count() == 0 and p.locator('.losa b').all_inner_texts() == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', '¿Ya ganó Empiece Ya?', 'Entrenamientos', 'Horario', 'Mis premios', 'Mis puntos'], 'Sin Nivel Cero, premios ni local: inicio limpio con sus 8 botones')
+    ok(p.locator('.hola h1').inner_text() == 'Hola, Ana' and p.locator('.avisos').count() == 0 and p.locator('.losa b').all_inner_texts() == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', 'Entrenamientos', 'Horario', 'Mis premios', 'Mis puntos'], 'Sin Nivel Cero, premios ni local: inicio limpio con sus 7 botones')
     p.click('.losa:has-text("Mis premios")'); p.wait_for_timeout(150)
     ok('Todavía no tienes premios registrados' in texto(p), 'Mis premios vacío lo dice sin alarmar')
     p.click('.tope .atras'); p.wait_for_timeout(200); p.click('.losa:has-text("Mis puntos")'); p.wait_for_timeout(150)
@@ -418,7 +441,7 @@ with sync_playwright() as pw:
     PANEL['modo'] = 'falla'
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
-    ok('No pude cargar tus datos' in texto(p) and p.locator('.losa').count() == 8, 'Si lo personal falla, lo avisa y lo demás sigue funcionando')
+    ok('No pude cargar tus datos' in texto(p) and p.locator('.losa').count() == 7, 'Si lo personal falla, lo avisa y lo demás sigue funcionando')
     PANEL['modo'] = 'normal'
     p.click('.avisos >> text=Reintentar'); p.wait_for_timeout(400)
     ok(p.locator('.hola h1').inner_text() == 'Hola, Fley' and 'Tienes un premio por recoger' in texto(p), '«Reintentar» lo trae sin recargar la página')

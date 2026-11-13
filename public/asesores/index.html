@@ -543,7 +543,7 @@ function escribirHash(){
 }
 function aplicarHash(){
   const o = leerHash();
-  const tabs = oficina() ? ['entrenamientos', 'listas', 'horario'] : PANTALLAS;
+  const tabs = oficina() ? ['entrenamientos', 'listas', 'horario'] : PANTALLAS.filter(t => t !== 'empiece' || conEmpiece());
   S.tab = tabs.find(t => o[t]) || (o.leccion || o.modulo ? 'entrenamientos' : tabs[0]);
   S.leccion = null; S.modulo = null; S.zona = null;
   if (S.tab === 'entrenamientos') {
@@ -692,6 +692,7 @@ async function accion(fn, exito){
 function render(){
   escribirHash();
   if (!oficina()) {
+    if (S.tab === 'empiece' && !conEmpiece()) { S.tab = 'inicio'; escribirHash(); }
     const vista = (VISTAS[S.tab] || VISTAS.inicio)();
     return repintar(S.tab === 'inicio' ? null : tope(),
       S.tab !== 'inicio' && !profundo() ? h('h1', {class: 'titulo-p'}, TITULOS[S.tab]) : null,
@@ -1444,6 +1445,9 @@ async function abrirExterno(m, boton){
 }
 function navegar(url){ location.href = url; }
 function moduloDelMenu(id, porDefecto){ return ((S.p && S.p.menu) || []).find(m => m.id === id) || porDefecto; }
+// «¿Ya ganó Empiece Ya?» está apagado para las asesoras (13/11/2026). Se prende desde la base, sin tocar esta página:
+// plataforma_modulos «eya-buscar» con activo = true; entonces llega en su menú y aparecen el botón, la pantalla y la búsqueda.
+function conEmpiece(){ return ((S.p && S.p.menu) || []).some(m => m.id === 'eya-buscar'); }
 function vistaInicio(){
   const p = S.p || {}, hoy = S.d.hoy;
   const nombre = primerNombre(p.nombre || S.d.nombre);
@@ -1498,15 +1502,15 @@ function vistaInicio(){
       h('span', {class: 'tarj-d'}, `${ev.titulo} · ${dondeEs(ev)}`)),
     flechita()));
 
-  const propios = new Set(['cotizador', 'zonas', 'listas', 'entrenamientos', 'test', 'chat']);
+  const propios = new Set(['cotizador', 'zonas', 'listas', 'entrenamientos', 'test', 'chat', 'eya-buscar']);
   const otros = ((p.menu || [])).filter(m => !propios.has(m.id) && m.url && m.url.charAt(0) !== '#');
   const grupo = (tit, losas) => { losas = losas.filter(Boolean); return losas.length ? [h('h2', {}, tit), h('div', {class: 'losas'}, losas)] : []; };
   normal.append(...(avisos.length ? [h('div', {class: 'avisos'}, avisos)] : []),
-    ...grupo('Para vender y afiliar', [
+    ...grupo(conEmpiece() ? 'Para vender y afiliar' : 'Para vender', [
       losa(ICO.precios, 'Precios y promociones', 'Listas, especiales, repuestos y servicios', b => abrirExterno(moduloDelMenu('cotizador', {id: 'cotizador', url: PRECIOS, acceso: 'asesor'}), b)),
       losa(ICO.zonas, 'Zonas de crédito', '¿Hay crédito en ese distrito?', () => ir('zonas')),
       losa(ICO.listas, 'Listas y fotos', 'Para ver, enviar o descargar', () => ir('listas')),
-      losa(ICO.empiece, '¿Ya ganó Empiece Ya?', 'Busca a una persona por su nombre', () => ir('empiece'))]),
+      conEmpiece() ? losa(ICO.empiece, '¿Ya ganó Empiece Ya?', 'Busca a una persona por su nombre', () => ir('empiece')) : null]),
     ...grupo('Para aprender', [
       losa(ICO.aprender, 'Entrenamientos', 'Guías paso a paso', () => ir('entrenamientos')),
       losa(ICO.horario, 'Horario', 'Clases y reuniones de la semana', () => ir('horario'))]),
@@ -1530,7 +1534,7 @@ function indiceBusqueda(){
   sec('Listas y fotos', 'lista pdf foto concurso descargar enviar whatsapp', () => ir('listas'));
   sec('Entrenamientos', 'guia leccion video libro capacitacion aprender modulo', () => ir('entrenamientos'));
   sec('Horario', 'horario semana clase zoom taller reunion capacitacion lanzamiento charla desayuno', () => ir('horario'));
-  sec('¿Ya ganó Empiece Ya?', 'empiece ya gano ganador afiliado afiliar nuevo', () => ir('empiece'));
+  if (conEmpiece()) sec('¿Ya ganó Empiece Ya?', 'empiece ya gano ganador afiliado afiliar nuevo', () => ir('empiece'));
   sec('Mis premios', 'premio recoger concurso botella regalo', () => ir('premios'));
   sec('Mis puntos', 'puntos pedidos periodo', () => ir('puntos'));
   if (S.p && S.p.nivel) sec('Mi Nivel Cero', 'nivel cero asistencia clases test botella', () => ir('nivel'));
@@ -1982,7 +1986,7 @@ window.addEventListener('hashchange', () => {       // «atrás» y «adelante»
   if (!S.d || visorAbierto) return;
   const antes = S.tab + S.modulo + S.leccion + S.semana + S.zona;
   aplicarHash();
-  if (antes === S.tab + S.modulo + S.leccion + S.semana + S.zona) return;
+  if (antes === S.tab + S.modulo + S.leccion + S.semana + S.zona) { escribirHash(); return; }   // una dirección que no le toca vuelve a la suya
   const pinta = () => { render(); window.scrollTo(0, 0); };
   if (S.tab === 'horario' && S.semana !== S.semanaD.lunes) cargarSemana(S.semana).then(pinta); else pinta();
 });

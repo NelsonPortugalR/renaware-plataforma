@@ -25,8 +25,8 @@ reconoce por cualquiera de los dos. SQL: `renaware-peru/sql/20261112_06_ingreso_
 - `public/chat/index.html` — **Pregúntale** (`/chat/`): el chat en lenguaje
   natural sobre toda la base. Usa la misma sesión del hub. Ver más abajo.
 - `public/asesores/index.html` — la **plataforma de asesores** (`/asesores/`): el inicio de la
-  asesora con lo suyo, el buscador, precios, zonas de crédito, ¿ya ganó Empiece Ya?, premios,
-  Nivel Cero y puntos; y dentro, **Entrenamientos**, **Listas** (`#listas`) y **Horario**
+  asesora con lo suyo, el buscador, precios, zonas de crédito, premios, Nivel Cero y puntos
+  («¿ya ganó Empiece Ya?» está hecho pero apagado para las asesoras); y dentro, **Entrenamientos**, **Listas** (`#listas`) y **Horario**
   (`#horario`), que la oficina edita ahí mismo. Asesor con su DNI; oficina con la sesión
   de la plataforma o la clave. Ver más abajo.
 - `public/entrenamientos/index.html` — solo redirige a `/asesores/` (enlaces viejos).
@@ -274,9 +274,9 @@ quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla
 - **Inicio**: saluda por su nombre, dice el día y cuándo cierra el período, y muestra solo lo
   que le toca a ella: *premios por recoger*, *su Nivel Cero* (clases, plazo y próxima clase;
   con las 5 clases, el botón de su test) y *lo que sigue en el horario*. Debajo, los botones
-  en tres grupos: **Para vender y afiliar** (Precios y promociones, Zonas de crédito, Listas y
-  fotos, ¿Ya ganó Empiece Ya?), **Para aprender** (Entrenamientos, Horario) y **Lo tuyo**
-  (Mi Nivel Cero, Mis premios, Mis puntos, y lo que `plataforma_menu` le sume, como el Local).
+  en tres grupos: **Para vender** (Precios y promociones, Zonas de crédito, Listas y fotos),
+  **Para aprender** (Entrenamientos, Horario) y **Lo tuyo** (Mi Nivel Cero, Mis premios, Mis
+  puntos, y lo que `plataforma_menu` le sume, como el Local).
 - **Buscador** (arriba del inicio): una sola caja busca secciones, listas, guías y distritos.
   Escribir «cayma» responde ahí mismo si hay crédito.
 - **Precios y promociones**: sale al portal `renaware-peru` con su sesión (traspaso); con
@@ -286,8 +286,15 @@ quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla
   Cada distrito dice con palabras «Sí hay crédito», «Sí, con excepciones» o «No hay crédito»,
   cómo se entrega y sus zonas sin crédito por motivo. La lista se guarda 12 horas en el
   teléfono (`rw_zonas_v1`) y sirve sin señal.
-- **¿Ya ganó Empiece Ya?**: un nombre (o un código) y dice si esa persona ya ganó, cuándo, en
-  qué división y con qué premios, y hasta qué cierre llega la lista (`eya_buscar`).
+- **¿Ya ganó Empiece Ya?** — **apagado para las asesoras desde el 13/11/2026** (Nelson: «por
+  ahora no, le voy a complicar a una persona con esa información»; la oficina lo tiene en el
+  hub, en «Ganadores Empiece Ya» → Buscar persona). Está hecho: un nombre (o un código) y dice
+  si esa persona ya ganó, cuándo, en qué división y con qué premios, y hasta qué cierre llega
+  la lista (`eya_buscar`). Es un interruptor en la base, sin tocar la página:
+  `update plataforma_modulos set activo = true where id = 'eya-buscar';`. Con eso
+  `plataforma_menu` se lo manda a la asesora y aparecen el botón (el grupo vuelve a llamarse
+  «Para vender y afiliar»), la pantalla `#empiece` y la entrada del buscador; apagado, la
+  dirección `#empiece` vuelve al inicio y `eya_buscar` no le responde a una sesión de asesor.
 - **Mis premios** (`pr_premios` por su código): para recoger en la oficina, ganados que todavía
   no llegan (sin prometer de más: dice si es oficial, preliminar o anotado por la oficina) y
   entregados. **Mi Nivel Cero**: clases a las que fue, las próximas que cuentan y su test.
@@ -297,15 +304,20 @@ quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla
 Lo personal llega en una sola llamada, `asesor_panel(p_token)`; si falla, el inicio lo dice y lo
 demás sigue funcionando. El hub (`/`) ya no le arma un inicio a la asesora: la manda aquí, con la
 misma sesión (`rw_asesor_token`, mismo dominio). La dirección vieja `/entrenamientos/` redirige
-conservando la pantalla y el traspaso. SQL en `sql/20261111_asesores.sql`. Pruebas:
-`python3 pruebas/prueba_asesores.py [carpeta_capturas]` (Chromium real, 149 comprobaciones).
+conservando la pantalla y el traspaso. SQL en `sql/20261111_asesores.sql` y
+`sql/20261113_asesores_02_empiece_ya_apagado.sql`. Pruebas:
+`python3 pruebas/prueba_asesores.py [carpeta_capturas]` (Chromium real, 156 comprobaciones; el
+simulador responde por defecto como está la base, sin Empiece Ya, y un escenario aparte lo prende).
 
 ### Entrenamientos, Listas y Horario (dentro de `/asesores/`; la oficina los edita ahí mismo)
 
 Para la oficina es la misma página con tres pestañas y el **modo edición** (entra por el hub
 con traspaso, o con `#oficina` y la clave).
 
-- **Entrenamientos**: módulos (3–4 lecciones cada uno) → lecciones → materiales.
+- **Entrenamientos**: módulos (2–4 lecciones cada uno) → lecciones → materiales. Son ocho, en
+  el orden del trabajo: Empieza bien, Consigue citas, La presentación, Cierra la venta,
+  **Créditos y pedidos** (qué pedir para un crédito, llenado del pedido), **Cómo cobrar**
+  (abrir cuentas, facturar, declarar), Crece en el negocio y Trabaja en ti.
   Cada lección muestra solo lo que tiene: **guía** (PDF), **video** (archivo o
   YouTube), **libro** (PDF o enlace), **enlace**. El asesor marca cada lección
   como completada; abrir un material la deja como vista. La oficina ve cuántos
@@ -345,4 +357,4 @@ exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>
 Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
 (Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
 chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
-SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql` y `sql/20261106_entrenamientos_04_*.sql`.
+SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql`, `sql/20261106_entrenamientos_04_*.sql` y `sql/20261113_entrenamientos_05_creditos_y_cobrar.sql`.
