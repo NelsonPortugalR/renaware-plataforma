@@ -334,10 +334,11 @@ simulador responde por defecto como está la base, sin Empiece Ya, y un escenari
 Para la oficina es la misma página con tres pestañas y el **modo edición** (entra por el hub
 con traspaso, o con `#oficina` y la clave).
 
-- **Entrenamientos**: módulos (2–4 lecciones cada uno) → lecciones → materiales. Son ocho, en
+- **Entrenamientos**: módulos (3–4 lecciones cada uno) → lecciones → materiales. Son siete, en
   el orden del trabajo: Empieza bien, Consigue citas, La presentación, Cierra la venta,
-  **Créditos y pedidos** (qué pedir para un crédito, llenado del pedido), **Cómo cobrar**
-  (abrir cuentas, facturar, declarar), Crece en el negocio y Trabaja en ti.
+  **Cómo cobrar** (abrir cuentas, facturar, declarar; desde el 13/11), Crece en el negocio y
+  Trabaja en ti. El pedido y el crédito van en «Cierra la venta» (lección «Contratos: contado
+  y crédito»); un módulo aparte, «Créditos y pedidos», se creó y se retiró ese mismo día.
   Cada lección muestra solo lo que tiene: **guía** (PDF), **video** (archivo o
   YouTube), **libro** (PDF o enlace), **enlace**. El asesor marca cada lección
   como completada; abrir un material la deja como vista. La oficina ve cuántos
@@ -377,4 +378,4 @@ exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>
 Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
 (Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
 chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
-SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql`, `sql/20261106_entrenamientos_04_*.sql` y `sql/20261113_entrenamientos_05_creditos_y_cobrar.sql`.
+SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql`, `sql/20261106_entrenamientos_04_*.sql` y `sql/20261113_entrenamientos_05_como_cobrar.sql`.
