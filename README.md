@@ -294,13 +294,17 @@ quien no es de tecnología: letra grande, botones grandes, una cosa por pantalla
 - **Inicio**: saluda por su nombre, dice el día y cuándo cierra el período, y muestra solo lo
   que le toca a ella: *premios por recoger*, *su Nivel Cero* (clases, plazo y próxima clase;
   con las 5 clases, el botón de su test) y *lo que sigue en el horario*. Debajo, los botones
-  en tres grupos: **Para vender** (Precios y promociones, Zonas de crédito, Listas y fotos),
+  en tres grupos: **Para vender** (Precios y promociones, Zonas de crédito, Listas y fotos, Números de cuenta),
   **Para aprender** (Entrenamientos, Horario) y **Lo tuyo** (Mi Nivel Cero, Mis premios, Mis
   puntos, y lo que `plataforma_menu` le sume, como el Local).
 - **Buscador** (arriba del inicio): una sola caja busca secciones, listas, guías y distritos.
   Escribir «cayma» responde ahí mismo si hay crédito.
 - **Precios y promociones**: sale al portal `renaware-peru` con su sesión (traspaso); con
   «atrás» vuelve.
+- **Números de cuenta** (`#cuentas`, desde el 19/11/2026): las cuentas de Rena Ware para que el cliente deposite (BCP,
+  Interbank y BBVA, a nombre de Rena Ware del Perú S.A.): la imagen oficial para «Enviar» por WhatsApp y cada cuenta y CCI con
+  su botón «Copiar» (copia solo los dígitos, así lo acepta cualquier app de banco). Es la categoría `cuentas` de Listas; el
+  botón y la entrada del buscador («bcp», «cci», «cuenta», «depositar»…) solo salen si tiene algo cargado.
 - **Zonas de crédito**: la lista oficial (`zc_lista`, la misma del buscador de zonas). Abre con
   los distritos de Arequipa; al escribir busca distritos y zonas restringidas de todo el país.
   Cada distrito dice con palabras «Sí hay crédito», «Sí, con excepciones» o «No hay crédito»,
@@ -326,7 +330,7 @@ demás sigue funcionando. El hub (`/`) ya no le arma un inicio a la asesora: la 
 misma sesión (`rw_asesor_token`, mismo dominio). La dirección vieja `/entrenamientos/` redirige
 conservando la pantalla y el traspaso. SQL en `sql/20261111_asesores.sql` y
 `sql/20261113_asesores_02_empiece_ya_apagado.sql`. Pruebas:
-`python3 pruebas/prueba_asesores.py [carpeta_capturas]` (Chromium real, 156 comprobaciones; el
+`python3 pruebas/prueba_asesores.py [carpeta_capturas]` (Chromium real, 171 comprobaciones; el
 simulador responde por defecto como está la base, sin Empiece Ya, y un escenario aparte lo prende).
 
 ### Entrenamientos, Listas y Horario (dentro de `/asesores/`; la oficina los edita ahí mismo)
@@ -352,6 +356,12 @@ con traspaso, o con `#oficina` y la clave).
   **Enviar** (hoja de compartir del celular: WhatsApp con el archivo) y
   **Descargar**. Lo marcado «para el cliente» es lo que se le puede mandar.
   Un PDF por concurso: la oficina crea un documento nuevo en Concursos.
+  **Números que se copian**: en la descripción de un documento, cada línea con un número largo (9 dígitos o más) sale con
+  su botón «Copiar»; «BCP · CCI: 002-…» agrupa por lo que va antes del «·». Así está la categoría **Números de cuenta**
+  (`cuentas`, documento `cuentas-rena-ware`), que la asesora tiene también como botón en su inicio.
+  **Archivos fijos del sitio**: una versión puede apuntar a un archivo de `public/archivos/` con su dirección completa
+  (`https://…`); la página, `doc_vigente` y el chat la usan tal cual. Así se cargó la imagen de las cuentas, porque desde un
+  chat no se puede subir a Storage; lo que la oficina suba después va a Storage como siempre.
 - **Horario**: la semana con fechas reales (lunes a domingo), ‹ › para moverse,
   hoy resaltado y el jueves que inicia un período marcado («Inicia el PB24»,
   donde va el lanzamiento del concurso). La oficina apaga un evento para esa
@@ -378,4 +388,4 @@ exige un ticket de la oficina (`ent_subida_crear`) y la ruta `<ticket>/<archivo>
 Registrado en `plataforma_modulos` como `entrenamientos` (Equipo) y `listas`
 (Vender, `#listas`), en Vigencia (`clases-nivel-cero`, `listas-digitales`) y en el
 chat (`horario_semana`, `documentos_listas`, `entrenamientos_lecciones`).
-SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql`, `sql/20261106_entrenamientos_04_*.sql` y `sql/20261113_entrenamientos_05_como_cobrar.sql`.
+SQL en `sql/20261104_entrenamientos_01_base.sql`, `_02_datos.sql`, `_03_zoom_sin_asistencia.sql`, `sql/20261106_entrenamientos_04_*.sql`, `sql/20261113_entrenamientos_05_como_cobrar.sql` y `sql/20261119_listas_06_numeros_de_cuenta.sql`.

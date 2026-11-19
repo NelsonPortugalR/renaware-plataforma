@@ -172,9 +172,22 @@
   .portada img{width:100%;height:100%;object-fit:cover;display:block}
   .doc .cuerpo{min-width:0}
   .doc .nombre{font-weight:700;line-height:1.3}
-  .doc .desc{color:var(--suave);font-size:14.5px;margin-top:3px}
+  .doc .desc{color:var(--suave);font-size:14.5px;margin-top:3px;white-space:pre-line}
   .doc .acciones{margin-top:10px;gap:6px}
   .doc .acciones .mini{font-size:14px;padding:8px 11px}
+  /* números que se copian (cuentas, CCI): debajo de la tarjeta, a todo lo ancho */
+  .doc .datos{grid-column:1 / -1;border-top:1px solid var(--borde);padding-top:2px}
+  .datos .dato-l{margin:10px 0 2px;color:var(--suave);font-size:15px}
+  .datos .dato-g{margin:14px 0 0;font-weight:700}
+  /* el nombre y «Copiar» arriba; el número debajo, a todo lo ancho, para que entre en una sola línea */
+  .datos .dato{display:grid;grid-template-columns:minmax(0, 1fr) auto;grid-template-areas:"k b" "n n" "d d";align-items:center;column-gap:12px;
+    padding:9px 0 10px;border-bottom:1px solid var(--borde)}
+  .datos .dato:last-child{border-bottom:0}
+  .datos .dato-k{grid-area:k;color:var(--suave);font-size:14.5px;min-width:0}
+  .datos .dato .mini{grid-area:b}
+  .datos .dato-n{grid-area:n;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em;overflow-wrap:anywhere;margin-top:3px}
+  .datos .dato-d{grid-area:d;color:var(--suave);font-size:14.5px}
+  @media (max-width:350px){ .datos .dato-n{font-size:16.5px} }
   .versiones{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--borde)}
   .versiones li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--borde);font-size:15px}
   .versiones .v{font-weight:700}
@@ -430,7 +443,9 @@ function slug(nombre){
 function esPdf(x){ return /pdf/i.test(x.content_type || '') || /\.pdf$/i.test(x.archivo || ''); }
 function esImagen(x){ return /^image\//i.test(x.content_type || '') || /\.(jpe?g|png|webp|gif)$/i.test(x.archivo || ''); }
 function esVideo(x){ return /^video\//i.test(x.content_type || '') || /\.(mp4|webm|mov)$/i.test(x.archivo || ''); }
-function urlDe(ruta){ return (S.d && S.d.archivos_base ? S.d.archivos_base : SB_URL + '/storage/v1/object/public/entrenamientos/') + ruta; }
+// Lo subido vive en Storage (ruta dentro de la carpeta). Una versión también puede apuntar a un archivo fijo del sitio con su
+// dirección completa (https://…): así se cargó la imagen de las cuentas de Rena Ware el 19/11/2026.
+function urlDe(ruta){ return /^https?:\/\//i.test(ruta || '') ? ruta : (S.d && S.d.archivos_base ? S.d.archivos_base : SB_URL + '/storage/v1/object/public/entrenamientos/') + ruta; }
 function urlDescarga(ruta, nombre){ return urlDe(ruta) + '?download=' + encodeURIComponent(nombre || ruta.split('/').pop()); }
 function youtubeId(u){
   const m = String(u || '').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -948,6 +963,17 @@ function vistaListas(){
     cats.length > 1 ? h('button', {class: 'mini sec', type: 'button', onclick: () => ordenar('categoria', cats, c => c.nombre)}, 'Ordenar categorías') : null));
   return out;
 }
+// «Números de cuenta» (19/11/2026) es la categoría de Listas con id «cuentas». La asesora la tiene también como botón propio en
+// su inicio y en el buscador, porque es lo que más se le manda al cliente. Lo que muestra se cambia en Listas (modo edición).
+function catCuentas(){ return ((S.d && S.d.categorias) || []).find(c => c.id === 'cuentas') || null; }
+function hayCuentas(){ const c = catCuentas(); return !!(c && (c.documentos || []).some(d => d.vigente)); }
+function vistaCuentas(){
+  const c = catCuentas();
+  const docs = c ? (c.documentos || []).filter(d => d.vigente) : [];
+  if (!docs.length) return [h('p', {class: 'aviso', style: 'margin-top:16px'}, 'Todavía no hay números de cuenta cargados.')];
+  return [h('p', {class: 'apoyo', style: 'margin-bottom:4px'}, 'Toca «Enviar» para mandarle la imagen al cliente por WhatsApp, o «Copiar» para pegar un número donde lo necesites.'),
+    ...docs.map(d => tarjetaDocumento(d, c))];
+}
 function estadoVigencia(v){
   if (!v) return null;
   const hoy = S.d.hoy;
@@ -959,6 +985,7 @@ function estadoVigencia(v){
 function tarjetaDocumento(d, c){
   const v = d.vigente;
   const nombreArchivo = v ? v.archivo : '';
+  const conNumeros = tieneNumeros(d.descripcion);
   const portada = h('button', {class: 'portada', type: 'button', 'aria-label': 'Ver ' + d.titulo, onclick: () => v && abrirDocumento(d, v)},
     v && v.portada ? h('img', {src: urlDe(v.portada), alt: ''}) : (v ? (esPdf(v) ? 'PDF' : esImagen(v) ? 'FOTO' : 'ARCHIVO') : 'SIN ARCHIVO'));
   const chips = [estadoVigencia(v),
@@ -970,15 +997,16 @@ function tarjetaDocumento(d, c){
   if (v) {
     acciones.append(h('button', {class: 'mini', type: 'button', onclick: () => abrirDocumento(d, v)}, 'Ver'));
     if (navigator.share) acciones.append(h('button', {class: 'mini sec', type: 'button', onclick: () => compartir({url: urlDe(v.ruta), archivo: v.archivo, content_type: v.content_type, nombre: d.titulo})}, d.audiencia === 'cliente' ? 'Enviar' : 'Compartir'));
-    acciones.append(h('a', {class: 'mini sec', href: urlDescarga(v.ruta, v.archivo), target: '_blank', rel: 'noopener'}, 'Descargar'));
+    acciones.append(h('a', {class: 'mini sec', href: urlDescarga(v.ruta, v.archivo), download: v.archivo || '', target: '_blank', rel: 'noopener'}, 'Descargar'));
   }
   if (edita()) {
     acciones.append(h('button', {class: 'mini' + (v ? ' sec' : ''), type: 'button', onclick: () => formVersion(d)}, v ? 'Subir nueva versión' : 'Subir archivo'));
     acciones.append(h('button', {class: 'enlace', type: 'button', onclick: () => formDocumento(d, c)}, 'Editar'));
   }
   const card = h('div', {class: 'doc' + (v || oficina() ? '' : ' sin') + (d.activo ? '' : ' apagada')}, v || oficina() ? portada : null,
-    h('div', {class: 'cuerpo'}, h('div', {class: 'nombre'}, d.titulo), d.descripcion ? h('div', {class: 'desc'}, d.descripcion) : null,
-      chips.length ? h('div', {class: 'chips'}, chips) : null, detalle ? h('div', {class: 'desc'}, detalle) : null, acciones));
+    h('div', {class: 'cuerpo'}, h('div', {class: 'nombre'}, d.titulo), d.descripcion && !conNumeros ? h('div', {class: 'desc'}, d.descripcion) : null,
+      chips.length ? h('div', {class: 'chips'}, chips) : null, detalle ? h('div', {class: 'desc'}, detalle) : null, acciones),
+    conNumeros ? bloqueNumeros(d.descripcion) : null);
   if (edita() && d.versiones && d.versiones.length > 1) {
     const ul = h('ul', {class: 'versiones oculto'}, d.versiones.map(x => h('li', {},
       h('span', {}, h('span', {class: 'v'}, 'v' + x.version), ' · ', corta(x.creado_en), x.nota ? ' · ' + x.nota : '', x.vigente_hasta ? ' · hasta ' + corta(x.vigente_hasta) : ''),
@@ -1015,6 +1043,48 @@ async function compartir(x){
   }
 }
 
+/* ---------- números que se copian con un toque (cuentas, CCI…) ---------- */
+// En la descripción de un documento, cada línea con un número largo (9 dígitos o más, con guiones o sin ellos) sale con su
+// botón «Copiar», que copia solo los dígitos: así lo acepta cualquier app de banco. «BCP · CCI: 002-…» agrupa por lo que va
+// antes del «·». La oficina lo escribe en «Editar» del documento, una línea por número.
+const NUMERO_LARGO = /\d[\d-]{7,}\d/;
+function numeroDe(linea){ const m = String(linea).match(NUMERO_LARGO); return m && m[0].replace(/\D/g, '').length >= 9 ? m : null; }
+function tieneNumeros(t){ return String(t || '').split('\n').some(l => !!numeroDe(l)); }
+async function copiar(texto){
+  let hecho = false;
+  try { await navigator.clipboard.writeText(texto); hecho = true; } catch (e) { /* sin permiso del navegador: el método de siempre */ }
+  if (!hecho) {
+    const a = h('textarea', {readonly: true, 'aria-hidden': 'true', style: 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0'}, texto);
+    document.body.append(a); a.select();
+    try { hecho = document.execCommand('copy'); } catch (e) { hecho = false; }
+    a.remove();
+  }
+  aviso(hecho ? 'Copiado: ' + texto : 'No se pudo copiar. Mantén apretado el número para copiarlo.', !hecho);
+}
+function bloqueNumeros(texto){
+  const filas = [];
+  let grupo = null;
+  String(texto || '').split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
+    const m = numeroDe(l);
+    if (!m) { grupo = null; filas.push(h('p', {class: 'dato-l'}, l)); return; }
+    const partes = l.slice(0, m.index).split(' · ');
+    const cab = partes.length > 1 ? partes.shift().trim() : null;
+    const etiqueta = partes.join(' · ').replace(/[\s:]+$/, '').trim();
+    const despues = l.slice(m.index + m[0].length).trim();
+    if (cab && cab !== grupo) filas.push(h('p', {class: 'dato-g'}, cab));
+    grupo = cab;
+    const digitos = m[0].replace(/\D/g, '');
+    // un número largo se parte solo en sus guiones, nunca a la mitad de un grupo
+    const numero = m[0].split('-').map((g, i, a) => i < a.length - 1 ? [g + '-', h('wbr')] : g);
+    filas.push(h('div', {class: 'dato'},
+      h('span', {class: 'dato-k'}, etiqueta || 'Número'),
+      h('button', {class: 'mini sec', type: 'button', 'aria-label': 'Copiar ' + [cab, etiqueta].filter(Boolean).join(' ') + ' ' + m[0], onclick: () => copiar(digitos)}, 'Copiar'),
+      h('span', {class: 'dato-n'}, numero),
+      despues ? h('span', {class: 'dato-d'}, despues) : null));
+  });
+  return h('div', {class: 'datos'}, filas);
+}
+
 /* ---------- formularios de documentos ---------- */
 function formCategoria(c){
   hoja(c ? 'Editar categoría' : 'Nueva categoría', [
@@ -1028,7 +1098,8 @@ function formCategoria(c){
 function formDocumento(d, c){
   hoja(d ? 'Editar documento' : 'Nuevo documento', [
     {k: 'titulo', t: 'Título', v: d ? d.titulo : '', req: true},
-    {k: 'descripcion', t: 'Descripción (opcional)', v: d ? d.descripcion || '' : '', tipo: 'textarea'},
+    {k: 'descripcion', t: 'Descripción (opcional)', v: d ? d.descripcion || '' : '', tipo: 'textarea',
+     ayuda: 'Un número largo (cuenta, CCI) sale con su botón «Copiar». Pon uno por línea, p. ej. «BCP · CCI: 002-193-000714516032-16».'},
     {k: 'categoria_id', t: 'Categoría', v: c.id, tipo: 'select', opciones: (S.d.categorias || []).map(x => [x.id, x.nombre])},
     {k: 'audiencia', t: 'Para quién es', v: d ? d.audiencia : 'asesor', tipo: 'select', opciones: [['cliente', 'Para el cliente (se le puede enviar)'], ['asesor', 'Para el asesor (interno)'], ['oficina', 'Para la oficina']]},
     {k: 'asesor_ve', t: 'Lo ven los asesores', v: d ? d.roles.includes('asesor') : true, tipo: 'check'},
@@ -1323,6 +1394,7 @@ const ICO = {
   precios: 'M20.5 13.2 12.8 21a1 1 0 0 1-1.4 0L3 12.6V4a1 1 0 0 1 1-1h8.6l7.9 8.8a1 1 0 0 1 0 1.4Z|M7.6 7.6h.01',
   zonas: 'M12 21.5s7-6.4 7-11.7a7 7 0 1 0-14 0c0 5.3 7 11.7 7 11.7Z|M12 12.3a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
   listas: 'M6 3h9l4 4v14H6z|M15 3v4h4|M9.5 12h6|M9.5 16h6',
+  cuentas: 'm3.5 9 8.5-5 8.5 5|M5 9.5h14|M6.5 12.5v5|M10.5 12.5v5|M13.5 12.5v5|M17.5 12.5v5|M4 20.5h16',
   aprender: 'M3.5 5.5C6 4.3 9 4.3 12 6c3-1.7 6-1.7 8.5-.5v13C18 17.3 15 17.3 12 19c-3-1.7-6-1.7-8.5-.5Z|M12 6v13',
   horario: 'M4 6h16v15H4z|M4 10.5h16|M8 3v4|M16 3v4',
   empiece: 'm12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9l-5.4 2.9 1.1-6.1-4.5-4.3 6.1-.8Z',
@@ -1343,9 +1415,9 @@ function dondeEs(e){ return e.modo === 'zoom' ? 'Por Zoom' : e.modo === 'presenc
 function poner(el, ...nodos){ el.replaceChildren(...nodos.flat(Infinity).filter(x => x != null && x !== false)); }
 const flechita = () => h('span', {class: 'flecha', 'aria-hidden': 'true'}, '›');
 
-const TITULOS = {entrenamientos: 'Entrenamientos', listas: 'Listas y fotos', horario: 'Horario', zonas: 'Zonas de crédito',
+const TITULOS = {entrenamientos: 'Entrenamientos', listas: 'Listas y fotos', cuentas: 'Números de cuenta', horario: 'Horario', zonas: 'Zonas de crédito',
   empiece: '¿Ya ganó Empiece Ya?', premios: 'Mis premios', nivel: 'Mi Nivel Cero', puntos: 'Mis puntos'};
-const PANTALLAS = ['inicio', 'entrenamientos', 'listas', 'horario', 'zonas', 'empiece', 'premios', 'nivel', 'puntos'];
+const PANTALLAS = ['inicio', 'entrenamientos', 'listas', 'cuentas', 'horario', 'zonas', 'empiece', 'premios', 'nivel', 'puntos'];
 
 /* ---------- moverse: cada pantalla es un paso en el historial, así «atrás» del teléfono vuelve una ---------- */
 function ir(tab, cambios){
@@ -1510,6 +1582,7 @@ function vistaInicio(){
       losa(ICO.precios, 'Precios y promociones', 'Listas, especiales, repuestos y servicios', b => abrirExterno(moduloDelMenu('cotizador', {id: 'cotizador', url: PRECIOS, acceso: 'asesor'}), b)),
       losa(ICO.zonas, 'Zonas de crédito', '¿Hay crédito en ese distrito?', () => ir('zonas')),
       losa(ICO.listas, 'Listas y fotos', 'Para ver, enviar o descargar', () => ir('listas')),
+      hayCuentas() ? losa(ICO.cuentas, 'Números de cuenta', 'Para que el cliente deposite', () => ir('cuentas')) : null,
       conEmpiece() ? losa(ICO.empiece, '¿Ya ganó Empiece Ya?', 'Busca a una persona por su nombre', () => ir('empiece')) : null]),
     ...grupo('Para aprender', [
       losa(ICO.aprender, 'Entrenamientos', 'Guías paso a paso', () => ir('entrenamientos')),
@@ -1532,13 +1605,15 @@ function indiceBusqueda(){
     () => abrirExterno(moduloDelMenu('cotizador', {id: 'cotizador', url: PRECIOS, acceso: 'asesor'})));
   sec('Zonas de crédito', 'zona credito distrito urbanizacion courier entrega', () => ir('zonas'));
   sec('Listas y fotos', 'lista pdf foto concurso descargar enviar whatsapp', () => ir('listas'));
+  if (hayCuentas()) sec('Números de cuenta', 'cuenta cuentas numero numeros cci deposito depositar transferencia transferir abono pago pagar banco bancos bcp interbank bbva continental rena ware',
+    () => ir('cuentas'));
   sec('Entrenamientos', 'guia leccion video libro capacitacion aprender modulo', () => ir('entrenamientos'));
   sec('Horario', 'horario semana clase zoom taller reunion capacitacion lanzamiento charla desayuno', () => ir('horario'));
   if (conEmpiece()) sec('¿Ya ganó Empiece Ya?', 'empiece ya gano ganador afiliado afiliar nuevo', () => ir('empiece'));
   sec('Mis premios', 'premio recoger concurso botella regalo', () => ir('premios'));
   sec('Mis puntos', 'puntos pedidos periodo', () => ir('puntos'));
   if (S.p && S.p.nivel) sec('Mi Nivel Cero', 'nivel cero asistencia clases test botella', () => ir('nivel'));
-  (S.d.categorias || []).forEach(c => (c.documentos || []).filter(d => d.vigente).forEach(d =>
+  (S.d.categorias || []).filter(c => c.id !== 'cuentas').forEach(c => (c.documentos || []).filter(d => d.vigente).forEach(d =>
     e.push({tipo: 'Lista', t: d.titulo, s: c.nombre, n: llano(d.titulo + ' ' + (d.descripcion || '') + ' ' + c.nombre), ir: () => { ir('listas'); abrirDocumento(d, d.vigente); }})));
   modulos().filter(m => m.activo).forEach(m => (m.lecciones || []).filter(l => l.activo).forEach(l =>
     e.push({tipo: 'Guía', t: l.titulo, s: m.titulo, n: llano(l.titulo + ' ' + (l.descripcion || '') + ' ' + m.titulo), ir: () => ir('entrenamientos', {modulo: m.id, leccion: l.id})})));
@@ -1843,7 +1918,7 @@ function vistaPuntos(){
   if (p.codigo) out.push(h('p', {class: 'apoyo chico', style: 'margin-top:16px'}, 'Tu código de asesor: ' + p.codigo));
   return out;
 }
-const VISTAS = {inicio: vistaInicio, entrenamientos: () => vistaEntrenamientos(), listas: () => vistaListas(), horario: () => vistaHorario(),
+const VISTAS = {inicio: vistaInicio, entrenamientos: () => vistaEntrenamientos(), listas: () => vistaListas(), cuentas: vistaCuentas, horario: () => vistaHorario(),
   zonas: vistaZonas, empiece: vistaEmpiece, premios: vistaPremios, nivel: vistaNivel, puntos: vistaPuntos};
 
 /* ---------- visor (PDF, imagen, video) ---------- */
@@ -1870,7 +1945,7 @@ async function abrirVisor(x){
   const estado = h('p', {class: 'estado'}, 'Cargando…');
   const pie = h('div', {class: 'pie'},
     x.enviar && navigator.share ? h('button', {type: 'button', onclick: () => compartir(x)}, 'Enviar al cliente') : (navigator.share ? h('button', {type: 'button', onclick: () => compartir(x)}, 'Compartir') : null),
-    h('a', {href: x.descarga, target: '_blank', rel: 'noopener'}, 'Descargar'));
+    h('a', {href: x.descarga, download: x.archivo || '', target: '_blank', rel: 'noopener'}, 'Descargar'));
   const el = h('div', {class: 'visor', role: 'dialog', 'aria-modal': 'true', 'aria-label': x.nombre},
     h('div', {class: 'cab'}, h('span', {class: 't'}, x.nombre), h('button', {class: 'x', type: 'button', 'aria-label': 'Cerrar', onclick: cerrarVisor}, '×')),
     cuerpo, pie);

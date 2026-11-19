@@ -7,6 +7,7 @@ from playwright.sync_api import sync_playwright
 
 RAIZ = os.path.join(os.path.dirname(__file__), '..', 'public')
 SB = 'https://kiexpdaaoegbtesqmaff.supabase.co'
+SITIO = 'https://renaware-plataforma.nelson1614.workers.dev'
 CAPTURAS = sys.argv[1] if len(sys.argv) > 1 else None
 fallas = 0
 
@@ -25,6 +26,16 @@ PUERTO = srv.server_address[1]
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 # ---------- Supabase simulado ----------
+CUENTAS = {'hay': True}      # la categoría «Números de cuenta» de Listas (id «cuentas»), como quedó en la base el 19/11/2026
+CUENTAS_TXT = ('A nombre de RENA WARE DEL PERÚ S.A.\n'
+               'BCP · Cuenta corriente: 193-0714516-0-32\nBCP · CCI: 002-193-000714516032-16\n'
+               'Interbank · Cuenta: 164-3001186510\nInterbank · CCI: 003-164-003001186510-19\n'
+               'BBVA · Cuenta corriente: 0011-0910-01-00004302\nBBVA · CCI: 011-910-000100004302-74')
+def cat_cuentas():
+    return {'id': 'cuentas', 'nombre': 'Números de cuenta', 'descripcion': 'Las cuentas de Rena Ware.', 'orden': 4, 'roles': ['admin', 'asistente', 'asesor'], 'activo': True, 'documentos': [
+        {'id': 'd9', 'clave': 'cuentas-rena-ware', 'titulo': 'Cuentas de Rena Ware', 'descripcion': CUENTAS_TXT, 'audiencia': 'cliente', 'roles': ['admin', 'asistente', 'asesor'], 'orden': 1, 'activo': True,
+         'vigente': {'id': 'v9', 'version': 1, 'ruta': SITIO + '/archivos/cuentas-rena-ware.jpg', 'archivo': 'Cuentas Rena Ware.jpg', 'bytes': 90366, 'content_type': 'image/jpeg', 'paginas': None,
+                     'portada': SITIO + '/archivos/cuentas-rena-ware-portada.jpg', 'nota': None, 'vigente_desde': None, 'vigente_hasta': None, 'creado_en': '2026-11-19T14:30:00Z'}, 'versiones': []}]}
 PNG = bytes.fromhex('89504e470d0a1a0a0000000d4948445200000001000000010806000000' '1f15c4890000000d49444154789c636000020000050001e2' '26059b0000000049454e44ae426082')
 def datos(rol):
     base = {
@@ -56,6 +67,7 @@ def datos(rol):
                        {'id': 'p6', 'dia': 4, 'hora': '09:00', 'titulo': 'Capacitación por Zoom', 'descripcion': None, 'lugar': None, 'modo': 'zoom', 'facilitador': 'Juan Carlos Ezaine', 'enlace': None, 'tipo': 'capacitacion', 'asistencia': False, 'solo_inicio_periodo': False, 'excepto_inicio_periodo': True, 'publico': True, 'orden': 1, 'activo': True}] if rol == 'admin' else None,
         'progreso': [{'celular': '987654321', 'nombre': 'fley rojas', 'vistas': 2, 'completadas': 1, 'ultimo': '2026-11-03T15:00:00Z'}] if rol == 'admin' else None,
     }
+    if CUENTAS['hay']: base['categorias'].append(cat_cuentas())
     if rol != 'admin':   # la función real no manda lo oculto al asesor
         for m in base['modulos']: m['lecciones'] = [l for l in m['lecciones'] if l['activo']]
     return base
@@ -167,7 +179,7 @@ def manejar(route, request):
     if u.startswith(SB + '/storage/v1/object/entrenamientos/'):
         llamadas.append(('storage', u.split('/entrenamientos/')[1], request.headers.get('content-type')))
         return route.fulfill(status=200, headers=m, body=json.dumps({'Key': 'entrenamientos/x'}))
-    if u.startswith(SB + '/storage/v1/object/public/'):
+    if u.startswith(SB + '/storage/v1/object/public/') or u.startswith(SITIO + '/archivos/'):
         return route.fulfill(status=200, headers={'content-type': 'image/png'}, body=PNG)
     if 'cdnjs' in u or 'fonts.g' in u:
         return route.abort()
@@ -215,7 +227,7 @@ with sync_playwright() as pw:
     ok('Hoy, 4:00 p. m.' in av[2] and 'Taller de cocina · En la oficina' in av[2], 'Aviso 3: lo que sigue en el horario')
     ok(p.locator('h2').all_inner_texts() == ['Para vender', 'Para aprender', 'Lo tuyo'], 'Los botones van en tres grupos: ' + ' / '.join(p.locator('h2').all_inner_texts()))
     losas = p.locator('.losa b').all_inner_texts()
-    ok(losas == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', 'Entrenamientos', 'Horario', 'Mi Nivel Cero', 'Mis premios', 'Mis puntos', 'Local del equipo'], 'Nueve botones, cada uno con su nombre (sin Empiece Ya: está apagado para las asesoras): ' + ', '.join(losas))
+    ok(losas == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', 'Números de cuenta', 'Entrenamientos', 'Horario', 'Mi Nivel Cero', 'Mis premios', 'Mis puntos', 'Local del equipo'], 'Diez botones, cada uno con su nombre (sin Empiece Ya: está apagado para las asesoras): ' + ', '.join(losas))
     ok(p.locator('.losa .globo').inner_text() == '1', 'Mis premios lleva la cuenta de lo que hay por recoger')
     med = p.evaluate("(() => { const l = [...document.querySelectorAll('.losa')].map(e => e.getBoundingClientRect()); const f = parseFloat(getComputedStyle(document.body).fontSize); const b = parseFloat(getComputedStyle(document.querySelector('.losa b')).fontSize); return {alto: Math.min(...l.map(r => r.height)), ancho: Math.min(...l.map(r => r.width)), letra: f, losa: b, desborda: document.documentElement.scrollWidth > innerWidth}; })()")
     ok(med['alto'] >= 120 and med['ancho'] >= 150 and med['letra'] >= 18 and med['losa'] >= 17.5 and not med['desborda'], 'Botones grandes y letra grande, sin desbordar el ancho del teléfono: ' + json.dumps(med))
@@ -249,6 +261,35 @@ with sync_playwright() as pw:
     ok('No encontré nada con «xyzq»' in texto(p), 'Si no hay nada, lo dice con sus palabras')
     p.click('text=Ver todas las secciones'); p.wait_for_timeout(100)
     ok(p.input_value('#buscar') == '' and p.locator('.losas').first.is_visible(), 'Y ofrece volver a ver todos los botones')
+
+    # --- números de cuenta: botón propio, cada número se copia con un toque y la imagen va al cliente ---
+    p.fill('#buscar', 'bcp'); p.wait_for_timeout(150)
+    r = p.locator('.resultados .fila').all_inner_texts()
+    ok(len(r) == 1 and 'SECCIÓN' in r[0].upper() and 'Números de cuenta' in r[0], 'Buscar «bcp» lleva a los números de cuenta, una sola vez: ' + ' | '.join(r).replace('\n', ' '))
+    p.fill('#buscar', 'cci'); p.wait_for_timeout(150)
+    ok('Números de cuenta' in p.locator('.resultados').inner_text(), 'También buscando «cci»')
+    p.fill('#buscar', ''); p.wait_for_timeout(100)
+    p.click('.losa:has-text("Números de cuenta")'); p.wait_for_timeout(200)
+    t = texto(p)
+    ok(p.locator('h1').inner_text() == 'Números de cuenta' and p.url.endswith('#cuentas') and 'Cuentas de Rena Ware' in t and 'Para el cliente' in t and 'A nombre de RENA WARE DEL PERÚ S.A.' in t, 'Números de cuenta: su pantalla, con la imagen para el cliente y a nombre de quién')
+    ok(p.locator('.datos .dato-g').all_inner_texts() == ['BCP', 'Interbank', 'BBVA'] and p.locator('.datos .dato').count() == 6 and p.locator('.datos .dato button').count() == 6, 'Tres bancos, cada uno con su cuenta y su CCI, y un «Copiar» por número')
+    fil = p.evaluate("[...document.querySelectorAll('.datos .dato')].map(r => r.querySelector('.dato-k').textContent + ' ' + r.querySelector('.dato-n').textContent)")
+    ok(fil[0] == 'Cuenta corriente 193-0714516-0-32' and fil[1] == 'CCI 002-193-000714516032-16' and fil[5] == 'CCI 011-910-000100004302-74', 'Cada número con su nombre: ' + ' / '.join(fil))
+    ok(p.locator('.doc .portada img').get_attribute('src') == SITIO + '/archivos/cuentas-rena-ware-portada.jpg' and p.locator('.doc a.mini').get_attribute('download') == 'Cuentas Rena Ware.jpg', 'La imagen sale del sitio (dirección completa) y se descarga con su nombre')
+    p.evaluate("() => { window.__copiado = null; navigator.clipboard.writeText = t => { window.__copiado = t; return Promise.resolve(); }; }")
+    p.click('.dato:has-text("002-193") button'); p.wait_for_timeout(150)
+    ok(p.evaluate('window.__copiado') == '00219300071451603216' and 'Copiado: 00219300071451603216' in p.locator('#toast').inner_text(), '«Copiar» copia solo los dígitos (así lo acepta cualquier app de banco) y lo confirma')
+    p.evaluate("() => { navigator.clipboard.writeText = () => Promise.reject(new Error('sin permiso')); }")
+    p.click('.dato:has-text("164-3001186510") button'); p.wait_for_timeout(150)
+    ok('Copiado: 1643001186510' in p.locator('#toast').inner_text() or 'No se pudo copiar' in p.locator('#toast').inner_text(), 'Sin permiso del portapapeles intenta de otra forma y siempre dice qué pasó')
+    for ancho in (390, 360, 320):
+        p.set_viewport_size({'width': ancho, 'height': 740}); p.wait_for_timeout(120)
+        m = p.evaluate("(() => ({desborda: document.documentElement.scrollWidth > innerWidth, cortados: [...document.querySelectorAll('.dato-n')].filter(e => e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > e.closest('.doc').getBoundingClientRect().right).map(e => e.textContent), botones: [...document.querySelectorAll('.dato button')].filter(b => b.getBoundingClientRect().right > b.closest('.doc').getBoundingClientRect().right).length, en_dos: [...document.querySelectorAll('.dato-n')].filter(e => { const r = document.createRange(); r.selectNodeContents(e); return new Set([...r.getClientRects()].map(x => Math.round(x.top))).size > 1; }).map(e => e.textContent)}))()")
+        ok(not m['desborda'] and not m['cortados'] and not m['botones'] and not m['en_dos'], f'A {ancho} px: cada número en una sola línea, nada fuera de la tarjeta: ' + json.dumps(m, ensure_ascii=False))
+    p.set_viewport_size({'width': 390, 'height': 844}); p.wait_for_timeout(120)
+    cap(p, '12b-cuentas')
+    p.click('.tope .atras'); p.wait_for_timeout(250)
+    ok(p.locator('.hola h1').count() == 1 and p.url.endswith('#inicio'), '«Volver» desde los números de cuenta: al inicio')
 
     # --- zonas de crédito ---
     p.click('.losa:has-text("Zonas de crédito")'); p.wait_for_timeout(250)
@@ -353,6 +394,7 @@ with sync_playwright() as pw:
     p.click('.losa:has-text("Listas y fotos")'); p.wait_for_timeout(200)
     t = texto(p)
     ok('Promociones del mes' in t and 'Vigente hasta el 30 nov' in t and 'Para el cliente' in t and 'Noviembre 2026' in t, 'Listas: la promo vigente con su vigencia y audiencia')
+    ok('NÚMEROS DE CUENTA' in t.upper() and 'Cuentas de Rena Ware' in t and p.locator('.datos .dato').count() == 6, 'Y la categoría «Números de cuenta» con sus números para copiar')
     ok('Precio regular · autocompra' not in t, 'Asesor no ve documentos sin archivo')
     ok('Venció el 20 oct' in t, 'Marca la foto vencida')
     ok(p.locator('.doc a.mini').first.get_attribute('href').endswith('?download=promos.pdf'), 'Descargar con nombre')
@@ -404,7 +446,7 @@ with sync_playwright() as pw:
     PANEL['eya'] = True
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
-    ok(p.locator('h2').all_inner_texts()[0] == 'Para vender y afiliar' and p.locator('.losa b').all_inner_texts()[3] == '¿Ya ganó Empiece Ya?', 'Prendido desde la base, el botón aparece solo en «Para vender y afiliar»')
+    ok(p.locator('h2').all_inner_texts()[0] == 'Para vender y afiliar' and p.locator('.losa b').all_inner_texts()[4] == '¿Ya ganó Empiece Ya?', 'Prendido desde la base, el botón aparece solo en «Para vender y afiliar»')
     p.fill('#buscar', 'ganador'); p.wait_for_timeout(150)
     ok('¿Ya ganó Empiece Ya?' in p.locator('.resultados').inner_text(), 'Y también en el buscador')
     p.fill('#buscar', ''); p.wait_for_timeout(100)
@@ -429,7 +471,7 @@ with sync_playwright() as pw:
     PANEL['eya'] = False
 
     # --- una asesora sin nada personal, y cuando lo personal falla ---
-    PANEL['modo'] = 'vacio'
+    PANEL['modo'] = 'vacio'; CUENTAS['hay'] = False
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
     ok(p.locator('.hola h1').inner_text() == 'Hola, Ana' and p.locator('.avisos').count() == 0 and p.locator('.losa b').all_inner_texts() == ['Precios y promociones', 'Zonas de crédito', 'Listas y fotos', 'Entrenamientos', 'Horario', 'Mis premios', 'Mis puntos'], 'Sin Nivel Cero, premios ni local: inicio limpio con sus 7 botones')
@@ -437,11 +479,14 @@ with sync_playwright() as pw:
     ok('Todavía no tienes premios registrados' in texto(p), 'Mis premios vacío lo dice sin alarmar')
     p.click('.tope .atras'); p.wait_for_timeout(200); p.click('.losa:has-text("Mis puntos")'); p.wait_for_timeout(150)
     ok('todavía no está enlazado a tu código de asesor' in texto(p), 'Mis puntos sin código: explica qué falta')
+    p.evaluate("location.hash = '#cuentas'"); p.wait_for_timeout(250)
+    ok(p.locator('h1').inner_text() == 'Números de cuenta' and 'Todavía no hay números de cuenta cargados.' in texto(p), 'Sin cuentas cargadas no hay botón, y la pantalla lo dice')
     ctx.close()
+    CUENTAS['hay'] = True
     PANEL['modo'] = 'falla'
     ctx, p = nuevo()
     p.evaluate("localStorage.setItem('rw_asesor_token', JSON.stringify('tok-ase'))"); p.reload(); p.wait_for_timeout(500)
-    ok('No pude cargar tus datos' in texto(p) and p.locator('.losa').count() == 7, 'Si lo personal falla, lo avisa y lo demás sigue funcionando')
+    ok('No pude cargar tus datos' in texto(p) and p.locator('.losa').count() == 8, 'Si lo personal falla, lo avisa y lo demás sigue funcionando (también los números de cuenta)')
     PANEL['modo'] = 'normal'
     p.click('.avisos >> text=Reintentar'); p.wait_for_timeout(400)
     ok(p.locator('.hola h1').inner_text() == 'Hola, Fley' and 'Tienes un premio por recoger' in texto(p), '«Reintentar» lo trae sin recargar la página')
